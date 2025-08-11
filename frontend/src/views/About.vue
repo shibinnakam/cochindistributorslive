@@ -1,29 +1,23 @@
 <template>
   <div class="about-page">
-    <!-- Top Image -->
-    <img src="@/assets/bg.jpg" alt="About Top Banner" class="top-banner" />
+    <!-- Background image section -->
+    <section class="about-banner"></section>
 
-    <!-- Animated Section -->
-    <div class="about-content">
-      <!-- Image Slide from Left -->
-      <div class="about-image" v-if="visible">
-        <img src="@/assets/login-bg.jpg" alt="Who We Are" />
+    <!-- About content section -->
+    <div class="about-container">
+      <!-- Image on left -->
+      <div class="about-image" v-scroll-animation>
+        <img src="@/assets/bg.jpg" alt="About Us" />
       </div>
 
-      <!-- Text Slide from Right inside Box -->
-      <div class="about-text-box" v-if="visible">
-        <h2 class="cochinhead">Who We Are</h2>
-        <div class="cochintext">
-          <p>
-            Cochin Distributors is a dedicated supplier of high-quality bakery products, committed to serving customers
-            with efficiency, reliability, and innovation.
-          </p>
-          <p>
-            We believe in empowering local businesses and maintaining strong relationships with our clients. Our focus
-            is not just on delivering products but building trust and supporting growth in the food and distribution
-            industry.
-          </p>
-        </div>
+      <!-- Text on right -->
+      <div class="about-text" v-scroll-animation>
+        <h2>Who We Are</h2>
+        <p>
+          We are a passionate team committed to delivering top-quality products
+          and services. Our mission is to bring the best experiences to our
+          customers through innovation, dedication, and trust.
+        </p>
       </div>
     </div>
   </div>
@@ -31,130 +25,76 @@
 
 <script>
 export default {
-  name: 'AboutPage',
-  data() {
-    return {
-      visible: false
-    };
+  name: "AboutPage",
+  directives: {
+    scrollAnimation: {
+      mounted(el) {
+        el.style.opacity = 0;
+        el.style.transform = "translateY(30px)";
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                el.style.transition = "all 0.8s ease-out";
+                el.style.opacity = 1;
+                el.style.transform = "translateY(0)";
+              }
+            });
+          },
+          { threshold: 0.2 }
+        );
+        observer.observe(el);
+      },
+    },
   },
-  mounted() {
-    setTimeout(() => {
-      this.visible = true;
-    }, 300);
-  }
 };
 </script>
 
 <style scoped>
-/* Full page should scroll if overflow */
 .about-page {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  height: 100vh;
-  overflow-y: auto;
-  scroll-behavior: smooth;
 }
 
-/* Top banner */
-.top-banner {
+/* Banner background */
+.about-banner {
+  background: url("@/assets/bakery1.jpg") no-repeat center center/cover;
+  height: 300px; /* adjust height */
   width: 100%;
-  height: 300px;
-  object-fit: cover;
-  margin-bottom: 30px;
 }
 
-/* Main content section */
-.about-content {
+/* About content section */
+.about-container {
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: flex-start;
-  padding: 40px;
-  gap: 50px;
-  width: 90%;
+  padding: 50px;
   max-width: 1200px;
-  flex-wrap: wrap;
+  margin: auto;
+  gap: 40px;
 }
 
-/* Left-side image */
 .about-image img {
-  width: 300px;
-  height: auto;
+  width: 100%;
+  height: 350px; /* Adjust image height */
+  object-fit: cover;
   border-radius: 12px;
-  opacity: 0;
-  transform: translateX(-100px);
-  animation: slideInLeft 1s forwards;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-/* Text box with border and background */
-.about-text-box {
+.about-text {
   max-width: 600px;
-  background-color: #f7f7f7;
-  padding: 25px 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  opacity: 0;
-  transform: translateX(100px);
-  animation: slideInRight 1s forwards;
 }
 
-.cochinhead {
-  font-size: 28px;
-  font-weight: bold;
+.about-text h2 {
+  font-size: 2.2rem;
   margin-bottom: 15px;
   color: #2c3e50;
 }
 
-.cochintext p {
-  font-size: 16px;
-  line-height: 1.7;
-  color: #444;
-  margin-bottom: 12px;
-  text-align: justify; 
-}
-
-/* Slide animations */
-@keyframes slideInLeft {
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideInRight {
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-</style>
-
-<!-- Global Scrollbar Styles: NOT Scoped -->
-<style>
-/* Scrollbar Styles - Very Light Green (Professional Look) */
-
-/* Chrome, Safari, Edge */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f5fff5; /* Very light green background */
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: #b7e4c7; /* Soft green thumb */
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: #95d5b2; /* Darker on hover */
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #b7e4c7 #f5fff5;
+.about-text p {
+  font-size: 1.1rem;
+  color: #555;
+  line-height: 1.6;
 }
 </style>
