@@ -9,7 +9,14 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: function () {
+      // Require password only if the user is not using Google Sign-in
+      return !this.googleId;
+    },
+  },
+  googleId: {
+    type: String, // Store Google account ID here
+    default: null,
   },
   role: {
     type: String,

@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-    <!-- Navbar always visible -->
-    <Navbar @open-login="showLogin = true" />
+    <!-- Navbar only visible when NOT on /admin or /staff -->
+    <Navbar v-if="!isDashboard" @open-login="showLogin = true" />
 
     <!-- Page Content -->
     <router-view />
@@ -23,12 +23,14 @@ export default {
       showLogin: false,
     };
   },
+  computed: {
+    isDashboard() {
+      // Hide navbar if route starts with /admin or /staff
+      return (
+        this.$route.path.startsWith("/admin") ||
+        this.$route.path.startsWith("/staff")
+      );
+    },
+  },
 };
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  color: #2c3e50;
-}
-</style>

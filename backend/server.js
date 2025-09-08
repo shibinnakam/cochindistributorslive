@@ -1,17 +1,27 @@
+require('dotenv').config(); 
 const express = require('express');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const cors = require('cors');
-const bcrypt = require('bcryptjs');        // Add bcrypt for password hashing
-const User = require('./models/User');      // Import your User model
+const bcrypt = require('bcryptjs'); // For password hashing
+const User = require('./models/User');
 
-dotenv.config();
+// Routes
+const authRoutes = require('./routes/auth');
+const productRoutes = require('./routes/ProductRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const staffRoutes = require("./routes/staff");
+const leaveRoutes = require("./routes/leaves");
+
+
 
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
+app.use("/uploads", express.static("uploads"));
 
+// Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI)
   .then(async () => {
@@ -36,10 +46,14 @@ mongoose
   })
   .catch((err) => console.error('MongoDB Error:', err.message));
 
-// Import routes and use them
-const authRoutes = require('./routes/auth');
+// Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);  
+app.use('/api/categories', categoryRoutes);
+app.use("/api/staff", staffRoutes);
+app.use("/api/leaves", leaveRoutes);
 
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

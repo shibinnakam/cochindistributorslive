@@ -49,14 +49,17 @@ export default {
     token() {
       return this.$route.query.token || "";
     },
+    email() {
+      return this.$route.query.email || "";
+    },
   },
   methods: {
     async handleResetPassword() {
       this.message = "";
       this.error = "";
 
-      if (!this.token) {
-        this.error = "Invalid reset token.";
+      if (!this.token || !this.email) {
+        this.error = "Invalid or missing reset link details.";
         return;
       }
 
@@ -74,10 +77,10 @@ export default {
         this.loading = true;
         const res = await axios.post("/api/auth/reset-password", {
           token: this.token,
+          email: this.email,
           password: this.password,
         });
         this.message = res.data.message || "Password updated successfully.";
-        // optionally redirect to login after short delay
         setTimeout(() => {
           this.$router.push("/login");
         }, 1500);

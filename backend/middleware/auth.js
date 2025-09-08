@@ -1,27 +1,30 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Staff = require("../models/Staff");
 
 const authMiddleware = async (req, res, next) => {
   try {
-    // Get token from Authorization header (format: Bearer token)
     const authHeader = req.header("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ msg: "No token, authorization denied" });
     }
 
     const token = authHeader.replace("Bearer ", "");
-
-    // Verify token and decode payload
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Find user by decoded ID, exclude password
-    const user = await User.findById(decoded.id).select("-password");
-    if (!user) {
-      return res.status(401).json({ msg: "User not found" });
+    // Try to find user in User collection
+    let account = await User.findById(decoded.id).select("-password");
+
+    // If not found, try in Staff collection
+    if (!account) {
+      account = await Staff.findById(decoded.id).select("-password");
     }
 
-    // Attach user object to request for downstream handlers
-    req.user = user;
+    if (!account) {
+      return res.status(401).json({ msg: "Account not found" });
+    }
+
+    req.user = account;
     next();
   } catch (err) {
     console.error("Auth middleware error:", err);
@@ -29,7 +32,6 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-// Middleware to restrict routes to admin users only
 const adminMiddleware = (req, res, next) => {
   if (!req.user || req.user.role !== "admin") {
     return res.status(403).json({ msg: "Admin access required" });
