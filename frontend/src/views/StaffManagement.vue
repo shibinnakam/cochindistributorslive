@@ -1,17 +1,125 @@
 <template>
   <div class="staff-management">
-    <h2>Staff Management</h2>
+    <!-- Top Header -->
+    <div class="top-header">
+      <h1>COMPANY EMPLOYEES</h1>
+    </div>
 
-    <!-- Invite Form -->
-    <form @submit.prevent="inviteStaff" class="invite-form">
-      <input
-        v-model="email"
-        type="email"
-        placeholder="Enter staff email"
-        required
-      />
-      <button type="submit">Invite</button>
-    </form>
+    <!-- Metrics Cards -->
+    <div class="metrics-section">
+      <div class="metric-card">
+        <div class="metric-content">
+          <div class="metric-number">{{ stats.total }}</div>
+          <div class="metric-label">Total Employees</div>
+        </div>
+        <div class="metric-progress">
+          <div class="progress-bar" :style="{ width: '100%' }"></div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-content">
+          <div class="metric-number">{{ stats.pending }}</div>
+          <div class="metric-label">Pending Approvals</div>
+        </div>
+        <div class="metric-progress">
+          <div
+            class="progress-bar pending-bar"
+            :style="{ width: (stats.pending / stats.total) * 100 + '%' }"
+          ></div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-content">
+          <div class="metric-number">{{ stats.active }}</div>
+          <div class="metric-label">Active Employees</div>
+        </div>
+        <div class="metric-progress">
+          <div
+            class="progress-bar active-bar"
+            :style="{ width: (stats.active / stats.total) * 100 + '%' }"
+          ></div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-content">
+          <div class="metric-number">{{ stats.deactivated }}</div>
+          <div class="metric-label">Deactivated</div>
+        </div>
+        <div class="metric-progress">
+          <div
+            class="progress-bar deactivated-bar"
+            :style="{ width: (stats.deactivated / stats.total) * 100 + '%' }"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="chart-container">
+        <h3>Status Distribution</h3>
+        <canvas ref="statusChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h3>Department Distribution</h3>
+        <canvas ref="departmentChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Header Section -->
+    <div class="header-section">
+      <div class="header-controls">
+        <div class="search-filter">
+          <div class="search-box">
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search Employee"
+              class="search-input"
+            />
+            <i class="search-icon">🔍</i>
+          </div>
+          <select v-model="statusFilter" class="status-filter">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="deactivated">Deactivated</option>
+          </select>
+        </div>
+        <div class="action-buttons-header">
+          <button @click="showInviteForm = true" class="btn-add">
+            + Add Employees
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invite Modal -->
+    <div
+      v-if="showInviteForm"
+      class="modal-overlay"
+      @click="showInviteForm = false"
+    >
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>Invite Employee</h2>
+          <button class="modal-close" @click="showInviteForm = false">✕</button>
+        </div>
+        <form @submit.prevent="inviteStaff" class="invite-form-modal">
+          <input
+            v-model="email"
+            type="email"
+            placeholder="Enter staff email"
+            required
+          />
+          <button type="submit" class="btn-submit">Send Invitation</button>
+        </form>
+      </div>
+    </div>
 
     <!-- Toast Notification -->
     <div
@@ -21,74 +129,114 @@
       {{ toastMessage }}
     </div>
 
-    <!-- Staff List -->
-    <h3>Staff List</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Email</th>
-          <th>Name</th>
-          <th>Phone</th>
-          <th>Date of Joining</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="s in staff" :key="s._id">
-          <td>{{ s.email }}</td>
-          <td>{{ s.name || "—" }}</td>
-          <td>{{ s.phone || "—" }}</td>
-          <td>
-            {{
-              s.dateOfJoining
-                ? new Date(s.dateOfJoining).toLocaleDateString()
-                : "—"
-            }}
-          </td>
-          <td>{{ s.status }}</td>
-          <td class="action-buttons">
-            <button v-if="s.status === 'pending'" @click="approveStaff(s._id)">
-              Approve
-            </button>
-            <button
-              v-if="s.status === 'active'"
-              @click="setStatus(s._id, 'deactivated')"
-            >
-              Deactivate
-            </button>
-            <button
-              v-if="s.status === 'deactivated'"
-              @click="setStatus(s._id, 'active')"
-            >
-              Activate
-            </button>
-
-            <!-- PDF -->
-            <button @click="exportStaffPDF(s)">Download PDF</button>
-
-            <!-- Delete -->
-            <button @click="openDeleteModal(s._id)" class="delete-btn">
-              Delete
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- Export All -->
-    <button @click="exportAllStaffPDF" class="export-all">
-      Download All Staff Report
-    </button>
+    <!-- Staff Table -->
+    <div class="table-container">
+      <table class="staff-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Contact</th>
+            <th>Requests</th>
+            <th>Hire Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(s, index) in filteredStaff" :key="s._id">
+            <td class="id-cell">{{ index + 1 }}</td>
+            <td class="name-cell">
+              <div class="employee-info">
+                <div class="employee-avatar">
+                  {{ s.name ? s.name.charAt(0).toUpperCase() : "?" }}
+                </div>
+                <span class="employee-name">{{ s.name || "—" }}</span>
+              </div>
+            </td>
+            <td class="department-cell">{{ s.department || "—" }}</td>
+            <td class="contact-cell">
+              <div class="contact-info">
+                <div class="phone">{{ s.phone || "—" }}</div>
+                <div class="email">{{ s.email }}</div>
+              </div>
+            </td>
+            <td class="requests-cell">
+              <span v-if="s.status === 'pending'" class="badge pending">1</span>
+              <span v-else class="badge">0</span>
+            </td>
+            <td class="date-cell">
+              {{
+                s.dateOfJoining
+                  ? new Date(s.dateOfJoining).toLocaleDateString("en-CA")
+                  : "—"
+              }}
+            </td>
+            <td class="actions-cell">
+              <div class="action-menu">
+                <button
+                  @click="toggleMenu(s._id)"
+                  class="menu-trigger"
+                  title="More options"
+                >
+                  ⋮
+                </button>
+                <div v-if="activeMenu === s._id" class="dropdown-menu">
+                  <button
+                    v-if="s.status === 'pending'"
+                    @click="approveStaff(s._id)"
+                    class="menu-item approve"
+                  >
+                    ✓ Approve
+                  </button>
+                  <button
+                    v-if="s.status === 'active'"
+                    @click="setStatus(s._id, 'deactivated')"
+                    class="menu-item deactivate"
+                  >
+                    ⊘ Deactivate
+                  </button>
+                  <button
+                    v-if="s.status === 'deactivated'"
+                    @click="setStatus(s._id, 'active')"
+                    class="menu-item activate"
+                  >
+                    ✓ Activate
+                  </button>
+                  <button @click="exportStaffPDF(s)" class="menu-item download">
+                    📄 Download PDF
+                  </button>
+                  <button
+                    @click="openDeleteModal(s._id)"
+                    class="menu-item delete"
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-if="filteredStaff.length === 0" class="no-data">
+        No employees found
+      </div>
+    </div>
 
     <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteModal" class="modal-overlay">
-      <div class="modal">
-        <h3>Are you sure you want to permanently delete this staff?</h3>
-        <p>This action cannot be undone.</p>
-        <div class="modal-actions">
-          <button @click="confirmDelete" class="confirm-btn">Delete</button>
-          <button @click="cancelDelete" class="cancel-btn">Cancel</button>
+    <div v-if="showDeleteModal" class="modal-overlay" @click="cancelDelete">
+      <div class="modal-delete" @click.stop>
+        <div class="delete-icon">⚠️</div>
+        <h3>Delete Employee</h3>
+        <p>Are you sure you want to permanently delete this staff?</p>
+        <p class="warning">This action cannot be undone.</p>
+        <div class="modal-actions-delete">
+          <button @click="confirmDelete" class="btn-delete-confirm">
+            Delete
+          </button>
+          <button @click="cancelDelete" class="btn-delete-cancel">
+            Cancel
+          </button>
         </div>
       </div>
     </div>
@@ -99,17 +247,56 @@
 import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import Chart from "chart.js/auto";
 
 export default {
   data() {
     return {
       email: "",
       staff: [],
+      searchQuery: "",
+      statusFilter: "",
       toastMessage: "",
       toastError: false,
       showDeleteModal: false,
+      showInviteForm: false,
       deleteId: null,
+      activeMenu: null,
+      statusChartInstance: null,
+      departmentChartInstance: null,
     };
+  },
+  computed: {
+    filteredStaff() {
+      return this.staff.filter((s) => {
+        const matchesSearch =
+          !this.searchQuery ||
+          s.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          s.email?.toLowerCase().includes(this.searchQuery.toLowerCase());
+
+        const matchesStatus =
+          !this.statusFilter || s.status === this.statusFilter;
+
+        return matchesSearch && matchesStatus;
+      });
+    },
+    stats() {
+      return {
+        total: this.staff.length,
+        pending: this.staff.filter((s) => s.status === "pending").length,
+        active: this.staff.filter((s) => s.status === "active").length,
+        deactivated: this.staff.filter((s) => s.status === "deactivated")
+          .length,
+      };
+    },
+    departmentData() {
+      const departments = {};
+      this.staff.forEach((s) => {
+        const dept = s.department || "Unassigned";
+        departments[dept] = (departments[dept] || 0) + 1;
+      });
+      return departments;
+    },
   },
   methods: {
     async fetchStaff() {
@@ -185,6 +372,10 @@ export default {
       }
       this.showDeleteModal = false;
       this.deleteId = null;
+    },
+
+    toggleMenu(staffId) {
+      this.activeMenu = this.activeMenu === staffId ? null : staffId;
     },
 
     showToast(message, isError = false) {
@@ -324,138 +515,644 @@ export default {
 
       doc.save("staff-report.pdf");
     },
+    initStatusChart() {
+      if (this.statusChartInstance) {
+        this.statusChartInstance.destroy();
+      }
+      const ctx = this.$refs.statusChart;
+      if (!ctx) return;
+
+      this.statusChartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: ["Pending", "Active", "Deactivated"],
+          datasets: [
+            {
+              label: "Employee Count",
+              data: [
+                this.stats.pending,
+                this.stats.active,
+                this.stats.deactivated,
+              ],
+              borderColor: "#3b82f6",
+              backgroundColor: "rgba(59, 130, 246, 0.1)",
+              fill: true,
+              tension: 0.4,
+              borderWidth: 3,
+              pointRadius: 6,
+              pointBackgroundColor: "#3b82f6",
+              pointBorderColor: "#fff",
+              pointBorderWidth: 2,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              position: "top",
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1,
+              },
+            },
+          },
+        },
+      });
+    },
+    initDepartmentChart() {
+      if (this.departmentChartInstance) {
+        this.departmentChartInstance.destroy();
+      }
+      const ctx = this.$refs.departmentChart;
+      if (!ctx) return;
+
+      const deptNames = Object.keys(this.departmentData);
+      const deptCounts = Object.values(this.departmentData);
+
+      this.departmentChartInstance = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: deptNames,
+          datasets: [
+            {
+              data: deptCounts,
+              backgroundColor: [
+                "#3b82f6",
+                "#10b981",
+                "#f59e0b",
+                "#ef4444",
+                "#8b5cf6",
+                "#06b6d4",
+              ],
+              borderColor: "#fff",
+              borderWidth: 2,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              position: "bottom",
+            },
+          },
+        },
+      });
+    },
   },
   mounted() {
     this.fetchStaff();
+  },
+  watch: {
+    staff() {
+      this.$nextTick(() => {
+        this.initStatusChart();
+        this.initDepartmentChart();
+      });
+    },
   },
 };
 </script>
 
 <style scoped>
 .staff-management {
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #ffffff;
+  min-height: 100vh;
+}
+
+.top-header {
+  padding: 24px 32px;
+  background: white;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.metrics-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 24px 32px;
+  background: white;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.metric-card {
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
   padding: 20px;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.staff-management h2,
-.staff-management h3 {
-  margin-bottom: 15px;
-  color: #333;
-}
-
-/* Invite Form */
-.invite-form {
-  margin-bottom: 20px;
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.invite-form input {
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  flex: 1;
+.metric-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
-.invite-form button {
-  padding: 10px 16px;
-  background: linear-gradient(135deg, #3498db, #1e6bb8);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.25s ease-in-out;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-}
-.invite-form button:hover {
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-}
-
-/* Table Styling */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-thead {
-  background-color: #f7f7f7;
-}
-
-th,
-td {
-  text-align: left;
-  padding: 12px 14px;
-  border-bottom: 1px solid #eee;
-  font-size: 14px;
-}
-
-tr:nth-child(even) {
-  background-color: #fafafa;
-}
-
-.action-buttons {
+.metric-content {
   display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
-/* Action + PDF + Delete + Export All Buttons */
-.action-buttons button,
-.delete-btn,
-.export-all {
-  min-width: 110px;
-  height: 38px;
-  padding: 0 14px;
-  background: linear-gradient(135deg, #34495e, #2c3e50);
-  color: white;
+.metric-number {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.metric-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.metric-progress {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.progress-bar.pending-bar {
+  background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+}
+
+.progress-bar.active-bar {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.progress-bar.deactivated-bar {
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+}
+
+.charts-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 24px 32px;
+  background: white;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.chart-container {
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.chart-container h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.chart-container canvas {
+  display: block;
+  max-height: 250px;
+}
+
+.top-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.5px;
+}
+
+.header-section {
+  background: white;
+  padding: 20px 32px;
+  margin: 24px 32px 0 32px;
+  border-radius: 12px 12px 0 0;
+  border: 1px solid #e5e7eb;
+  border-bottom: none;
+}
+
+.table-container {
+  margin: 0 32px 32px 32px;
+}
+
+.table-container + .header-section {
+  border-radius: 0;
+  margin-top: 0;
+}
+
+.header-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.search-filter {
+  display: flex;
+  gap: 14px;
+  flex: 1;
+  min-width: 320px;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 16px 10px 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: white;
+  color: #1e293b;
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.05);
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  cursor: text;
+  font-size: 16px;
+}
+
+.status-filter {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.status-filter:hover {
+  border-color: #9ca3af;
+}
+
+.status-filter:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.05);
+}
+
+.action-buttons-header {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-add {
+  padding: 10px 24px;
   border: none;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: all 0.25s ease-in-out;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  background: #3b82f6;
+  color: white;
+  box-shadow: none;
 }
 
-.action-buttons button:hover,
-.delete-btn:hover,
-.export-all:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+.btn-add:hover {
+  background: #2563eb;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
-/* Delete button */
-.delete-btn {
-  min-width: 110px;
+.table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: visible;
+  border: 1px solid #e5e7eb;
+  margin: 0 32px 32px 32px;
+}
+
+.staff-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.staff-table thead {
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.staff-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.staff-table th {
+  padding: 16px 32px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.staff-table td {
+  padding: 18px 32px;
+  border-bottom: 1px solid #f3f4f6;
   font-size: 14px;
+  color: #1e293b;
+}
+
+.staff-table tbody tr {
+  transition: all 0.2s ease;
+  overflow: visible;
+}
+
+.staff-table tbody tr:hover {
+  background: #f9fafb;
+  box-shadow: inset 0 0 12px rgba(59, 130, 246, 0.04);
+}
+
+.staff-table td {
+  overflow: visible;
+}
+
+.id-cell {
+  font-weight: 600;
+  color: #475569;
+}
+
+.name-cell {
+  padding: 14px 16px;
+}
+
+.employee-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.employee-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  border: 2px solid white;
+}
+
+.employee-name {
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+.department-cell {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.contact-cell {
+  font-size: 13px;
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.phone {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.email {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.requests-cell {
+  text-align: center;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  background: #f3f4f6;
+  color: #6b7280;
+  border-radius: 50%;
+  font-size: 13px;
   font-weight: 600;
 }
 
-/* Toast Styling */
-.toast {
-  margin: 15px 0;
-  padding: 10px;
-  border-radius: 6px;
-  font-size: 14px;
-  color: white;
-}
-.toast.success {
-  background-color: #2ecc71;
-}
-.toast.error {
-  background-color: #e74c3c;
+.badge.pending {
+  background: #dcfce7;
+  color: #15803d;
 }
 
-/* --- Modal Styling --- */
+.date-cell {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.actions-cell {
+  text-align: center;
+  overflow: visible;
+  position: relative;
+}
+
+.action-menu {
+  position: relative;
+  display: inline-block;
+  z-index: 200;
+}
+
+.menu-trigger {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+}
+
+.menu-trigger:hover {
+  color: #475569;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  min-width: 160px;
+  z-index: 1001;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: 11px 14px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #374151;
+  font-weight: 500;
+}
+
+.menu-item:first-child {
+  border-radius: 9px 9px 0 0;
+}
+
+.menu-item:last-child {
+  border-radius: 0 0 9px 9px;
+}
+
+.menu-item:hover {
+  background: #f3f4f6;
+  padding-left: 16px;
+}
+
+.menu-item.approve {
+  color: #10b981;
+}
+
+.menu-item.approve:hover {
+  background: #ecfdf5;
+}
+
+.menu-item.deactivate {
+  color: #f59e0b;
+}
+
+.menu-item.deactivate:hover {
+  background: #fffbeb;
+}
+
+.menu-item.activate {
+  color: #10b981;
+}
+
+.menu-item.activate:hover {
+  background: #ecfdf5;
+}
+
+.menu-item.download {
+  color: #06b6d4;
+}
+
+.menu-item.download:hover {
+  background: #ecfdfd;
+}
+
+.menu-item.delete {
+  color: #ef4444;
+}
+
+.menu-item.delete:hover {
+  background: #fef2f2;
+}
+
+.no-data {
+  padding: 40px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideInRight 0.3s ease;
+  z-index: 2000;
+}
+
+.toast.success {
+  background: #10b981;
+  color: white;
+}
+
+.toast.error {
+  background: #ef4444;
+  color: white;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -467,46 +1164,262 @@ tr:nth-child(even) {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  animation: fadeIn 0.3s ease;
+  backdrop-filter: blur(2px);
 }
-.modal {
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
   background: white;
-  padding: 20px;
-  border-radius: 10px;
-  width: 400px;
-  max-width: 90%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  text-align: center;
+  border-radius: 14px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
+  width: 90%;
+  animation: slideUp 0.3s ease;
+  border: 1px solid #f0f1f3;
 }
-.modal h3 {
-  font-size: 16px;
-  margin-bottom: 10px;
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
-.modal p {
-  font-size: 14px;
-  margin-bottom: 20px;
-  color: #666;
-}
-.modal-actions {
+
+.modal-header {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f0f1f3;
+  background: white;
 }
-.confirm-btn {
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #d10000ff, #b20707ff);
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  color: #1e293b;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+}
+
+.invite-form-modal {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.invite-form-modal input {
+  padding: 11px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: white;
+  color: #1e293b;
+}
+
+.invite-form-modal input::placeholder {
+  color: #94a3b8;
+}
+
+.invite-form-modal input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
+  background: #f9fafb;
+}
+
+.btn-submit {
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  border-radius: 9px;
+  font-size: 14px;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
-.cancel-btn {
-  padding: 8px 16px;
-  background: #eee;
-  color: #333;
+
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.modal-delete {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  width: 90%;
+  padding: 36px;
+  text-align: center;
+  animation: slideUp 0.3s ease;
+  border: 1px solid #f0f1f3;
+}
+
+.delete-icon {
+  font-size: 56px;
+  margin-bottom: 18px;
+  display: inline-block;
+}
+
+.modal-delete h3 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modal-delete p {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  color: #475569;
+}
+
+.modal-delete p.warning {
+  color: #dc2626;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.modal-actions-delete {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+}
+
+.btn-delete-confirm {
+  padding: 11px 28px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 9px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
+}
+
+.btn-delete-confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+}
+
+.btn-delete-cancel {
+  padding: 11px 28px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 9px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.btn-delete-cancel:hover {
+  background: #e5e7eb;
+  border-color: #d1d5db;
+}
+
+@media (max-width: 768px) {
+  .top-header {
+    padding: 16px 20px;
+  }
+
+  .metrics-section {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 16px 20px;
+  }
+
+  .metric-card {
+    padding: 16px;
+  }
+
+  .metric-number {
+    font-size: 24px;
+  }
+
+  .chart-container canvas {
+    max-height: 200px;
+  }
+
+  .charts-section {
+    grid-template-columns: 1fr;
+    padding: 16px 20px;
+    gap: 12px;
+  }
+
+  .header-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-filter {
+    flex-direction: column;
+    min-width: unset;
+  }
+
+  .action-buttons-header {
+    flex-direction: column;
+  }
+
+  .btn-add,
+  .btn-import {
+    width: 100%;
+    text-align: center;
+  }
+
+  .staff-table th,
+  .staff-table td {
+    padding: 12px 16px;
+    font-size: 12px;
+  }
+
+  .employee-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+  }
+
+  .dropdown-menu {
+    min-width: 140px;
+  }
 }
 </style>

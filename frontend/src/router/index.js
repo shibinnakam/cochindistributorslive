@@ -86,6 +86,17 @@ const routes = [
       else next("/login");
     },
   },
+  // Admin staff management page
+  {
+    path: "/admin/staff-management",
+    name: "AdminStaffManagement",
+    component: () => import("@/views/StaffManagement.vue"),
+    beforeEnter: (to, from, next) => {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (user?.role === "admin") next();
+      else next("/login");
+    },
+  },
   // Admin leave management page
   {
     path: "/admin/leaves",

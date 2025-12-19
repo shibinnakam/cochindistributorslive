@@ -23,10 +23,52 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'staff', 'user'],
     default: 'user', // default role for self-registered users
   },
+
+  // New fields
+  name: {
+    type: String,
+    required: false,
+  },
+  phone: {
+    type: String,
+    required: false,
+  },
+  pincode: {
+    type: String,
+    required: false,
+  },
+  storeName: {
+    type: String,
+    required: false,
+  },
+  storeAddress: {
+    type: String,
+    required: false,
+  },
+  landmark: {
+    type: String,
+  },
+
+  // Status fields
+  isActive: {
+    type: Boolean,
+    default: true,   // user not active until admin activates
+  },
+  isBlocked: {
+    type: Boolean,
+    default: false,
+  },
+  verificationStatus: {
+    type: String,
+    enum: ['pending', 'verified', 'not_verified'],
+    default: 'pending',  // initially pending
+  },
+
   resetPasswordToken: String,
   resetPasswordExpires: Date,
 }, {
-  collection: 'users'
+  collection: 'users',
+  timestamps: true, // adds createdAt & updatedAt
 });
 
 module.exports = mongoose.model('User', userSchema);

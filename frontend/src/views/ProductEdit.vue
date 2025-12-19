@@ -1,59 +1,79 @@
 <template>
-  <div class="edit-wrapper">
+  <div class="form-wrapper">
     <div class="form-card">
-      <h2>Edit Product</h2>
-
-      <form @submit.prevent="updateProduct" enctype="multipart/form-data">
-        <!-- Name -->
+      <h2 class="form-title">Edit Product</h2>
+      <form
+        @submit.prevent="updateProduct"
+        enctype="multipart/form-data"
+        class="form-grid"
+      >
+        <!-- Row 1: Name & Quantity -->
         <div class="form-group">
-          <label>Name</label>
-          <input v-model="form.name" type="text" />
+          <input v-model="form.name" type="text" placeholder="Item Name" />
+        </div>
+        <div class="form-group">
+          <input
+            v-model.number="form.quantity"
+            type="number"
+            min="0"
+            placeholder="Quantity"
+          />
         </div>
 
-        <!-- Description -->
+        <!-- Row 2: Original Price & Discount Price -->
         <div class="form-group">
-          <label>Description</label>
-          <textarea v-model="form.description"></textarea>
+          <input
+            v-model.number="form.originalPrice"
+            type="number"
+            placeholder="Original Price"
+          />
+        </div>
+        <div class="form-group">
+          <input
+            v-model.number="form.discountPrice"
+            type="number"
+            placeholder="Discount Price"
+          />
         </div>
 
-        <!-- Original Price -->
-        <div class="form-group">
-          <label>Original Price</label>
-          <input v-model.number="form.originalPrice" type="number" />
+        <!-- Row 3: Description (Full Width) -->
+        <div class="form-group full-width">
+          <textarea
+            v-model="form.description"
+            placeholder="Description (4-20 chars)"
+          ></textarea>
         </div>
 
-        <!-- Discount Price -->
-        <div class="form-group">
-          <label>Discount Price</label>
-          <input v-model.number="form.discountPrice" type="number" />
+        <!-- Row 4: File Upload -->
+        <div class="form-group full-width">
+          <input
+            id="image"
+            type="file"
+            @change="handleFileUpload"
+            accept="image/*"
+          />
         </div>
 
-        <!-- Quantity -->
-        <div class="form-group">
-          <label>Quantity</label>
-          <input v-model.number="form.quantity" type="number" />
+        <!-- Current Image Preview -->
+        <div v-if="form.image && !imageFile" class="image-preview-container">
+          <img
+            :src="getImageUrl(form.image)"
+            alt="Current Product"
+            class="image-preview"
+          />
         </div>
 
-        <!-- Image -->
-        <div class="form-group">
-          <label>Product Image</label>
-
-          <!-- Show existing image if available -->
-          <div v-if="form.image && !imageFile" class="image-preview">
-            <img
-              :src="`http://localhost:5000${form.image}`"
-              alt="Current Product"
-            />
-          </div>
-
-          <!-- Upload new image -->
-          <input type="file" @change="handleFileUpload" />
+        <!-- New Image Preview -->
+        <div v-if="newImagePreview" class="image-preview-container">
+          <img :src="newImagePreview" alt="New Preview" class="image-preview" />
         </div>
 
-        <button type="submit" class="btn-submit">Update Product</button>
-        <button type="button" class="btn-back" @click="$router.push('/admin')">
-          Back
-        </button>
+        <!-- Row 5: Submit Button (Full Width) -->
+        <div class="form-group full-width button-group">
+          <button type="submit" :disabled="loading" class="btn-submit">
+            {{ loading ? "Updating..." : "Update Product" }}
+          </button>
+        </div>
       </form>
     </div>
   </div>
@@ -64,6 +84,12 @@ import axios from "axios";
 
 export default {
   name: "ProductEdit",
+  props: {
+    productId: {
+      type: String,
+      required: true,
+    },
+  },
   data() {
     return {
       form: {
@@ -72,20 +98,24 @@ export default {
         originalPrice: null,
         discountPrice: null,
         quantity: null,
-        image: "", // keep old image
+        image: "",
       },
       imageFile: null,
+      newImagePreview: null,
+      loading: false,
     };
   },
   async mounted() {
     await this.fetchProduct();
   },
   methods: {
+    getImageUrl(path) {
+      return path.startsWith("/") ? `http://localhost:5000${path}` : path;
+    },
     async fetchProduct() {
-      const id = this.$route.params.id;
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/products/getproduct/${id}`
+          `http://localhost:5000/api/products/getproduct/${this.productId}`
         );
         if (res.data.success) {
           const product = res.data.product;
@@ -107,13 +137,19 @@ export default {
     },
     handleFileUpload(e) {
       this.imageFile = e.target.files[0];
+      if (this.imageFile) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          this.newImagePreview = event.target.result;
+        };
+        reader.readAsDataURL(this.imageFile);
+      }
     },
     async updateProduct() {
-      const id = this.$route.params.id;
+      this.loading = true;
       try {
         const formData = new FormData();
 
-        // ✅ Append only filled values
         Object.keys(this.form).forEach((key) => {
           if (this.form[key] !== null && this.form[key] !== "") {
             if (key !== "image") {
@@ -122,24 +158,23 @@ export default {
           }
         });
 
-        // ✅ New image if chosen
         if (this.imageFile) {
           formData.append("image", this.imageFile);
         }
 
         const res = await axios.put(
-          `http://localhost:5000/api/products/updateproduct/${id}`,
+          `http://localhost:5000/api/products/updateproduct/${this.productId}`,
           formData,
           { headers: { "Content-Type": "multipart/form-data" } }
         );
 
         if (res.data.success) {
-          alert("✅ Product updated successfully!");
-          this.$router.push("/admin");
+          this.$emit("updated");
         }
       } catch (err) {
-        alert("❌ Error updating product");
         console.error(err.response?.data || err.message);
+      } finally {
+        this.loading = false;
       }
     },
   },
@@ -147,92 +182,114 @@ export default {
 </script>
 
 <style scoped>
-.edit-wrapper {
+.form-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 30px;
+  min-height: 80vh;
 }
 
 .form-card {
   background: #fff;
-  padding: 25px 30px;
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-  width: 450px;
-}
-.btn-back {
+  padding: 20px;
   width: 100%;
-  padding: 12px;
-  border: none;
-  background: #6c757d;
-  color: #fff;
-  font-weight: bold;
-  font-size: 15px;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-top: 10px;
-  transition: 0.3s;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.btn-back:hover {
-  background: #5a6268;
-}
-
-h2 {
+.form-title {
   text-align: center;
-  margin-bottom: 20px;
-  color: #333;
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 .form-group {
-  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
 }
 
-label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 6px;
-  color: #444;
+.form-group.full-width {
+  grid-column: 1 / -1;
 }
 
-input,
-textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
+.form-group label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 4px;
 }
 
-textarea {
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-group textarea {
   resize: none;
+  height: 70px;
   min-height: 70px;
 }
 
-.image-preview {
-  margin-bottom: 10px;
-}
-.image-preview img {
-  max-width: 120px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-}
-
 .btn-submit {
-  width: 100%;
-  padding: 12px;
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  color: white;
+  font-weight: 600;
   border: none;
-  background: #007bff;
-  color: #fff;
-  font-weight: bold;
-  font-size: 15px;
-  border-radius: 8px;
   cursor: pointer;
-  transition: 0.3s;
+  padding: 10px 16px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  width: 100%;
 }
 
-.btn-submit:hover {
-  background: #0056b3;
+.btn-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.image-preview-container {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.image-preview {
+  max-width: 120px;
+  max-height: 120px;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  object-fit: contain;
+}
+
+.button-group {
+  margin-top: 8px;
 }
 </style>

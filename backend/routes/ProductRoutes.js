@@ -37,14 +37,29 @@ const upload = multer({
 // ✅ Add Product
 router.post("/addproduct", upload.single("image"), async (req, res) => {
   try {
-    const { name, description, originalPrice, discountPrice, category, quantity } = req.body;
+    const { 
+      name, 
+      description, 
+      originalPrice, 
+      discountPrice, 
+      category, 
+      quantity,
+      manufacturingDate,
+      expiryDate,
+      batchNumber,
+      rackNumber
+    } = req.body;
 
-    // ---- VALIDATION ----
-    if (!name || !description || !originalPrice || !discountPrice || !category || quantity === undefined) {
+    // ---- BASIC VALIDATION ----
+    if (
+      !name || !description || !originalPrice || !discountPrice ||
+      !category || quantity === undefined || !manufacturingDate ||
+      !expiryDate || !batchNumber || !rackNumber
+    ) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Name validation (4–15 chars, only letters/numbers/spaces)
+    // ✅ Name validation (4–15 chars, only letters/numbers/spaces)
     const nameRegex = /^[A-Za-z0-9 ]{4,15}$/;
     if (!nameRegex.test(name)) {
       return res.status(400).json({
@@ -52,7 +67,7 @@ router.post("/addproduct", upload.single("image"), async (req, res) => {
       });
     }
 
-    // Description validation (4–20 chars, only letters/numbers/spaces)
+    // ✅ Description validation (4–20 chars, only letters/numbers/spaces)
     const descRegex = /^[A-Za-z0-9 ]{4,20}$/;
     if (!descRegex.test(description)) {
       return res.status(400).json({
@@ -60,7 +75,7 @@ router.post("/addproduct", upload.single("image"), async (req, res) => {
       });
     }
 
-    // Price validation
+    // ✅ Price validation
     const original = Number(originalPrice);
     const discount = Number(discountPrice);
 
@@ -74,14 +89,13 @@ router.post("/addproduct", upload.single("image"), async (req, res) => {
       });
     }
 
-    // ✅ Discount should not be greater than original
     if (discount > original) {
       return res.status(400).json({
         message: "Discount price cannot be greater than original price"
       });
     }
 
-    // Quantity validation
+    // ✅ Quantity validation
     const qty = Number(quantity);
     if (isNaN(qty) || qty < 0) {
       return res.status(400).json({
@@ -89,26 +103,63 @@ router.post("/addproduct", upload.single("image"), async (req, res) => {
       });
     }
 
-    // Category validation
+    // ✅ Rack number validation (1–155)
+    const rack = Number(rackNumber);
+    if (isNaN(rack) || rack < 1 || rack > 155) {
+      return res.status(400).json({
+        message: "Rack number must be a number between 1 and 155"
+      });
+    }
+
+    // ✅ Dates validation
+    const mfgDate = new Date(manufacturingDate);
+    const expDate = new Date(expiryDate);
+
+    if (isNaN(mfgDate.getTime()) || isNaN(expDate.getTime())) {
+      return res.status(400).json({ message: "Invalid manufacturing or expiry date" });
+    }
+
+    if (mfgDate.getTime() === expDate.getTime()) {
+      return res.status(400).json({ message: "Manufacturing date and expiry date cannot be the same" });
+    }
+
+    // Expiry must be at least 10 days after manufacturing
+    const diffDays = (expDate - mfgDate) / (1000 * 60 * 60 * 24);
+    if (diffDays < 10) {
+      return res.status(400).json({ message: "Expiry date must be at least 10 days after manufacturing date" });
+    }
+
+    // ✅ Batch Number validation (India formats)
+    const batchRegex = /^([0-9]{3,10}|[0-9]{6}[A-Z]?|[A-Z]{1,2}[0-9]{4,6}[A-Z0-9]?|L[0-9]{2}[A-Z][0-9]{2})$/;
+    if (!batchRegex.test(batchNumber)) {
+      return res.status(400).json({
+        message: "Invalid batch number format"
+      });
+    }
+
+    // ✅ Category validation
     const categoryExists = await Category.findById(category);
     if (!categoryExists) {
       return res.status(400).json({ message: "Invalid category selected" });
     }
 
-    // Image validation
+    // ✅ Image validation
     if (!req.file) {
       return res.status(400).json({ message: "Image is required" });
     }
 
-    // ✅ Check if same product with same name + originalPrice already exists
+    // ✅ Duplicate check: same name, price, mfg date, expiry date, batch number
     const existingProduct = await Product.findOne({
       name: name.trim(),
-      originalPrice: original
+      originalPrice: original,
+      manufacturingDate: mfgDate,
+      expiryDate: expDate,
+      batchNumber: batchNumber.trim()
     });
 
     if (existingProduct) {
       return res.status(400).json({
-        message: `Product "${name}" with price ${original} already exists`
+        message: "Product already uploaded. You can edit it instead."
       });
     }
 
@@ -120,7 +171,12 @@ router.post("/addproduct", upload.single("image"), async (req, res) => {
       discountPrice: discount,
       image: `/uploads/${req.file.filename}`,
       category,
-      quantity: qty
+      quantity: qty,
+      manufacturingDate: mfgDate,
+      expiryDate: expDate,
+      batchNumber: batchNumber.trim(),
+      rackNumber: rack,
+      isDeleted: false // default
     });
 
     await product.save();
@@ -129,6 +185,8 @@ router.post("/addproduct", upload.single("image"), async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+
 
 
 // ✅ Get All Products (with category details)
