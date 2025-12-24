@@ -1,7 +1,9 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const Jimp = require("jimp");
 const Product = require("../models/Product");
 const Category = require("../models/Category");
 
@@ -20,22 +22,50 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
-
-  if (mimetype && extname) cb(null, true);
-  else cb(new Error("Only image files are allowed"));
+  const allowedImageTypes = /jpeg|jpg|png|gif/;
+  const allowedModelTypes = /glb|gltf/;
+  
+  const extname = path.extname(file.originalname).toLowerCase();
+  
+  if (['image', 'imageFront', 'imageSide', 'imageBack', 'imageTop', 'imageBottom'].includes(file.fieldname)) {
+    const isExtValid = allowedImageTypes.test(extname);
+    const isMimeValid = file.mimetype.startsWith('image/');
+    
+    if (isExtValid && isMimeValid) {
+      return cb(null, true);
+    } else {
+      return cb(new Error("Only image files (jpeg, jpg, png, gif) are allowed for product images"));
+    }
+  } else if (file.fieldname === 'model3D') {
+    const isExtValid = allowedModelTypes.test(extname);
+    const isModel = file.originalname.match(/\.(glb|gltf)$/i);
+    
+    if (isExtValid || isModel) {
+      return cb(null, true);
+    } else {
+      return cb(new Error("Only 3D model files (glb, gltf) are allowed for the 3D model field"));
+    }
+  }
+  
+  cb(new Error("Unexpected field"));
 };
 
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  limits: { fileSize: 10 * 1024 * 1024 }, // Increased limit to 10MB for 3D models
 });
 
 // ✅ Add Product
-router.post("/addproduct", upload.single("image"), async (req, res) => {
+router.post("/addproduct", upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'imageFront', maxCount: 1 },
+  { name: 'imageSide', maxCount: 1 },
+  { name: 'imageBack', maxCount: 1 },
+  { name: 'imageTop', maxCount: 1 },
+  { name: 'imageBottom', maxCount: 1 },
+  { name: 'model3D', maxCount: 1 }
+]), async (req, res) => {
   try {
     const { 
       name, 
@@ -47,7 +77,8 @@ router.post("/addproduct", upload.single("image"), async (req, res) => {
       manufacturingDate,
       expiryDate,
       batchNumber,
-      rackNumber
+      rackNumber,
+      shape
     } = req.body;
 
     // ---- BASIC VALIDATION ----
@@ -138,14 +169,28 @@ router.post("/addproduct", upload.single("image"), async (req, res) => {
     }
 
     // ✅ Category validation
+    if (!mongoose.Types.ObjectId.isValid(category)) {
+      return res.status(400).json({ message: "Invalid category ID format" });
+    }
     const categoryExists = await Category.findById(category);
     if (!categoryExists) {
       return res.status(400).json({ message: "Invalid category selected" });
     }
 
-    // ✅ Image validation
-    if (!req.file) {
-      return res.status(400).json({ message: "Image is required" });
+    // ✅ Image validation - require front & back (side optional) OR single image for backward compatibility
+    const hasFrontImage = req.files && req.files.imageFront;
+    const hasSideImage = req.files && req.files.imageSide;
+    const hasBackImage = req.files && req.files.imageBack;
+    const hasSingleImage = req.files && req.files.image;
+
+    // If new format (front+back), both front and back must be provided (side is optional)
+    if ((hasFrontImage || hasBackImage) && (!hasFrontImage || !hasBackImage)) {
+      return res.status(400).json({ message: "Front and Back images are required for 3D visualization" });
+    }
+
+    // At least one format must be provided
+    if (!hasFrontImage && !hasBackImage && !hasSingleImage) {
+      return res.status(400).json({ message: "Image is required (either single image or front+back images for 3D)" });
     }
 
     // ✅ Duplicate check: same name, price, mfg date, expiry date, batch number
@@ -169,13 +214,20 @@ router.post("/addproduct", upload.single("image"), async (req, res) => {
       description: description.trim(),
       originalPrice: original,
       discountPrice: discount,
-      image: `/uploads/${req.file.filename}`,
+      image: hasSingleImage ? `/uploads/${req.files.image[0].filename}` : undefined,
+      imageFront: hasFrontImage ? `/uploads/${req.files.imageFront[0].filename}` : undefined,
+      imageSide: hasSideImage ? `/uploads/${req.files.imageSide[0].filename}` : undefined,
+      imageBack: hasBackImage ? `/uploads/${req.files.imageBack[0].filename}` : undefined,
+      imageTop: req.files.imageTop ? `/uploads/${req.files.imageTop[0].filename}` : undefined,
+      imageBottom: req.files.imageBottom ? `/uploads/${req.files.imageBottom[0].filename}` : undefined,
+      model3D: req.files.model3D ? `/uploads/${req.files.model3D[0].filename}` : undefined,
       category,
       quantity: qty,
       manufacturingDate: mfgDate,
       expiryDate: expDate,
       batchNumber: batchNumber.trim(),
       rackNumber: rack,
+      shape: shape || 'box',
       isDeleted: false // default
     });
 
@@ -219,10 +271,41 @@ router.delete("/deleteproduct/:id", async (req, res) => {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    // Delete image file
+    // Delete image files (both legacy and new format)
     if (product.image) {
       const imagePath = path.join(__dirname, "..", product.image.replace(/^\/+/, ""));
       if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+    }
+
+    if (product.imageFront) {
+      const imagePath = path.join(__dirname, "..", product.imageFront.replace(/^\/+/, ""));
+      if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+    }
+
+    if (product.imageSide) {
+      const imagePath = path.join(__dirname, "..", product.imageSide.replace(/^\/+/, ""));
+      if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+    }
+
+    if (product.imageBack) {
+      const imagePath = path.join(__dirname, "..", product.imageBack.replace(/^\/+/, ""));
+      if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+    }
+
+    if (product.imageTop) {
+      const imagePath = path.join(__dirname, "..", product.imageTop.replace(/^\/+/, ""));
+      if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+    }
+
+    if (product.imageBottom) {
+      const imagePath = path.join(__dirname, "..", product.imageBottom.replace(/^\/+/, ""));
+      if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+    }
+
+    // Delete 3D model file
+    if (product.model3D) {
+      const modelPath = path.join(__dirname, "..", product.model3D.replace(/^\/+/, ""));
+      if (fs.existsSync(modelPath)) fs.unlinkSync(modelPath);
     }
 
     res.status(200).json({ success: true, message: "Product deleted successfully" });
@@ -231,9 +314,17 @@ router.delete("/deleteproduct/:id", async (req, res) => {
   }
 });
 // ✅ Update Product by ID
-router.put("/updateproduct/:id", upload.single("image"), async (req, res) => {
+router.put("/updateproduct/:id", upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'imageFront', maxCount: 1 },
+  { name: 'imageSide', maxCount: 1 },
+  { name: 'imageBack', maxCount: 1 },
+  { name: 'imageTop', maxCount: 1 },
+  { name: 'imageBottom', maxCount: 1 },
+  { name: 'model3D', maxCount: 1 }
+]), async (req, res) => {
   try {
-    const { name, description, originalPrice, discountPrice, category, quantity } = req.body;
+    const { name, description, originalPrice, discountPrice, category, quantity, shape } = req.body;
 
     // Find product
     const product = await Product.findById(req.params.id);
@@ -246,20 +337,158 @@ router.put("/updateproduct/:id", upload.single("image"), async (req, res) => {
     if (discountPrice) product.discountPrice = Number(discountPrice);
     if (category) product.category = category;
     if (quantity !== undefined) product.quantity = Number(quantity);
+    if (shape) product.shape = shape;
 
-    // ✅ If new image uploaded, replace old one
-    if (req.file) {
-      // delete old image
+    // ✅ If new single image uploaded, replace old one
+    if (req.files && req.files.image) {
       if (product.image) {
         const oldImagePath = path.join(__dirname, "..", product.image.replace(/^\/+/, ""));
         if (fs.existsSync(oldImagePath)) fs.unlinkSync(oldImagePath);
       }
-      product.image = `/uploads/${req.file.filename}`;
+      product.image = `/uploads/${req.files.image[0].filename}`;
+    }
+
+    // ✅ If new 3-image set uploaded, replace old ones
+    if (req.files && req.files.imageFront) {
+      if (product.imageFront) {
+        const oldPath = path.join(__dirname, "..", product.imageFront.replace(/^\/+/, ""));
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+      product.imageFront = `/uploads/${req.files.imageFront[0].filename}`;
+    }
+
+    if (req.files && req.files.imageSide) {
+      if (product.imageSide) {
+        const oldPath = path.join(__dirname, "..", product.imageSide.replace(/^\/+/, ""));
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+      product.imageSide = `/uploads/${req.files.imageSide[0].filename}`;
+    }
+
+    if (req.files && req.files.imageBack) {
+      if (product.imageBack) {
+        const oldPath = path.join(__dirname, "..", product.imageBack.replace(/^\/+/, ""));
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+      product.imageBack = `/uploads/${req.files.imageBack[0].filename}`;
+    }
+
+    if (req.files && req.files.imageTop) {
+      if (product.imageTop) {
+        const oldPath = path.join(__dirname, "..", product.imageTop.replace(/^\/+/, ""));
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+      product.imageTop = `/uploads/${req.files.imageTop[0].filename}`;
+    }
+
+    if (req.files && req.files.imageBottom) {
+      if (product.imageBottom) {
+        const oldPath = path.join(__dirname, "..", product.imageBottom.replace(/^\/+/, ""));
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+      product.imageBottom = `/uploads/${req.files.imageBottom[0].filename}`;
+    }
+
+    // ✅ If new 3D model uploaded, replace old one
+    if (req.files && req.files.model3D) {
+      if (product.model3D) {
+        const oldModelPath = path.join(__dirname, "..", product.model3D.replace(/^\/+/, ""));
+        if (fs.existsSync(oldModelPath)) fs.unlinkSync(oldModelPath);
+      }
+      product.model3D = `/uploads/${req.files.model3D[0].filename}`;
     }
 
     await product.save();
     res.status(200).json({ success: true, message: "Product updated successfully", product });
   } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ✅ Search Products by Image
+router.post("/search-image", upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Please upload an image" });
+    }
+
+    const uploadedImagePath = req.file.path;
+    let uploadedImage;
+    try {
+        // Check if file is webp, if so, reject or handle differently (Jimp doesn't support webp by default)
+        if (req.file.mimetype === 'image/webp') {
+             if (fs.existsSync(uploadedImagePath)) fs.unlinkSync(uploadedImagePath);
+             return res.status(400).json({ message: "WebP images are not supported for search. Please use JPG, JPEG, or PNG." });
+        }
+
+        uploadedImage = await Jimp.read(uploadedImagePath);
+    } catch (error) {
+        console.error("Error reading uploaded image:", error);
+        if (fs.existsSync(uploadedImagePath)) fs.unlinkSync(uploadedImagePath);
+        return res.status(400).json({ message: "Invalid image file or unsupported format" });
+    }
+    
+    uploadedImage.resize({ w: 64, h: 64 });
+    uploadedImage.greyscale();
+
+    const products = await Product.find();
+    const results = [];
+
+    for (const product of products) {
+      const productImageUrl = product.image || product.imageFront;
+      if (!productImageUrl) continue;
+
+      // Handle both absolute and relative paths correctly
+      let productImagePath;
+      if (path.isAbsolute(productImageUrl)) {
+          productImagePath = productImageUrl;
+      } else {
+          productImagePath = path.join(__dirname, "..", productImageUrl.replace(/^\//, ''));
+      }
+
+      if (fs.existsSync(productImagePath)) {
+        try {
+          const productImage = await Jimp.read(productImagePath);
+          productImage.resize({ w: 64, h: 64 });
+          productImage.greyscale();
+
+          const dist = Jimp.distance(uploadedImage, productImage);
+          const diffResult = Jimp.diff(uploadedImage, productImage);
+
+          const score = dist + diffResult.percent;
+
+          // If score is very low, it's likely the same product
+          if (score < 0.5) {
+             results.push({ product, score });
+          }
+        } catch (e) {
+          console.error(`Error comparing image for product ${product._id}:`, e);
+        }
+      }
+    }
+
+    results.sort((a, b) => a.score - b.score);
+
+    fs.unlinkSync(uploadedImagePath);
+
+    // Logic: If exact match found (score < 0.15), return only that. Otherwise return similar products.
+    const exactMatchThreshold = 0.15;
+    const exactMatches = results.filter(r => r.score < exactMatchThreshold);
+
+    let finalProducts;
+    if (exactMatches.length > 0) {
+        finalProducts = exactMatches.map(r => r.product);
+    } else {
+        finalProducts = results.map(r => r.product);
+    }
+
+    res.status(200).json({ success: true, products: finalProducts });
+
+  } catch (err) {
+    console.error("Search image error:", err);
+    if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+    }
     res.status(500).json({ success: false, error: err.message });
   }
 });

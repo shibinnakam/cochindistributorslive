@@ -136,6 +136,22 @@
           }}</span>
         </li>
 
+        <li
+          :class="{ active: currentTab === 'resignation' }"
+          @click="currentTab = 'resignation'"
+        >
+          <svg
+            class="sidebar-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M15 3h6v18h-6M10 17l5-5-5-5M13.8 12H3" />
+          </svg>
+          <span class="sidebar-text">Resignation</span>
+        </li>
+
         <li @click="logout">
           <svg
             class="sidebar-icon"
@@ -405,6 +421,76 @@
         </table>
       </div>
 
+      <!-- Resignation Tab -->
+      <div v-if="currentTab === 'resignation'" class="resignation-tab">
+        <h2>Resignation Request</h2>
+        <div class="resignation-content">
+          <div
+            v-if="staff.resignationStatus === 'pending'"
+            class="status-box pending"
+          >
+            <h3>Request Pending</h3>
+            <p>
+              Your resignation request is currently being reviewed by the admin.
+            </p>
+            <p>
+              Submitted on:
+              {{
+                staff.resignationDate ? formatDate(staff.resignationDate) : "—"
+              }}
+            </p>
+          </div>
+
+          <div
+            v-else-if="staff.resignationStatus === 'approved'"
+            class="status-box approved"
+          >
+            <h3>Resignation Approved</h3>
+            <p>Your resignation has been accepted.</p>
+            <p>
+              <strong>Last Working Day:</strong>
+              {{
+                staff.lastWorkingDay ? formatDate(staff.lastWorkingDay) : "—"
+              }}
+            </p>
+            <button @click="downloadExperienceCertificate" class="btn-download">
+              📄 Download Experience Certificate
+            </button>
+          </div>
+
+          <div
+            v-else-if="staff.resignationStatus === 'rejected'"
+            class="status-box rejected"
+          >
+            <h3>Request Rejected</h3>
+            <p>Your resignation request was rejected.</p>
+            <button @click="staff.resignationStatus = 'none'" class="btn-retry">
+              Apply Again
+            </button>
+          </div>
+
+          <div v-else class="apply-box">
+            <p>
+              If you wish to resign, please provide a reason below and submit
+              your request.
+            </p>
+            <textarea
+              v-model="resignationReason"
+              placeholder="Reason for resignation..."
+              class="reason-input"
+              rows="4"
+            ></textarea>
+            <button
+              @click="submitResignation"
+              class="btn-submit-resignation"
+              :disabled="!resignationReason"
+            >
+              Submit Resignation
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Chat Tab -->
       <div v-if="currentTab === 'chat'" class="chat-tab">
         <ChatWindow />
@@ -417,6 +503,8 @@
 import axios from "axios";
 import StaffLeave from "./StaffLeave.vue";
 import ChatWindow from "./ChatWindow.vue";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default {
   components: { StaffLeave, ChatWindow },
@@ -432,7 +520,10 @@ export default {
         address: "",
         pincode: "",
         profilePhoto: "",
+        resignationStatus: "none",
+        lastWorkingDay: null,
       },
+      resignationReason: "",
       stats: {
         totalItems: 0,
         leavesTaken: 0,
@@ -587,6 +678,88 @@ export default {
       } catch (err) {
         console.error("Error fetching unread messages:", err);
       }
+    },
+    async submitResignation() {
+      try {
+        const token = localStorage.getItem("token");
+        await axios.post(
+          `${this.apiBase}/api/staff/resign`,
+          { reason: this.resignationReason },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        this.staff.resignationStatus = "pending";
+        this.staff.resignationDate = new Date();
+        this.message = "Resignation submitted successfully";
+        setTimeout(() => (this.message = ""), 3000);
+      } catch (err) {
+        this.message =
+          err.response?.data?.message || "Error submitting resignation";
+      }
+    },
+    downloadExperienceCertificate() {
+      const doc = new jsPDF();
+      const logo = new Image();
+      logo.src = require("@/assets/logo.jpeg");
+      doc.addImage(logo, "JPEG", 34, 13, 30, 25);
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("COCHIN DISTRIBUTORS", 75, 18);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      doc.text("Merchant Association Building,", 82, 26);
+      doc.text("Santhi Nagar, Kattappana", 87, 32);
+      doc.text("Ph: 9447419293, 9446074962", 83, 38);
+      doc.setDrawColor(0);
+      doc.line(14, 45, 200, 45);
+
+      doc.setFontSize(22);
+      doc.setFont("helvetica", "bold");
+      doc.text("Experience Certificate", 105, 60, null, null, "center");
+
+      autoTable(doc, {
+        startY: 70,
+        theme: "grid",
+        body: [
+          ["Employee Name", this.staff.name],
+          [
+            "Date of Joining",
+            new Date(this.staff.dateOfJoining).toLocaleDateString(),
+          ],
+          [
+            "Last Working Day",
+            new Date(this.staff.lastWorkingDay).toLocaleDateString(),
+          ],
+          ["Designation", "Staff"],
+        ],
+      });
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+
+      const text = `This is to certify that Mr./Ms. ${
+        this.staff.name
+      } has worked with Cochin Distributors from ${new Date(
+        this.staff.dateOfJoining
+      ).toLocaleDateString()} to ${new Date(
+        this.staff.lastWorkingDay
+      ).toLocaleDateString()}.`;
+
+      const splitText = doc.splitTextToSize(text, 180);
+      doc.text(splitText, 14, doc.lastAutoTable.finalY + 15);
+
+      doc.text(
+        `We wish ${
+          this.staff.gender === "female" ? "her" : "him"
+        } all the best for future endeavors.`,
+        14,
+        doc.lastAutoTable.finalY + 30
+      );
+
+      doc.text("Sincerely,", 14, doc.lastAutoTable.finalY + 50);
+      doc.text("Manager", 14, doc.lastAutoTable.finalY + 60);
+      doc.text("Cochin Distributors", 14, doc.lastAutoTable.finalY + 65);
+
+      doc.save(`${this.staff.name}_Experience_Certificate.pdf`);
     },
   },
   beforeUnmount() {
@@ -1389,5 +1562,116 @@ export default {
 
 .chat-tab > div {
   height: 600px;
+}
+
+/* Resignation Tab */
+.resignation-tab {
+  padding: 32px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.resignation-tab h2 {
+  color: #1e293b;
+  font-size: 24px;
+  margin-bottom: 24px;
+  font-weight: 700;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 12px;
+}
+
+.status-box {
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.status-box.pending {
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+}
+
+.status-box.approved {
+  background-color: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+}
+
+.status-box.rejected {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.status-box h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 20px;
+}
+
+.apply-box {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reason-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.btn-submit-resignation {
+  background-color: #ef4444;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background-color 0.2s;
+}
+
+.btn-submit-resignation:hover {
+  background-color: #dc2626;
+}
+
+.btn-submit-resignation:disabled {
+  background-color: #fca5a5;
+  cursor: not-allowed;
+}
+
+.btn-download {
+  background-color: #2563eb;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-retry {
+  background-color: #4b5563;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 12px;
 }
 </style>

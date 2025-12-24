@@ -254,14 +254,82 @@ router.post("/forgot-password", async (req, res) => {
  */
 router.get("/profile", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ msg: "User not found" });
-    res.json({ user });
+    
+    const userObj = user.toObject();
+    const hasPassword = !!user.password;
+    delete userObj.password;
+    
+    res.json({ user: { ...userObj, hasPassword } });
   } catch (err) {
     console.error("Profile error:", err);
     res.status(500).json({ msg: "Error fetching profile" });
   }
 });
+
+/**
+ * 📌 UPDATE PROFILE
+ */
+router.put("/profile", authMiddleware, async (req, res) => {
+  const { name, phone, storeName, storeAddress, pincode, landmark } = req.body;
+  
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    if (name) user.name = name;
+    if (phone) user.phone = phone;
+    if (storeName) user.storeName = storeName;
+    if (storeAddress) user.storeAddress = storeAddress;
+    if (pincode) user.pincode = pincode;
+    if (landmark) user.landmark = landmark;
+
+    await user.save();
+    res.json({ msg: "Profile updated successfully", user });
+  } catch (err) {
+    console.error("Update profile error:", err);
+    res.status(500).json({ msg: "Server error updating profile" });
+  }
+});
+
+/**
+ * 📌 CHANGE PASSWORD (Authenticated)
+ */
+router.post("/change-password", authMiddleware, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    // If user has a password (not just Google login), verify it
+    if (user.password) {
+      if (!currentPassword) {
+        return res.status(400).json({ msg: "Current password is required" });
+      }
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ msg: "Incorrect current password" });
+      }
+    }
+
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({
+        msg: "Password must be at least 8 characters, contain uppercase, lowercase, number & special character.",
+      });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ msg: "Password changed successfully" });
+  } catch (err) {
+    console.error("Change password error:", err);
+    res.status(500).json({ msg: "Server error changing password" });
+  }
+});
+
 router.post("/register-email", async (req, res) => {
   try {
     const { email } = req.body;

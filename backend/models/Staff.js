@@ -10,11 +10,21 @@ const staffSchema = new mongoose.Schema(
     address: { type: String },
     pincode: { type: String },
     profilePhoto: { type: String },
+    position: { type: String },
+    salary: { type: Number },
     role: { type: String, default: "staff" },
     status: { type: String, default: "pending" }, // pending, active, deactivated
     isRegistered: { type: Boolean, default: false }, // after completing registration
     invitedBy: { type: String }, // email or admin id who invited
     dateOfJoining: { type: Date },
+    resignationStatus: {
+      type: String,
+      enum: ["none", "pending", "approved", "rejected"],
+      default: "none",
+    },
+    resignationDate: { type: Date },
+    lastWorkingDay: { type: Date },
+    resignationReason: { type: String },
   },
   { timestamps: true } // automatically adds createdAt and updatedAt
 );

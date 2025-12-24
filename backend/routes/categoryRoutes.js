@@ -1,6 +1,40 @@
 const express = require("express");
 const router = express.Router();
 const Category = require("../models/Category");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+
+// Ensure uploads folder exists
+const uploadDir = path.join(__dirname, "../uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+// Multer setup
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
+});
+
+const fileFilter = (req, file, cb) => {
+  const allowedImageTypes = /jpeg|jpg|png/;
+  const extname = path.extname(file.originalname).toLowerCase();
+  const isExtValid = allowedImageTypes.test(extname);
+  const isMimeValid = file.mimetype.startsWith('image/');
+
+  if (isExtValid && isMimeValid) {
+    return cb(null, true);
+  } else {
+    return cb(new Error("Only image files (jpeg, jpg, png) are allowed"));
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+});
 
 // Validation function
 function validateCategoryName(name) {
@@ -21,7 +55,7 @@ function validateCategoryName(name) {
 }
 
 // ➕ Add new category
-router.post("/", async (req, res) => {
+router.post("/", upload.single('image'), async (req, res) => {
   try {
     const { name } = req.body;
 
@@ -39,7 +73,8 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Category already exists" });
     }
 
-    const category = new Category({ name: name.trim() });
+    const image = req.file ? `/uploads/${req.file.filename}` : null;
+    const category = new Category({ name: name.trim(), image });
     await category.save();
 
     res.status(201).json(category);

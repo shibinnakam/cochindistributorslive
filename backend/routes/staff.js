@@ -7,6 +7,7 @@ const sgMail = require("@sendgrid/mail");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const path = require("path");
+const PDFDocument = require("pdfkit");
 const { authMiddleware } = require("../middleware/auth");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -180,11 +181,13 @@ router.put("/approve/:id", async (req, res) => {
     if (!staff) return res.status(404).json({ message: "Staff not found" });
 
     // Safe destructuring
-    const { joiningDate } = req.body || {};
+    const { joiningDate, position, salary } = req.body || {};
 
     staff.status = "active";
     staff.role = "staff";
     staff.dateOfJoining = joiningDate ? new Date(joiningDate) : new Date();
+    if (position) staff.position = position;
+    if (salary) staff.salary = salary;
 
     await staff.save();
 
@@ -269,6 +272,24 @@ router.put("/update", authMiddleware, upload.single("profilePhoto"), async (req,
   }
 });
 
+// Admin updates staff details (position, salary)
+router.put("/update-details/:id", async (req, res) => {
+  try {
+    const { position, salary } = req.body;
+    const staff = await Staff.findById(req.params.id);
+    if (!staff) return res.status(404).json({ message: "Staff not found" });
+
+    if (position !== undefined) staff.position = position;
+    if (salary !== undefined) staff.salary = salary;
+
+    await staff.save();
+    res.json({ success: true, message: "Staff details updated", staff });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Get all staff
 router.get("/", async (req, res) => {
   try {
@@ -290,6 +311,179 @@ router.delete("/:id", async (req, res) => {
     res.json({ success: true, message: "Staff deleted successfully" });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Resignation Request (Staff)
+router.post("/resign", authMiddleware, async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const staff = await Staff.findById(req.user.id);
+    if (!staff) return res.status(404).json({ message: "Staff not found" });
+
+    if (staff.resignationStatus === "pending") {
+      return res.status(400).json({ message: "Resignation request already pending" });
+    }
+
+    staff.resignationStatus = "pending";
+    staff.resignationDate = new Date();
+    staff.resignationReason = reason;
+    await staff.save();
+
+    res.json({ success: true, message: "Resignation request submitted" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Approve Resignation (Admin)
+router.put("/resign/approve/:id", async (req, res) => {
+  try {
+    const staff = await Staff.findById(req.params.id);
+    if (!staff) return res.status(404).json({ message: "Staff not found" });
+
+    const lastWorkingDay = new Date();
+    staff.resignationStatus = "approved";
+    staff.lastWorkingDay = lastWorkingDay;
+    staff.status = "deactivated"; // User said consider it as last working day, so they are done.
+    await staff.save();
+
+    // Generate PDF
+    const generatePDF = () => {
+      return new Promise((resolve, reject) => {
+        const doc = new PDFDocument();
+        let buffers = [];
+        doc.on("data", (chunk) => buffers.push(chunk));
+        doc.on("end", () => resolve(Buffer.concat(buffers)));
+        doc.on("error", reject);
+
+        // Logo
+        const logoPath = path.join(__dirname, "../../frontend/src/assets/logo.jpeg");
+        // PDFKit images use points. 30mm ~ 85pt, 25mm ~ 71pt.
+        // Assuming page margin 50pt (default). 
+        // Centering or positioning similar to frontend: x=34mm (96pt), y=13mm (37pt)
+        try {
+           doc.image(logoPath, 130, 40, { width: 85, height: 71 });
+        } catch (e) {
+           console.log("Logo not found or invalid", e);
+        }
+
+        doc.moveDown(4);
+        
+        // Header
+        doc.fontSize(16).font("Helvetica-Bold").text("COCHIN DISTRIBUTORS", { align: "center" });
+        doc.fontSize(11).font("Helvetica").text("Merchant Association Building,", { align: "center" });
+        doc.text("Santhi Nagar, Kattappana", { align: "center" });
+        doc.text("Ph: 9447419293, 9446074962", { align: "center" });
+        
+        doc.moveDown();
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown(2);
+
+        // Title
+        doc.fontSize(22).font("Helvetica-Bold").text("Experience Certificate", { align: "center" });
+        doc.moveDown(2);
+
+        // Content Table (Manual construction for simple table)
+        const startX = 100;
+        let currentY = doc.y;
+        const rowHeight = 30;
+        const colWidth = 200;
+
+        doc.fontSize(12).font("Helvetica");
+
+        const drawRow = (label, value) => {
+           doc.rect(startX, currentY, colWidth, rowHeight).stroke();
+           doc.rect(startX + colWidth, currentY, colWidth, rowHeight).stroke();
+           doc.text(label, startX + 10, currentY + 10);
+           doc.text(value, startX + colWidth + 10, currentY + 10);
+           currentY += rowHeight;
+        };
+
+        drawRow("Employee Name", staff.name);
+        drawRow("Date of Joining", staff.dateOfJoining ? staff.dateOfJoining.toLocaleDateString() : "—");
+        drawRow("Last Working Day", lastWorkingDay.toLocaleDateString());
+        drawRow("Designation", staff.position || "Staff");
+
+        doc.moveDown(3);
+        currentY += 20;
+        doc.y = currentY;
+
+        // Certificate Text
+        doc.font("Helvetica").fontSize(12);
+        const text = `This is to certify that Mr./Ms. ${staff.name} has worked with Cochin Distributors from ${staff.dateOfJoining ? staff.dateOfJoining.toLocaleDateString() : ""} to ${lastWorkingDay.toLocaleDateString()}.`;
+        doc.text(text, { align: "justify" });
+        
+        doc.moveDown();
+        const genderText = staff.gender === "female" ? "her" : "him";
+        doc.text(`We wish ${genderText} all the best for future endeavors.`, { align: "justify" });
+
+        doc.moveDown(4);
+        doc.text("Sincerely,");
+        doc.moveDown();
+        doc.text("Manager");
+        doc.text("Cochin Distributors");
+
+        doc.end();
+      });
+    };
+
+    let pdfBuffer;
+    try {
+      pdfBuffer = await generatePDF();
+    } catch (e) {
+      console.error("PDF Generation failed", e);
+    }
+
+    // Send Email
+    try {
+      const msg = {
+        to: staff.email,
+        from: process.env.FROM_EMAIL,
+        subject: "Resignation Request Approved - Experience Certificate",
+        html: `
+          <h2>Resignation Approved</h2>
+          <p>Dear ${staff.name},</p>
+          <p>Your resignation request has been approved.</p>
+          <p>Your last working day is: <strong>${lastWorkingDay.toLocaleDateString()}</strong></p>
+          <p>Please find your Experience Certificate attached.</p>
+          <br/>
+          <p>Thank you for your service.</p>
+          <p><strong>Cochin Distributors Team</strong></p>
+        `,
+        attachments: pdfBuffer ? [
+          {
+            content: pdfBuffer.toString("base64"),
+            filename: `${staff.name.replace(/\s+/g, "_")}_Experience_Certificate.pdf`,
+            type: "application/pdf",
+            disposition: "attachment",
+          },
+        ] : [],
+      };
+      await sgMail.send(msg);
+    } catch (emailErr) {
+      console.error("Email failed: ", emailErr.message);
+    }
+
+    res.json({ success: true, message: "Resignation approved", staff });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Reject Resignation (Admin)
+router.put("/resign/reject/:id", async (req, res) => {
+  try {
+    const staff = await Staff.findById(req.params.id);
+    if (!staff) return res.status(404).json({ message: "Staff not found" });
+
+    staff.resignationStatus = "rejected";
+    await staff.save();
+
+    res.json({ success: true, message: "Resignation rejected", staff });
+  } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });

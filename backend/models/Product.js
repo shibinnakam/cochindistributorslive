@@ -6,7 +6,18 @@ const productSchema = new mongoose.Schema(
     description: { type: String, required: true },
     originalPrice: { type: Number, required: true },
     discountPrice: { type: Number, required: true },
-    image: { type: String, required: true }, // uploaded file name/path
+    image: { type: String, required: false }, // legacy - single image
+    imageFront: { type: String, required: false }, // front view image path
+    imageSide: { type: String, required: false }, // side view image path (optional)
+    imageBack: { type: String, required: false }, // back view image path
+    imageTop: { type: String, required: false }, // top view image path (optional)
+    imageBottom: { type: String, required: false }, // bottom view image path (optional)
+    model3D: { type: String, required: false }, // uploaded 3D model path (optional)
+    shape: { 
+      type: String, 
+      enum: ['box', 'cylinder', 'pillow'], 
+      default: 'box' 
+    }, // 3D shape type
     category: { 
       type: mongoose.Schema.Types.ObjectId, 
       ref: "Category", 

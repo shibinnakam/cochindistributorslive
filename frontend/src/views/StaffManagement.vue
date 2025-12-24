@@ -7,7 +7,11 @@
 
     <!-- Metrics Cards -->
     <div class="metrics-section">
-      <div class="metric-card">
+      <div
+        class="metric-card"
+        @click="statusFilter = ''"
+        style="cursor: pointer"
+      >
         <div class="metric-content">
           <div class="metric-number">{{ stats.total }}</div>
           <div class="metric-label">Total Employees</div>
@@ -17,7 +21,11 @@
         </div>
       </div>
 
-      <div class="metric-card">
+      <div
+        class="metric-card"
+        @click="statusFilter = 'pending'"
+        style="cursor: pointer"
+      >
         <div class="metric-content">
           <div class="metric-number">{{ stats.pending }}</div>
           <div class="metric-label">Pending Approvals</div>
@@ -30,7 +38,28 @@
         </div>
       </div>
 
-      <div class="metric-card">
+      <div
+        class="metric-card"
+        @click="statusFilter = 'resignation_pending'"
+        style="cursor: pointer"
+      >
+        <div class="metric-content">
+          <div class="metric-number">{{ stats.resignation }}</div>
+          <div class="metric-label">Resignation Requests</div>
+        </div>
+        <div class="metric-progress">
+          <div
+            class="progress-bar resignation-bar"
+            :style="{ width: (stats.resignation / stats.total) * 100 + '%' }"
+          ></div>
+        </div>
+      </div>
+
+      <div
+        class="metric-card"
+        @click="statusFilter = 'active'"
+        style="cursor: pointer"
+      >
         <div class="metric-content">
           <div class="metric-number">{{ stats.active }}</div>
           <div class="metric-label">Active Employees</div>
@@ -43,7 +72,11 @@
         </div>
       </div>
 
-      <div class="metric-card">
+      <div
+        class="metric-card"
+        @click="statusFilter = 'deactivated'"
+        style="cursor: pointer"
+      >
         <div class="metric-content">
           <div class="metric-number">{{ stats.deactivated }}</div>
           <div class="metric-label">Deactivated</div>
@@ -57,18 +90,7 @@
       </div>
     </div>
 
-    <!-- Charts Section -->
-    <div class="charts-section">
-      <div class="chart-container">
-        <h3>Status Distribution</h3>
-        <canvas ref="statusChart"></canvas>
-      </div>
-
-      <div class="chart-container">
-        <h3>Department Distribution</h3>
-        <canvas ref="departmentChart"></canvas>
-      </div>
-    </div>
+    <!-- Charts Section Removed -->
 
     <!-- Header Section -->
     <div class="header-section">
@@ -88,6 +110,7 @@
             <option value="active">Active</option>
             <option value="pending">Pending</option>
             <option value="deactivated">Deactivated</option>
+            <option value="resignation_pending">Resignation Requests</option>
           </select>
         </div>
         <div class="action-buttons-header">
@@ -136,10 +159,12 @@
           <tr>
             <th>ID</th>
             <th>Name</th>
-            <th>Department</th>
+            <th>Position</th>
+            <th>Salary</th>
             <th>Contact</th>
             <th>Requests</th>
             <th>Hire Date</th>
+            <th>Resign Date</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -154,7 +179,8 @@
                 <span class="employee-name">{{ s.name || "—" }}</span>
               </div>
             </td>
-            <td class="department-cell">{{ s.department || "—" }}</td>
+            <td class="position-cell">{{ s.position || "—" }}</td>
+            <td class="salary-cell">₹{{ s.salary || "—" }}</td>
             <td class="contact-cell">
               <div class="contact-info">
                 <div class="phone">{{ s.phone || "—" }}</div>
@@ -162,13 +188,27 @@
               </div>
             </td>
             <td class="requests-cell">
-              <span v-if="s.status === 'pending'" class="badge pending">1</span>
+              <span v-if="s.status === 'pending'" class="badge pending"
+                >Reg Pending</span
+              >
+              <span
+                v-else-if="s.resignationStatus === 'pending'"
+                class="badge resignation"
+                >Resign Pending</span
+              >
               <span v-else class="badge">0</span>
             </td>
             <td class="date-cell">
               {{
                 s.dateOfJoining
                   ? new Date(s.dateOfJoining).toLocaleDateString("en-CA")
+                  : "—"
+              }}
+            </td>
+            <td class="date-cell">
+              {{
+                s.resignationDate
+                  ? new Date(s.resignationDate).toLocaleDateString("en-CA")
                   : "—"
               }}
             </td>
@@ -183,11 +223,32 @@
                 </button>
                 <div v-if="activeMenu === s._id" class="dropdown-menu">
                   <button
+                    v-if="s.resignationStatus === 'pending'"
+                    @click="approveResignation(s._id)"
+                    class="menu-item approve"
+                  >
+                    ✓ Approve Resignation
+                  </button>
+                  <button
+                    v-if="s.resignationStatus === 'pending'"
+                    @click="rejectResignation(s._id)"
+                    class="menu-item delete"
+                  >
+                    ✕ Reject Resignation
+                  </button>
+                  <button
                     v-if="s.status === 'pending'"
-                    @click="approveStaff(s._id)"
+                    @click="openApproveModal(s)"
                     class="menu-item approve"
                   >
                     ✓ Approve
+                  </button>
+                  <button
+                    v-if="s.status === 'active'"
+                    @click="openEditModal(s)"
+                    class="menu-item edit"
+                  >
+                    ✏️ Edit Details
                   </button>
                   <button
                     v-if="s.status === 'active'"
@@ -223,6 +284,43 @@
       </div>
     </div>
 
+    <!-- Edit/Approve Details Modal -->
+    <div v-if="showEditModal" class="modal-overlay" @click="closeEditModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>{{ isApproveMode ? "Approve Staff" : "Edit Staff Details" }}</h2>
+          <button class="modal-close" @click="closeEditModal">✕</button>
+        </div>
+        <form @submit.prevent="submitStaffDetails" class="invite-form-modal">
+          <div class="form-group">
+            <label>Position</label>
+            <input
+              v-model="editForm.position"
+              type="text"
+              placeholder="e.g. Manager, Sales, Driver"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label>Salary</label>
+            <input
+              v-model="editForm.salary"
+              type="number"
+              placeholder="Enter salary"
+              required
+            />
+          </div>
+          <div v-if="isApproveMode" class="form-group">
+            <label>Joining Date</label>
+            <input v-model="editForm.joiningDate" type="date" required />
+          </div>
+          <button type="submit" class="btn-submit">
+            {{ isApproveMode ? "Approve" : "Save Changes" }}
+          </button>
+        </form>
+      </div>
+    </div>
+
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteModal" class="modal-overlay" @click="cancelDelete">
       <div class="modal-delete" @click.stop>
@@ -247,7 +345,6 @@
 import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import Chart from "chart.js/auto";
 
 export default {
   data() {
@@ -262,8 +359,14 @@ export default {
       showInviteForm: false,
       deleteId: null,
       activeMenu: null,
-      statusChartInstance: null,
-      departmentChartInstance: null,
+      showEditModal: false,
+      isApproveMode: false,
+      editForm: {
+        id: null,
+        position: "",
+        salary: "",
+        joiningDate: new Date().toISOString().split("T")[0],
+      },
     };
   },
   computed: {
@@ -274,8 +377,12 @@ export default {
           s.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
           s.email?.toLowerCase().includes(this.searchQuery.toLowerCase());
 
-        const matchesStatus =
-          !this.statusFilter || s.status === this.statusFilter;
+        let matchesStatus = true;
+        if (this.statusFilter === "resignation_pending") {
+          matchesStatus = s.resignationStatus === "pending";
+        } else if (this.statusFilter) {
+          matchesStatus = s.status === this.statusFilter;
+        }
 
         return matchesSearch && matchesStatus;
       });
@@ -286,6 +393,8 @@ export default {
         pending: this.staff.filter((s) => s.status === "pending").length,
         active: this.staff.filter((s) => s.status === "active").length,
         deactivated: this.staff.filter((s) => s.status === "deactivated")
+          .length,
+        resignation: this.staff.filter((s) => s.resignationStatus === "pending")
           .length,
       };
     },
@@ -322,18 +431,101 @@ export default {
         );
       }
     },
-    async approveStaff(id) {
+    async approveStaff(id, data = {}) {
       try {
-        const joiningDate = new Date().toISOString();
+        const payload = {
+          joiningDate: data.joiningDate || new Date().toISOString(),
+          position: data.position,
+          salary: data.salary,
+        };
         const res = await axios.put(
           `http://localhost:5000/api/staff/approve/${id}`,
-          { joiningDate }
+          payload
         );
         this.showToast(res.data.message || "Staff approved successfully");
         this.fetchStaff();
       } catch (err) {
         this.showToast(
           err.response?.data?.message || "Error approving staff",
+          true
+        );
+      }
+    },
+    openEditModal(staff) {
+      this.isApproveMode = false;
+      this.editForm = {
+        id: staff._id,
+        position: staff.position || "",
+        salary: staff.salary || "",
+      };
+      this.showEditModal = true;
+      this.activeMenu = null;
+    },
+    openApproveModal(staff) {
+      this.isApproveMode = true;
+      this.editForm = {
+        id: staff._id,
+        position: staff.position || "",
+        salary: staff.salary || "",
+        joiningDate: new Date().toISOString().split("T")[0],
+      };
+      this.showEditModal = true;
+      this.activeMenu = null;
+    },
+    closeEditModal() {
+      this.showEditModal = false;
+      this.editForm = { id: null, position: "", salary: "", joiningDate: "" };
+    },
+    async submitStaffDetails() {
+      if (this.isApproveMode) {
+        await this.approveStaff(this.editForm.id, this.editForm);
+      } else {
+        await this.updateStaffDetails(this.editForm.id, this.editForm);
+      }
+      this.closeEditModal();
+    },
+    async updateStaffDetails(id, data) {
+      try {
+        const res = await axios.put(
+          `http://localhost:5000/api/staff/update-details/${id}`,
+          {
+            position: data.position,
+            salary: data.salary,
+          }
+        );
+        this.showToast(res.data.message || "Details updated");
+        this.fetchStaff();
+      } catch (err) {
+        this.showToast(
+          err.response?.data?.message || "Error updating details",
+          true
+        );
+      }
+    },
+    async approveResignation(id) {
+      try {
+        const res = await axios.put(
+          `http://localhost:5000/api/staff/resign/approve/${id}`
+        );
+        this.showToast(res.data.message || "Resignation approved successfully");
+        this.fetchStaff();
+      } catch (err) {
+        this.showToast(
+          err.response?.data?.message || "Error approving resignation",
+          true
+        );
+      }
+    },
+    async rejectResignation(id) {
+      try {
+        const res = await axios.put(
+          `http://localhost:5000/api/staff/resign/reject/${id}`
+        );
+        this.showToast(res.data.message || "Resignation rejected");
+        this.fetchStaff();
+      } catch (err) {
+        this.showToast(
+          err.response?.data?.message || "Error rejecting resignation",
           true
         );
       }
@@ -445,6 +637,13 @@ export default {
               : "—",
           ],
           ["Status", staff.status || "—"],
+          ["Position", staff.position || "—"],
+          [
+            "Resignation Date",
+            staff.resignationDate
+              ? new Date(staff.resignationDate).toLocaleDateString()
+              : "—",
+          ],
         ],
       });
 
@@ -486,7 +685,9 @@ export default {
             "Gender",
             "Address",
             "Pincode",
-            "Date of Joining",
+            "Position",
+            "Joining Date",
+            "Resign Date",
             "Status",
           ],
         ],
@@ -497,8 +698,12 @@ export default {
           s.gender || "—",
           s.address || "—",
           s.pincode || "—",
+          s.position || "—",
           s.dateOfJoining
             ? new Date(s.dateOfJoining).toLocaleDateString()
+            : "—",
+          s.resignationDate
+            ? new Date(s.resignationDate).toLocaleDateString()
             : "—",
           s.status || "—",
         ]),
@@ -515,110 +720,9 @@ export default {
 
       doc.save("staff-report.pdf");
     },
-    initStatusChart() {
-      if (this.statusChartInstance) {
-        this.statusChartInstance.destroy();
-      }
-      const ctx = this.$refs.statusChart;
-      if (!ctx) return;
-
-      this.statusChartInstance = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: ["Pending", "Active", "Deactivated"],
-          datasets: [
-            {
-              label: "Employee Count",
-              data: [
-                this.stats.pending,
-                this.stats.active,
-                this.stats.deactivated,
-              ],
-              borderColor: "#3b82f6",
-              backgroundColor: "rgba(59, 130, 246, 0.1)",
-              fill: true,
-              tension: 0.4,
-              borderWidth: 3,
-              pointRadius: 6,
-              pointBackgroundColor: "#3b82f6",
-              pointBorderColor: "#fff",
-              pointBorderWidth: 2,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          plugins: {
-            legend: {
-              display: true,
-              position: "top",
-            },
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                stepSize: 1,
-              },
-            },
-          },
-        },
-      });
-    },
-    initDepartmentChart() {
-      if (this.departmentChartInstance) {
-        this.departmentChartInstance.destroy();
-      }
-      const ctx = this.$refs.departmentChart;
-      if (!ctx) return;
-
-      const deptNames = Object.keys(this.departmentData);
-      const deptCounts = Object.values(this.departmentData);
-
-      this.departmentChartInstance = new Chart(ctx, {
-        type: "doughnut",
-        data: {
-          labels: deptNames,
-          datasets: [
-            {
-              data: deptCounts,
-              backgroundColor: [
-                "#3b82f6",
-                "#10b981",
-                "#f59e0b",
-                "#ef4444",
-                "#8b5cf6",
-                "#06b6d4",
-              ],
-              borderColor: "#fff",
-              borderWidth: 2,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          plugins: {
-            legend: {
-              display: true,
-              position: "bottom",
-            },
-          },
-        },
-      });
-    },
   },
   mounted() {
     this.fetchStaff();
-  },
-  watch: {
-    staff() {
-      this.$nextTick(() => {
-        this.initStatusChart();
-        this.initDepartmentChart();
-      });
-    },
   },
 };
 </script>
@@ -709,6 +813,10 @@ export default {
   background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
 }
 
+.progress-bar.resignation-bar {
+  background: linear-gradient(90deg, #d97706 0%, #b45309 100%);
+}
+
 .charts-section {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -775,9 +883,10 @@ export default {
 
 .search-filter {
   display: flex;
-  gap: 14px;
+  gap: 16px;
   flex: 1;
   min-width: 320px;
+  align-items: center;
 }
 
 .search-box {
@@ -794,6 +903,7 @@ export default {
   transition: all 0.3s ease;
   background: white;
   color: #1e293b;
+  box-sizing: border-box;
 }
 
 .search-input::placeholder {
@@ -818,6 +928,7 @@ export default {
 
 .status-filter {
   padding: 10px 12px;
+  height: 42px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 14px;
@@ -826,6 +937,8 @@ export default {
   transition: all 0.3s ease;
   color: #1e293b;
   font-weight: 500;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .status-filter:hover {
@@ -865,16 +978,16 @@ export default {
   background: white;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  overflow: visible;
+  overflow-x: auto; /* Enable horizontal scrolling */
   border: 1px solid #e5e7eb;
   margin: 0 32px 32px 32px;
+  min-height: 400px;
 }
 
 .staff-table {
   width: 100%;
   border-collapse: collapse;
-  border-radius: 12px;
-  overflow: hidden;
+  min-width: 1000px; /* Ensure table doesn't squash too much */
 }
 
 .staff-table thead {
@@ -887,20 +1000,22 @@ export default {
 }
 
 .staff-table th {
-  padding: 16px 32px;
+  padding: 16px 16px; /* Reduced padding */
   text-align: left;
   font-size: 13px;
   font-weight: 700;
   color: #1e293b;
   letter-spacing: 0;
   text-transform: none;
+  white-space: nowrap; /* Prevent headers from wrapping */
 }
 
 .staff-table td {
-  padding: 18px 32px;
+  padding: 16px 16px; /* Reduced padding */
   border-bottom: 1px solid #f3f4f6;
   font-size: 14px;
   color: #1e293b;
+  vertical-align: middle;
 }
 
 .staff-table tbody tr {
@@ -988,16 +1103,23 @@ export default {
   justify-content: center;
   min-width: 32px;
   height: 32px;
+  padding: 0 10px;
   background: #f3f4f6;
   color: #6b7280;
-  border-radius: 50%;
+  border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .badge.pending {
   background: #dcfce7;
   color: #15803d;
+}
+
+.badge.resignation {
+  background: #fef3c7;
+  color: #d97706;
 }
 
 .date-cell {
@@ -1109,6 +1231,20 @@ export default {
 }
 
 .menu-item.delete:hover {
+  background: #fef2f2;
+}
+
+.menu-item.approve-resign {
+  color: #8b5cf6;
+}
+.menu-item.approve-resign:hover {
+  background: #f5f3ff;
+}
+
+.menu-item.reject-resign {
+  color: #ef4444;
+}
+.menu-item.reject-resign:hover {
   background: #fef2f2;
 }
 

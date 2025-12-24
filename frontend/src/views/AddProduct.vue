@@ -85,8 +85,8 @@
           <p v-if="errors.rackNumber" class="error">{{ errors.rackNumber }}</p>
         </div>
 
-        <!-- Row 5: Category (Full Width) -->
-        <div class="form-group full-width">
+        <!-- Row 5: Category & Shape -->
+        <div class="form-group">
           <label for="category">Category</label>
           <select v-model="category" id="category">
             <option value="" disabled>Select Category</option>
@@ -95,6 +95,15 @@
             </option>
           </select>
           <p v-if="errors.category" class="error">{{ errors.category }}</p>
+        </div>
+        <div class="form-group">
+          <label for="shape">3D Shape</label>
+          <select v-model="shape" id="shape">
+            <option value="box">Box (Carton)</option>
+            <option value="pillow">Pillow (Packet/Chips)</option>
+            <option value="cylinder">Cylinder (Bottle/Can)</option>
+            <option value="exact">Exact Shape (From Image)</option>
+          </select>
         </div>
 
         <!-- Row 6: Description (Full Width) -->
@@ -109,20 +118,103 @@
           </p>
         </div>
 
-        <!-- Row 7: File Upload & Preview -->
+        <!-- Row 7: 3-Image Upload for 3D Visualization -->
         <div class="form-group full-width">
-          <input
-            id="image"
-            type="file"
-            @change="handleImageUpload"
-            accept="image/*"
-          />
-          <p v-if="errors.image" class="error">{{ errors.image }}</p>
+          <label>Product Images for 3D View (Required)</label>
+          <p class="form-hint">
+            Upload front and back images for 3D packet visualization
+          </p>
+          <div class="image-upload-grid-2col">
+            <!-- Front Image -->
+            <div class="image-upload-item">
+              <label for="imageFront" class="upload-label">Front Image</label>
+              <input
+                id="imageFront"
+                type="file"
+                @change="(e) => handleImageUpload(e, 'imageFront')"
+                accept="image/jpeg,image/png"
+              />
+              <div v-if="previewFront" class="image-preview-small">
+                <img :src="previewFront" alt="Front Preview" />
+              </div>
+              <p v-if="errors.imageFront" class="error">
+                {{ errors.imageFront }}
+              </p>
+            </div>
+
+            <!-- Back Image -->
+            <div class="image-upload-item">
+              <label for="imageBack" class="upload-label">Back Image</label>
+              <input
+                id="imageBack"
+                type="file"
+                @change="(e) => handleImageUpload(e, 'imageBack')"
+                accept="image/jpeg,image/png"
+              />
+              <div v-if="previewBack" class="image-preview-small">
+                <img :src="previewBack" alt="Back Preview" />
+              </div>
+              <p v-if="errors.imageBack" class="error">
+                {{ errors.imageBack }}
+              </p>
+            </div>
+          </div>
         </div>
 
-        <!-- Image Preview -->
-        <div v-if="preview" class="image-preview-container">
-          <img :src="preview" alt="Preview" class="image-preview" />
+        <!-- Side Image (Optional) -->
+        <div class="form-group full-width">
+          <label>Side Image (Optional)</label>
+          <p class="form-hint">Upload for better 3D visualization</p>
+          <input
+            id="imageSide"
+            type="file"
+            @change="(e) => handleImageUpload(e, 'imageSide')"
+            accept="image/jpeg,image/png"
+          />
+          <div v-if="previewSide" class="image-preview-side">
+            <img :src="previewSide" alt="Side Preview" />
+          </div>
+        </div>
+
+        <!-- Top Image (Optional) -->
+        <div class="form-group full-width">
+          <label>Top Image (Optional)</label>
+          <p class="form-hint">Upload for even better 3D visualization</p>
+          <input
+            id="imageTop"
+            type="file"
+            @change="(e) => handleImageUpload(e, 'imageTop')"
+            accept="image/jpeg,image/png"
+          />
+          <div v-if="previewTop" class="image-preview-side">
+            <img :src="previewTop" alt="Top Preview" />
+          </div>
+        </div>
+
+        <!-- Bottom Image (Optional) -->
+        <div class="form-group full-width">
+          <label>Bottom Image (Optional)</label>
+          <p class="form-hint">Upload for complete 3D visualization</p>
+          <input
+            id="imageBottom"
+            type="file"
+            @change="(e) => handleImageUpload(e, 'imageBottom')"
+            accept="image/jpeg,image/png"
+          />
+          <div v-if="previewBottom" class="image-preview-side">
+            <img :src="previewBottom" alt="Bottom Preview" />
+          </div>
+        </div>
+
+        <!-- 3D Model Upload (Optional) -->
+        <div class="form-group full-width">
+          <label>3D Model (.glb, .gltf) - Optional</label>
+          <input
+            id="model3D"
+            type="file"
+            @change="handleModelUpload"
+            accept=".glb,.gltf"
+          />
         </div>
 
         <!-- Row 8: Submit Button (Full Width) -->
@@ -159,19 +251,50 @@ export default {
       batchNumber: "",
       rackNumber: "",
       category: "",
+      shape: "box",
       categories: [],
-      image: null,
-      preview: null,
+      imageFront: null,
+      imageSide: null,
+      imageBack: null,
+      imageTop: null,
+      imageBottom: null,
+      previewFront: null,
+      previewSide: null,
+      previewBack: null,
+      previewTop: null,
+      previewBottom: null,
+      model3D: null,
       loading: false,
       errors: {},
     };
   },
   methods: {
-    handleImageUpload(e) {
+    handleImageUpload(e, imageType) {
       const file = e.target.files[0];
       if (file) {
-        this.image = file;
-        this.preview = URL.createObjectURL(file);
+        if (imageType === "imageFront") {
+          this.imageFront = file;
+          this.previewFront = URL.createObjectURL(file);
+        } else if (imageType === "imageSide") {
+          this.imageSide = file;
+          this.previewSide = URL.createObjectURL(file);
+        } else if (imageType === "imageBack") {
+          this.imageBack = file;
+          this.previewBack = URL.createObjectURL(file);
+        } else if (imageType === "imageTop") {
+          this.imageTop = file;
+          this.previewTop = URL.createObjectURL(file);
+        } else if (imageType === "imageBottom") {
+          this.imageBottom = file;
+          this.previewBottom = URL.createObjectURL(file);
+        }
+      }
+    },
+
+    handleModelUpload(e) {
+      const file = e.target.files[0];
+      if (file) {
+        this.model3D = file;
       }
     },
 
@@ -246,7 +369,8 @@ export default {
       if (!this.rackNumber || this.rackNumber < 1 || this.rackNumber > 155)
         this.errors.rackNumber = "Rack number must be 1-155";
       if (!this.category) this.errors.category = "Select a category";
-      if (!this.image) this.errors.image = "Select an image";
+      if (!this.imageFront) this.errors.imageFront = "Front image is required";
+      if (!this.imageBack) this.errors.imageBack = "Back image is required";
 
       // Stop if there are validation errors
       if (Object.keys(this.errors).length > 0) return;
@@ -265,7 +389,19 @@ export default {
         formData.append("batchNumber", this.batchNumber);
         formData.append("rackNumber", this.rackNumber);
         formData.append("category", this.category);
-        formData.append("image", this.image);
+        formData.append("shape", this.shape);
+        formData.append("imageFront", this.imageFront);
+        formData.append("imageSide", this.imageSide);
+        formData.append("imageBack", this.imageBack);
+        if (this.imageTop) {
+          formData.append("imageTop", this.imageTop);
+        }
+        if (this.imageBottom) {
+          formData.append("imageBottom", this.imageBottom);
+        }
+        if (this.model3D) {
+          formData.append("model3D", this.model3D);
+        }
 
         const res = await axios.post(
           "http://localhost:5000/api/products/addproduct",
@@ -310,8 +446,17 @@ export default {
       this.batchNumber = "";
       this.rackNumber = "";
       this.category = "";
-      this.image = null;
-      this.preview = null;
+      this.imageFront = null;
+      this.imageSide = null;
+      this.imageBack = null;
+      this.imageTop = null;
+      this.imageBottom = null;
+      this.previewFront = null;
+      this.previewSide = null;
+      this.previewBack = null;
+      this.previewTop = null;
+      this.previewBottom = null;
+      this.model3D = null;
       this.errors = {};
     },
   },
@@ -438,5 +583,97 @@ export default {
 
 .button-group {
   margin-top: 4px;
+}
+
+.form-hint {
+  font-size: 11px;
+  color: #64748b;
+  margin: 0 0 12px 0;
+  font-style: italic;
+}
+
+.image-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.image-upload-grid-2col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .image-upload-grid-2col {
+    grid-template-columns: 1fr;
+  }
+}
+
+.image-upload-item {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.upload-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.image-upload-item input[type="file"] {
+  padding: 4px 6px;
+  font-size: 11px;
+  border: 1px solid #cbd5e1 !important;
+  margin-bottom: 8px;
+}
+
+.image-preview-small {
+  width: 100%;
+  height: 100px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: white;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-preview-small img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.image-preview-side {
+  width: 150px;
+  height: 80px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: white;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.image-preview-side img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.image-upload-item .error {
+  font-size: 10px;
+  margin-top: 6px;
 }
 </style>

@@ -25,10 +25,11 @@ export default {
   },
   computed: {
     isDashboard() {
-      // Hide navbar if route starts with /admin or /staff
+      // Hide navbar if route starts with /admin, /staff, or is /user
       return (
         this.$route.path.startsWith("/admin") ||
-        this.$route.path.startsWith("/staff")
+        this.$route.path.startsWith("/staff") ||
+        this.$route.path === "/user"
       );
     },
   },

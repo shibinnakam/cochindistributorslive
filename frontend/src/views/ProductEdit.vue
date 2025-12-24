@@ -44,13 +44,35 @@
           ></textarea>
         </div>
 
-        <!-- Row 4: File Upload -->
+        <!-- Row 4: Shape Selection -->
         <div class="form-group full-width">
+          <label>3D Shape</label>
+          <select v-model="form.shape">
+            <option value="box">Box (Carton)</option>
+            <option value="pillow">Pillow (Packet/Chips)</option>
+            <option value="cylinder">Cylinder (Bottle/Can)</option>
+          </select>
+        </div>
+
+        <!-- Row 5: File Upload -->
+        <div class="form-group full-width">
+          <label>Product Image</label>
           <input
             id="image"
             type="file"
             @change="handleFileUpload"
             accept="image/*"
+          />
+        </div>
+
+        <!-- New Row: 3D Model Upload -->
+        <div class="form-group full-width">
+          <label>3D Model (.glb, .gltf) - Optional</label>
+          <input
+            id="model3D"
+            type="file"
+            @change="handleModelUpload"
+            accept=".glb,.gltf"
           />
         </div>
 
@@ -99,8 +121,11 @@ export default {
         discountPrice: null,
         quantity: null,
         image: "",
+        model3D: "",
+        shape: "box",
       },
       imageFile: null,
+      model3DFile: null,
       newImagePreview: null,
       loading: false,
     };
@@ -126,6 +151,8 @@ export default {
             discountPrice: product.discountPrice,
             quantity: product.quantity,
             image: product.image || "",
+            model3D: product.model3D || "",
+            shape: product.shape || "box",
           };
         }
       } catch (err) {
@@ -145,6 +172,9 @@ export default {
         reader.readAsDataURL(this.imageFile);
       }
     },
+    handleModelUpload(e) {
+      this.model3DFile = e.target.files[0];
+    },
     async updateProduct() {
       this.loading = true;
       try {
@@ -152,7 +182,7 @@ export default {
 
         Object.keys(this.form).forEach((key) => {
           if (this.form[key] !== null && this.form[key] !== "") {
-            if (key !== "image") {
+            if (key !== "image" && key !== "model3D") {
               formData.append(key, this.form[key]);
             }
           }
@@ -160,6 +190,10 @@ export default {
 
         if (this.imageFile) {
           formData.append("image", this.imageFile);
+        }
+
+        if (this.model3DFile) {
+          formData.append("model3D", this.model3DFile);
         }
 
         const res = await axios.put(
