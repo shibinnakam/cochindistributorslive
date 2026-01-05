@@ -59,6 +59,22 @@ async function trainChatbot() {
   manager.addDocument('en', 'categories', 'product.categories');
   manager.addDocument('en', 'category', 'product.categories');
 
+  // Password Change
+  manager.addDocument('en', 'how to change password', 'auth.password_change');
+  manager.addDocument('en', 'change my password', 'auth.password_change');
+  manager.addDocument('en', 'reset password', 'auth.password_change');
+  manager.addDocument('en', 'admin change password', 'auth.password_change_admin');
+  manager.addDocument('en', 'staff change password', 'auth.password_change_staff');
+  manager.addDocument('en', 'user change password', 'auth.password_change_user');
+  manager.addDocument('en', 'forgot password', 'auth.password_change');
+
+  // Delivery
+  manager.addDocument('en', 'delivery time', 'delivery.time');
+  manager.addDocument('en', 'how long to deliver', 'delivery.time');
+  manager.addDocument('en', 'when will I get my product', 'delivery.time');
+  manager.addDocument('en', 'delivery days', 'delivery.time');
+  manager.addDocument('en', 'shipping time', 'delivery.time');
+
   await manager.train();
   manager.save();
   console.log('Chatbot trained');

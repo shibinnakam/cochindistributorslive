@@ -46,8 +46,18 @@ router.post('/message', async (req, res) => {
       } else {
         responseText = "We have various food categories available.";
       }
+    } else if (intent === 'auth.password_change') {
+      responseText = "To change your password, please follow these steps:<br>1. Log in to your account.<br>2. Go to your <b>Profile</b> or <b>Settings</b>.<br>3. Look for the <b>Change Password</b> section.<br>4. Enter your current password and then your new password.<br>5. Click <b>Save</b> or <b>Update</b>.<br><br>If you forgot your password, go to the <b>Login page</b> and click on <b>Forgot Password</b>.";
+    } else if (intent === 'auth.password_change_admin') {
+      responseText = "<b>Admin Password Change:</b><br>1. Log in as Admin.<br>2. On the sidebar, click on <b>Change Password</b>.<br>3. Enter your current password.<br>4. Enter and confirm your new password.<br>5. Click <b>Update Password</b>.";
+    } else if (intent === 'auth.password_change_staff') {
+      responseText = "<b>Staff Password Change:</b><br>1. If you can log in: Go to <b>Profile</b> and look for password settings (if available).<br>2. If you forgot your password: Go to the <b>Login page</b>, click <b>Forgot Password</b>, enter your staff email, and follow the link sent to your email to reset it.";
+    } else if (intent === 'auth.password_change_user') {
+      responseText = "<b>User Password Change:</b><br>1. Log in to your account.<br>2. Click on your <b>Name/Profile</b> in the top menu.<br>3. Select <b>My Profile</b>.<br>4. Scroll down to the <b>Change Password</b> section.<br>5. Enter current and new passwords, then click <b>Change Password</b>.";
+    } else if (intent === 'delivery.time') {
+      responseText = "The delivery time for products to a merchant is a <b>minimum of 2 days</b> and a <b>maximum of 3 days</b>.";
     } else {
-        responseText = "I'm sorry, I didn't understand that. You can ask about us, contact, owner, products, or categories.";
+        responseText = "I'm sorry, I didn't understand that. You can ask about us, contact, owner, products, or how to change password.";
     }
 
     res.json({ response: responseText, intent: intent, score: result.score });
