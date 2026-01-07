@@ -1,15 +1,10 @@
-<OrdersPage v-if="showOrders" @close="showOrders = false" />
-=======
 <template>
   <div class="flipkart-layout">
-    <!-- Orders Modal -->
-    <OrdersPage v-if="showOrders" @close="showOrders = false" />
-
-    <!-- Wallet Modal -->
-    <WalletPage v-if="showWallet" @close="showWallet = false" />
+    <!-- Navbar -->
     <nav class="navbar">
       <div class="nav-container">
         <div class="logo-section">
+          <img src="@/assets/logo.jpeg" alt="Logo" class="logo" />
           <span class="brand-name">Distribution Agency</span>
         </div>
 
@@ -41,8 +36,6 @@
             <span>{{ userName || "User" }}</span>
             <div class="dropdown">
               <a href="#" @click.prevent="showProfile = true">My Profile</a>
-              <a href="#" @click.prevent="showOrders = true">My Orders</a>
-              <a href="#" @click.prevent="showWallet = true">My Wallet</a>
               <a href="#" @click.prevent="logout">Logout</a>
             </div>
           </div>
@@ -51,9 +44,6 @@
           </div>
           <div class="nav-item">
             <span>More</span>
-          </div>
-          <div class="nav-item wallet" @click="showWallet = true">
-            <span>💰 Wallet</span>
           </div>
           <div class="nav-item cart" @click="showCart = true">
             <span
@@ -128,10 +118,7 @@
             :key="product._id"
             class="product-card"
           >
-            <div
-              class="image-wrapper"
-              :class="{ expanded: active3DProductId === product._id }"
-            >
+            <div class="image-wrapper">
               <!-- 3D View Toggle -->
               <div
                 v-if="active3DProductId === product._id"
@@ -206,11 +193,7 @@
       v-if="showCart"
       @close="showCart = false"
       @cart-updated="cartCount = $event"
-      @order-placed="showOrders = true"
     />
-
-    <!-- Orders Modal -->
-    <OrdersPage v-if="showOrders" @close="showOrders = false" />
 
     <!-- ChatBot -->
     <ChatBot :categories="categories" :products="products" />
@@ -223,8 +206,6 @@ import ThreeDBox from "@/components/ThreeDBox.vue";
 import ChatBot from "@/components/ChatBot.vue";
 import ProfilePage from "@/views/ProfilePage.vue";
 import CartPage from "@/views/CartPage.vue";
-import OrdersPage from "@/views/OrdersPage.vue";
-import WalletPage from "@/views/WalletPage.vue";
 
 export default {
   name: "UserPage",
@@ -233,8 +214,6 @@ export default {
     ChatBot,
     ProfilePage,
     CartPage,
-    OrdersPage,
-    WalletPage,
   },
   data() {
     return {
@@ -247,8 +226,6 @@ export default {
       cartCount: 0,
       showProfile: false,
       showCart: false,
-      showOrders: false,
-      showWallet: false,
       showWelcome: true,
       selectedCategory: null,
     };
@@ -747,10 +724,6 @@ export default {
   align-items: center;
   margin-bottom: 12px;
   position: relative;
-}
-
-.image-wrapper.expanded {
-  height: 400px;
 }
 
 .product-img {
