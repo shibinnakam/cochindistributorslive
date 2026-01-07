@@ -66,6 +66,15 @@
           <a
             href="#"
             class="nav-item"
+            :class="{ active: selectedMenu === 'orders' }"
+            @click.prevent="selectedMenu = 'orders'"
+          >
+            <span class="icon">📦</span>
+            Orders
+          </a>
+          <a
+            href="#"
+            class="nav-item"
             :class="{ active: selectedMenu === 'approve-leaves' }"
             @click.prevent="selectedMenu = 'approve-leaves'"
           >
@@ -246,6 +255,7 @@
         <ProductCategory v-if="selectedMenu === 'addCategory'" />
         <ProductList v-if="selectedMenu === 'listProducts'" />
         <StaffManagement v-if="selectedMenu === 'staffManagement'" />
+        <AdminOrders v-if="selectedMenu === 'orders'" />
         <AdminLeaves v-if="selectedMenu === 'approve-leaves'" />
         <ChatWindow v-if="selectedMenu === 'chat'" />
 
@@ -398,6 +408,8 @@ import ProductList from "@/views/ProductList.vue";
 import ProductEdit from "@/views/ProductEdit.vue";
 import ProductCategory from "@/views/AddCategory.vue";
 import StaffManagement from "@/views/StaffManagement.vue";
+// eslint-disable-next-line no-unused-vars
+import AdminOrders from "@/views/AdminOrders.vue";
 import AdminLeaves from "@/views/AdminLeaves.vue";
 import ChatWindow from "@/views/ChatWindow.vue";
 
@@ -411,6 +423,7 @@ export default {
     ProductEdit,
     ProductCategory,
     StaffManagement,
+    AdminOrders,
     AdminLeaves,
     ChatWindow,
   },
@@ -465,6 +478,7 @@ export default {
         listProducts: "Product Catalog",
         addCategory: "Category Management",
         staffManagement: "Staff Management",
+        orders: "Order Management",
         "approve-leaves": "Leave Requests",
         chat: "Messages & Communications",
         changePassword: "Change Password",

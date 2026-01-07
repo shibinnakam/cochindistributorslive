@@ -64,7 +64,51 @@
           <span>Total Amount:</span>
           <span class="total-price">₹{{ totalAmount }}</span>
         </div>
-        <button class="place-order-btn">Place Order</button>
+
+        <!-- Payment Method Selection -->
+        <div class="payment-options" v-if="showPaymentOptions">
+          <h4>Select Payment Method</h4>
+          <div class="payment-methods">
+            <label class="payment-method">
+              <input
+                type="radio"
+                value="razorpay"
+                v-model="selectedPaymentMethod"
+              />
+              <span class="method-name">Pay with Razorpay</span>
+            </label>
+            <label class="payment-method" v-if="walletBalance >= totalAmount">
+              <input
+                type="radio"
+                value="wallet"
+                v-model="selectedPaymentMethod"
+              />
+              <span class="method-name"
+                >Pay with Wallet (₹{{ walletBalance }})</span
+              >
+            </label>
+            <label class="payment-method" v-else>
+              <input
+                type="radio"
+                value="wallet"
+                v-model="selectedPaymentMethod"
+                disabled
+              />
+              <span class="method-name disabled"
+                >Pay with Wallet (₹{{ walletBalance }}) - Insufficient
+                Balance</span
+              >
+            </label>
+          </div>
+        </div>
+
+        <button
+          class="place-order-btn"
+          @click="handleOrderClick"
+          :disabled="showPaymentOptions && !selectedPaymentMethod"
+        >
+          {{ showPaymentOptions ? "Place Order" : "Select Payment Method" }}
+        </button>
       </div>
     </div>
   </div>
@@ -79,6 +123,10 @@ export default {
     return {
       cartItems: [],
       loading: false,
+      selectedPaymentMethod: null,
+      walletBalance: 0,
+      showPaymentOptions: false,
+      userProfile: null,
     };
   },
   computed: {
@@ -90,8 +138,132 @@ export default {
   },
   mounted() {
     this.fetchCart();
+    this.fetchWalletBalance();
+    this.fetchUserProfile();
+    this.loadRazorpay();
   },
   methods: {
+    loadRazorpay() {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      document.body.appendChild(script);
+    },
+    handleOrderClick() {
+      if (!this.checkProfileCompletion()) {
+        alert(
+          "Please complete your profile with shop details (name, phone, pincode, shop name, shop address) before placing an order."
+        );
+        this.$emit("show-profile");
+        return;
+      }
+      if (!this.showPaymentOptions) {
+        this.showPaymentOptions = true;
+      } else {
+        this.placeOrder();
+      }
+    },
+    async placeOrder() {
+      if (this.cartItems.length === 0 || !this.selectedPaymentMethod) return;
+
+      try {
+        const token = localStorage.getItem("token");
+
+        if (this.selectedPaymentMethod === "wallet") {
+          // Handle wallet payment
+          const res = await axios.post(
+            "http://localhost:5000/api/orders/place-order-wallet",
+            {
+              items: this.cartItems.map((item) => ({
+                product: item.product._id,
+                quantity: item.quantity,
+                price: item.product.discountPrice,
+              })),
+              totalAmount: this.totalAmount,
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          alert(res.data.msg);
+          this.cartItems = [];
+          this.walletBalance = res.data.newBalance;
+          this.showPaymentOptions = false;
+          this.selectedPaymentMethod = null;
+          this.$emit("cart-updated", 0);
+          this.$emit("order-placed");
+          this.$emit("close");
+        } else if (this.selectedPaymentMethod === "razorpay") {
+          // Handle Razorpay payment
+          // 1. Create order on backend
+          const res = await axios.post(
+            "http://localhost:5000/api/orders/create-razorpay-order",
+            { amount: this.totalAmount },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          const { id: razorpay_order_id, amount, currency } = res.data;
+
+          // 2. Open Razorpay checkout
+          const options = {
+            key: "rzp_test_S03eZU04VsM19U", // Replace with your key
+            amount: amount,
+            currency: currency,
+            name: "Distribution Agency",
+            description: "Order Payment",
+            order_id: razorpay_order_id,
+            handler: async (response) => {
+              // 3. Verify payment on backend
+              try {
+                const verifyRes = await axios.post(
+                  "http://localhost:5000/api/orders/verify-payment",
+                  {
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                    items: this.cartItems.map((item) => ({
+                      product: item.product._id,
+                      quantity: item.quantity,
+                      price: item.product.discountPrice,
+                    })),
+                    totalAmount: this.totalAmount,
+                  },
+                  { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                alert(verifyRes.data.msg);
+                this.cartItems = [];
+                this.showPaymentOptions = false;
+                this.selectedPaymentMethod = null;
+                this.$emit("cart-updated", 0);
+                this.$emit("order-placed");
+                this.$emit("close");
+                // Redirect to orders page or show success
+              } catch (err) {
+                console.error("Payment verification failed:", err);
+                alert("Payment verification failed. Please contact support.");
+              }
+            },
+            prefill: {
+              name: "", // You can populate this from user profile
+              email: "",
+            },
+            theme: {
+              color: "#2874f0",
+            },
+          };
+
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        }
+      } catch (err) {
+        console.error("Error placing order:", err);
+        if (err.response && err.response.data && err.response.data.msg) {
+          alert(err.response.data.msg);
+        } else {
+          alert("Failed to place order");
+        }
+      }
+    },
     async fetchCart() {
       this.loading = true;
       try {
@@ -104,6 +276,23 @@ export default {
         console.error("Error fetching cart:", err);
       } finally {
         this.loading = false;
+      }
+    },
+    async fetchWalletBalance() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await axios.get(
+          "http://localhost:5000/api/wallet/balance",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (res.data.success) {
+          this.walletBalance = res.data.balance;
+        }
+      } catch (err) {
+        console.error("Error fetching wallet balance:", err);
       }
     },
     async updateQuantity(productId, change) {
@@ -147,6 +336,32 @@ export default {
     getImageUrl(path) {
       if (!path) return null;
       return path.startsWith("/") ? `http://localhost:5000${path}` : path;
+    },
+    async fetchUserProfile() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await axios.get("http://localhost:5000/api/auth/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        this.userProfile = res.data.user;
+      } catch (err) {
+        console.error("Error fetching user profile:", err);
+      }
+    },
+    checkProfileCompletion() {
+      if (!this.userProfile) return false;
+      const requiredFields = [
+        "name",
+        "phone",
+        "pincode",
+        "storeName",
+        "storeAddress",
+      ];
+      return requiredFields.every(
+        (field) =>
+          this.userProfile[field] && this.userProfile[field].trim() !== ""
+      );
     },
   },
 };
@@ -375,6 +590,62 @@ export default {
   border-radius: 2px;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.place-order-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Payment Options */
+.payment-options {
+  margin: 16px 0;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.payment-options h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #2874f0;
+}
+
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.payment-method {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.payment-method:hover {
+  background: #e3f2fd;
+}
+
+.payment-method input[type="radio"] {
+  margin-right: 12px;
+  accent-color: #2874f0;
+}
+
+.method-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.method-name.disabled {
+  color: #999;
+  text-decoration: line-through;
 }
 
 @media (max-width: 600px) {

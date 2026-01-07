@@ -73,7 +73,14 @@ const userSchema = new mongoose.Schema({
       product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
       quantity: { type: Number, default: 1 },
     }
-  ]
+  ],
+
+  // Wallet
+  walletBalance: {
+    type: Number,
+    default: 0,
+    min: 0,
+  }
 }, {
   collection: 'users',
   timestamps: true, // adds createdAt & updatedAt

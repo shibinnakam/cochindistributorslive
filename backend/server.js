@@ -1,8 +1,10 @@
-require('dotenv').config(); 
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs'); // For password hashing
+const http = require('http');
+const socketIo = require('socket.io');
 const User = require('./models/User');
 
 // Routes
@@ -14,10 +16,40 @@ const leaveRoutes = require("./routes/leaves");
 const messageRoutes = require("./routes/messages");
 const cartRoutes = require("./routes/cartRoutes");
 const chatRoutes = require("./routes/ChatRoutes");
-
-
+const orderRoutes = require("./routes/orderRoutes");
+const walletRoutes = require("./routes/walletRoutes");
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: "http://localhost:8080",
+    methods: ["GET", "POST"]
+  }
+});
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+
+  socket.on('join', (data) => {
+    const { token } = data;
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        socket.join(decoded.user.id);
+        console.log(`User ${decoded.user.id} joined room`);
+      } catch (error) {
+        console.error('Invalid token for socket join:', error);
+      }
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
 
 // Middleware
 app.use(cors());
@@ -51,16 +83,18 @@ mongoose
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/products', productRoutes);  
+app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/leaves", leaveRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/orders", orderRoutes(io)); // Pass io to orderRoutes
+app.use("/api/wallet", walletRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

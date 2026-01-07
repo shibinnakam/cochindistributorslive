@@ -162,7 +162,7 @@
         </div>
 
         <!-- Side Image (Optional) -->
-        <div class="form-group full-width">
+        <div v-if="shape !== 'pillow'" class="form-group full-width">
           <label>Side Image (Optional)</label>
           <p class="form-hint">Upload for better 3D visualization</p>
           <input
@@ -177,7 +177,7 @@
         </div>
 
         <!-- Top Image (Optional) -->
-        <div class="form-group full-width">
+        <div v-if="shape !== 'pillow'" class="form-group full-width">
           <label>Top Image (Optional)</label>
           <p class="form-hint">Upload for even better 3D visualization</p>
           <input
@@ -192,7 +192,7 @@
         </div>
 
         <!-- Bottom Image (Optional) -->
-        <div class="form-group full-width">
+        <div v-if="shape !== 'pillow'" class="form-group full-width">
           <label>Bottom Image (Optional)</label>
           <p class="form-hint">Upload for complete 3D visualization</p>
           <input

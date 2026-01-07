@@ -1,0 +1,3 @@
+- [x] Update UserPage.vue to add dynamic class for expanded 3D view height
+- [x] Update ProductList.vue to add dynamic class for expanded 3D view height
+- [x] Test the changes to ensure 3D view is bigger

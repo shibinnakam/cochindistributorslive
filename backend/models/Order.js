@@ -30,16 +30,21 @@ const orderSchema = new mongoose.Schema(
     },
     paymentId: {
       type: String,
-      required: true,
+      required: false,
     },
     razorpayOrderId: {
       type: String,
-      required: true,
+      required: false,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["razorpay", "wallet"],
+      default: "razorpay",
     },
     status: {
       type: String,
       default: "ordered",
-      enum: ["ordered", "shipped", "delivered", "cancelled"],
+      enum: ["ordered", "accepted", "shipped", "delivered", "cancelled"],
     },
   },
   { timestamps: true }

@@ -261,11 +261,50 @@ export default {
 
         geometry.computeVertexNormals();
 
+        // Create a combined texture for sides by blending front and back
+        const canvas = document.createElement("canvas");
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext("2d");
+
+        // Draw front image
+        const frontImg = frontTexture.image;
+        ctx.drawImage(frontImg, 0, 0, 256, 512);
+
+        // Draw back image blended or side by side
+        const backImg = backTexture.image;
+        ctx.globalAlpha = 0.5; // Blend back with front for sides
+        ctx.drawImage(backImg, 0, 0, 256, 512);
+        ctx.globalAlpha = 1.0;
+
+        // Draw back on the right half for wrapping effect
+        ctx.drawImage(backImg, 256, 0, 256, 512);
+
+        const sideTexture = new THREE.CanvasTexture(canvas);
+        sideTexture.colorSpace = THREE.SRGBColorSpace;
+        sideTexture.wrapS = THREE.RepeatWrapping;
+        sideTexture.wrapT = THREE.RepeatWrapping;
+
+        // Create a top/bottom texture by averaging front and back colors
+        const topBottomCanvas = document.createElement("canvas");
+        topBottomCanvas.width = 256;
+        topBottomCanvas.height = 256;
+        const topCtx = topBottomCanvas.getContext("2d");
+
+        // Draw front and back blended for top/bottom
+        topCtx.globalAlpha = 0.5;
+        topCtx.drawImage(frontImg, 0, 0, 256, 256);
+        topCtx.drawImage(backImg, 0, 0, 256, 256);
+        topCtx.globalAlpha = 1.0;
+
+        const topBottomTexture = new THREE.CanvasTexture(topBottomCanvas);
+        topBottomTexture.colorSpace = THREE.SRGBColorSpace;
+
         const materials = [
-          new THREE.MeshStandardMaterial({ color: 0xcccccc }), // Right
-          new THREE.MeshStandardMaterial({ color: 0xcccccc }), // Left
-          new THREE.MeshStandardMaterial({ color: 0xcccccc }), // Top
-          new THREE.MeshStandardMaterial({ color: 0xcccccc }), // Bottom
+          new THREE.MeshStandardMaterial({ map: sideTexture }), // Right
+          new THREE.MeshStandardMaterial({ map: sideTexture }), // Left
+          new THREE.MeshStandardMaterial({ map: topBottomTexture }), // Top
+          new THREE.MeshStandardMaterial({ map: topBottomTexture }), // Bottom
           new THREE.MeshStandardMaterial({ map: frontTexture }), // Front
           new THREE.MeshStandardMaterial({ map: backTexture }), // Back
         ];

@@ -45,7 +45,10 @@
         class="product-card"
       >
         <!-- Image Container -->
-        <div class="image-container">
+        <div
+          class="image-container"
+          :class="{ expanded: active3DProductId === product._id }"
+        >
           <!-- 3D View (Real or Simulated) -->
           <div v-if="active3DProductId === product._id" class="model-wrapper">
             <!-- Real 3D Model -->
@@ -439,6 +442,10 @@ export default {
   align-items: center;
   justify-content: center;
   padding: 16px;
+}
+
+.image-container.expanded {
+  height: 400px;
 }
 
 .image-container img {
