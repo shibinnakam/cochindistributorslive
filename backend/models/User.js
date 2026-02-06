@@ -80,7 +80,8 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0,
-  }
+  },
+  refreshTokens: [String],
 }, {
   collection: 'users',
   timestamps: true, // adds createdAt & updatedAt

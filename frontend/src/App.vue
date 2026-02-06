@@ -12,6 +12,7 @@
 </template>
 
 <script>
+import axios from "axios";
 import Navbar from "@/components/AppNavbar.vue";
 import LoginModal from "@/views/Login.vue"; // reuse your existing login.vue
 
@@ -22,6 +23,22 @@ export default {
     return {
       showLogin: false,
     };
+  },
+  async created() {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        // Verify token with backend
+        const res = await axios.get("/api/auth/verify");
+        if (res.data.valid) {
+          // Sync user info just in case
+          localStorage.setItem("user", JSON.stringify(res.data.user));
+        }
+      } catch (err) {
+        console.warn("Session verification failed on startup:", err);
+        // We don't necessarily logout here, let the interceptor handle 401s
+      }
+    }
   },
   computed: {
     isDashboard() {

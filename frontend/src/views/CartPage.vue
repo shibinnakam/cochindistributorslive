@@ -37,7 +37,7 @@
                 <button
                   class="qty-btn"
                   @click="updateQuantity(item.product._id, -1)"
-                  :disabled="item.quantity <= 1"
+                  :disabled="item.quantity <= 10"
                 >
                   -
                 </button>
@@ -45,6 +45,7 @@
                 <button
                   class="qty-btn"
                   @click="updateQuantity(item.product._id, 1)"
+                  :disabled="item.quantity >= 150"
                 >
                   +
                 </button>
@@ -112,13 +113,26 @@
       </div>
     </div>
   </div>
+
+  <!-- Scratch Card Modal -->
+  <ScratchCard
+    v-if="showScratchCard"
+    :orderId="scratchCardOrderId"
+    @close="closeScratchCard"
+    @wallet-updated="updateWalletBalance"
+  />
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
+import socket from "@/socket.js";
+import ScratchCard from "@/components/ScratchCard.vue";
 
 export default {
   name: "CartPage",
+  components: {
+    ScratchCard,
+  },
   data() {
     return {
       cartItems: [],
@@ -141,6 +155,21 @@ export default {
     this.fetchWalletBalance();
     this.fetchUserProfile();
     this.loadRazorpay();
+
+    // Socket listeners for real-time updates
+    socket.on("cartUpdated", (data) => {
+      this.cartItems = data.cart;
+      this.$emit("cart-updated", this.cartItems.length);
+    });
+
+    socket.on("walletUpdated", (data) => {
+      this.walletBalance = data.balance;
+    });
+  },
+  beforeUnmount() {
+    // Remove socket listeners
+    socket.off("cartUpdated");
+    socket.off("walletUpdated");
   },
   methods: {
     loadRazorpay() {
@@ -167,39 +196,34 @@ export default {
       if (this.cartItems.length === 0 || !this.selectedPaymentMethod) return;
 
       try {
-        const token = localStorage.getItem("token");
-
         if (this.selectedPaymentMethod === "wallet") {
           // Handle wallet payment
-          const res = await axios.post(
-            "http://localhost:5000/api/orders/place-order-wallet",
-            {
-              items: this.cartItems.map((item) => ({
-                product: item.product._id,
-                quantity: item.quantity,
-                price: item.product.discountPrice,
-              })),
-              totalAmount: this.totalAmount,
-            },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
+          const res = await axios.post("/api/orders/place-order-wallet", {
+            items: this.cartItems.map((item) => ({
+              product: item.product._id,
+              quantity: item.quantity,
+              price: item.product.discountPrice,
+            })),
+            totalAmount: this.totalAmount,
+          });
 
-          alert(res.data.msg);
+          // Show scratch card instead of alert
           this.cartItems = [];
           this.walletBalance = res.data.newBalance;
           this.showPaymentOptions = false;
           this.selectedPaymentMethod = null;
           this.$emit("cart-updated", 0);
           this.$emit("order-placed");
-          this.$emit("close");
+
+          // Show scratch card
+          this.scratchCardOrderId = res.data.order._id;
+          this.showScratchCard = true;
         } else if (this.selectedPaymentMethod === "razorpay") {
           // Handle Razorpay payment
           // 1. Create order on backend
-          const res = await axios.post(
-            "http://localhost:5000/api/orders/create-razorpay-order",
-            { amount: this.totalAmount },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
+          const res = await axios.post("/api/orders/create-razorpay-order", {
+            amount: this.totalAmount,
+          });
 
           const { id: razorpay_order_id, amount, currency } = res.data;
 
@@ -215,7 +239,7 @@ export default {
               // 3. Verify payment on backend
               try {
                 const verifyRes = await axios.post(
-                  "http://localhost:5000/api/orders/verify-payment",
+                  "/api/orders/verify-payment",
                   {
                     razorpay_order_id: response.razorpay_order_id,
                     razorpay_payment_id: response.razorpay_payment_id,
@@ -226,18 +250,19 @@ export default {
                       price: item.product.discountPrice,
                     })),
                     totalAmount: this.totalAmount,
-                  },
-                  { headers: { Authorization: `Bearer ${token}` } }
+                  }
                 );
 
-                alert(verifyRes.data.msg);
+                // Show scratch card instead of alert
                 this.cartItems = [];
                 this.showPaymentOptions = false;
                 this.selectedPaymentMethod = null;
                 this.$emit("cart-updated", 0);
                 this.$emit("order-placed");
-                this.$emit("close");
-                // Redirect to orders page or show success
+
+                // Show scratch card
+                this.scratchCardOrderId = verifyRes.data.order._id;
+                this.showScratchCard = true;
               } catch (err) {
                 console.error("Payment verification failed:", err);
                 alert("Payment verification failed. Please contact support.");
@@ -267,10 +292,7 @@ export default {
     async fetchCart() {
       this.loading = true;
       try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/cart", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get("/api/cart");
         this.cartItems = res.data;
       } catch (err) {
         console.error("Error fetching cart:", err);
@@ -280,14 +302,7 @@ export default {
     },
     async fetchWalletBalance() {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        const res = await axios.get(
-          "http://localhost:5000/api/wallet/balance",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await axios.get("/api/wallet/balance");
         if (res.data.success) {
           this.walletBalance = res.data.balance;
         }
@@ -297,12 +312,19 @@ export default {
     },
     async updateQuantity(productId, change) {
       try {
-        const token = localStorage.getItem("token");
-        const res = await axios.post(
-          "http://localhost:5000/api/cart/add",
-          { productId, quantity: change },
-          { headers: { Authorization: `Bearer ${token}` } }
+        const currentItem = this.cartItems.find(
+          (i) => i.product._id === productId
         );
+        if (currentItem) {
+          const newQty = currentItem.quantity + change;
+          if (newQty < 10 && change < 0) return; // Prevent going below 10
+          if (newQty > 150 && change > 0) return; // Prevent going above 150
+        }
+
+        const res = await axios.post("/api/cart/add", {
+          productId,
+          quantity: change,
+        });
 
         // Update local state
         this.cartItems = res.data.cart;
@@ -320,11 +342,7 @@ export default {
       if (!confirm("Are you sure you want to remove this item?")) return;
 
       try {
-        const token = localStorage.getItem("token");
-        const res = await axios.delete(
-          `http://localhost:5000/api/cart/remove/${productId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const res = await axios.delete(`/api/cart/remove/${productId}`);
 
         this.cartItems = res.data.cart;
         this.$emit("cart-updated", this.cartItems.length);
@@ -335,15 +353,11 @@ export default {
     },
     getImageUrl(path) {
       if (!path) return null;
-      return path.startsWith("/") ? `http://localhost:5000${path}` : path;
+      return path.startsWith("/") ? path : path;
     },
     async fetchUserProfile() {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        const res = await axios.get("http://localhost:5000/api/auth/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get("/api/auth/profile");
         this.userProfile = res.data.user;
       } catch (err) {
         console.error("Error fetching user profile:", err);
@@ -362,6 +376,15 @@ export default {
         (field) =>
           this.userProfile[field] && this.userProfile[field].trim() !== ""
       );
+    },
+    closeScratchCard() {
+      this.showScratchCard = false;
+      this.scratchCardOrderId = null;
+      this.$emit("close"); // Close cart modal after scratch card
+    },
+    updateWalletBalance(newBalance) {
+      this.walletBalance = newBalance;
+      this.$emit("wallet-updated", newBalance);
     },
   },
 };

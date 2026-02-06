@@ -1,27 +1,75 @@
 <template>
-  <div class="flipkart-layout">
-    <!-- Navbar -->
-    <nav class="navbar">
-      <div class="nav-container">
-        <div class="logo-section">
-          <img src="@/assets/logo.jpeg" alt="Logo" class="logo" />
-          <span class="brand-name">Distribution Agency</span>
+  <div class="marketplace-layout">
+    <!-- Slim Navbar -->
+    <nav class="top-nav">
+      <div class="top-nav-container">
+        <div class="brand-section" @click="$router.push('/')">
+          <img src="@/assets/logo.jpeg" alt="Logo" class="nav-logo" />
+          <span class="brand-title">Cochin Distributors</span>
         </div>
 
-        <div class="search-bar">
-          <input
-            type="text"
-            placeholder="Search for products, brands and more"
-            v-model="searchQuery"
-          />
-          <button
-            class="camera-btn"
-            @click="triggerImageUpload"
-            title="Search by Image"
-          >
-            📷
-          </button>
-          <button class="search-btn">🔍</button>
+        <div class="top-nav-center">
+          <span class="phone-link">📞 (450) 678 099 67</span>
+        </div>
+
+        <div class="top-nav-actions">
+          <div class="nav-extra-info">
+            <span class="wallet-balance">💰 ₹{{ walletBalance }}</span>
+          </div>
+          <div class="user-action dropdown-trigger">
+            <span class="btn-signin">👤 {{ userName || "SIGN IN" }}</span>
+            <div class="nav-dropdown">
+              <a href="#" @click.prevent="showProfile = true">My Profile</a>
+              <a href="#" @click.prevent="showWallet = true">My Wallet</a>
+              <a href="#" @click.prevent="showOrders = true">My Orders</a>
+              <a href="#" @click.prevent="logout">Logout</a>
+            </div>
+          </div>
+          <div class="cart-btn" @click="showCart = true">
+            <span>🛒</span>
+            <span class="badge" v-if="cartCount > 0">{{ cartCount }}</span>
+          </div>
+          <button class="hamburger">☰</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero-section">
+      <div class="hero-container">
+        <h1>Product directory</h1>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content-wrapper">
+      <div class="content-container">
+        <!-- Floating Filter Bar -->
+        <div class="search-filter-ribbon">
+          <div class="ribbon-item search-box">
+            <span class="icon">📍</span>
+            <input
+              type="text"
+              placeholder="Search products..."
+              v-model="searchQuery"
+            />
+            <button class="img-search-btn" @click="triggerImageUpload">
+              📷
+            </button>
+          </div>
+          <div class="ribbon-item select-box">
+            <select v-model="selectedCategory">
+              <option :value="null">All Categories</option>
+              <option v-for="cat in categories" :key="cat._id" :value="cat._id">
+                {{ cat.name }}
+              </option>
+            </select>
+          </div>
+          <div class="ribbon-item select-box">
+            <select disabled>
+              <option>All Locations</option>
+            </select>
+          </div>
           <input
             type="file"
             ref="imageInput"
@@ -31,189 +79,285 @@
           />
         </div>
 
-        <div class="nav-links">
-          <div class="nav-item user-menu">
-            <span>{{ userName || "User" }}</span>
-            <div class="dropdown">
-              <a href="#" @click.prevent="showProfile = true">My Profile</a>
-              <a href="#" @click.prevent="logout">Logout</a>
-            </div>
-          </div>
-          <div class="nav-item">
-            <span>Become a Seller</span>
-          </div>
-          <div class="nav-item">
-            <span>More</span>
-          </div>
-          <div class="nav-item cart" @click="showCart = true">
-            <span
-              >🛒 Cart
-              <span v-if="cartCount > 0" class="cart-badge">{{
-                cartCount
-              }}</span></span
-            >
-          </div>
-        </div>
-      </div>
-    </nav>
-
-    <!-- Categories Bar -->
-    <div class="categories-bar">
-      <div
-        class="category-item"
-        v-for="cat in categories"
-        :key="cat._id"
-        @click="selectCategory(cat)"
-        :class="{ active: selectedCategory === cat._id }"
-      >
-        <div class="cat-img-placeholder">
-          <img
-            v-if="cat.image"
-            :src="getImageUrl(cat.image)"
-            :alt="cat.name"
-            class="cat-img"
-          />
-        </div>
-        <span>{{ cat.name }}</span>
-      </div>
-    </div>
-
-    <!-- Welcome Banner -->
-    <div v-if="showWelcome" class="welcome-banner">
-      <div class="welcome-content">
-        <span class="welcome-text"
-          >Welcome back, <b>{{ userName }}</b
-          >! Explore our latest collection.</span
-        >
-        <button class="close-welcome" @click="showWelcome = false">✕</button>
-      </div>
-    </div>
-
-    <!-- Main Content -->
-    <main class="main-content">
-      <!-- Banner (Placeholder) -->
-      <div class="banner-section">
-        <div class="banner">
-          <h2>Big Savings on Distribution Products!</h2>
-          <p>Shop now for the best deals.</p>
-        </div>
-      </div>
-
-      <!-- Product Grid -->
-      <div class="product-section">
-        <h3>Latest Products</h3>
-
-        <div v-if="loading" class="loading">
-          <div class="spinner"></div>
-          <p>Loading products...</p>
-        </div>
-
-        <div v-else-if="filteredProducts.length === 0" class="no-products">
-          <p>No products found.</p>
-        </div>
-
-        <div v-else class="products-grid">
-          <div
-            v-for="product in filteredProducts"
-            :key="product._id"
-            class="product-card"
-          >
-            <div class="image-wrapper">
-              <!-- 3D View Toggle -->
-              <div
-                v-if="active3DProductId === product._id"
-                class="model-container"
-              >
-                <ThreeDBox
-                  :image="getImageUrl(product.image)"
-                  :image-front="getImageUrl(product.imageFront)"
-                  :image-side="getImageUrl(product.imageSide)"
-                  :image-back="getImageUrl(product.imageBack)"
-                  :image-top="getImageUrl(product.imageTop)"
-                  :image-bottom="getImageUrl(product.imageBottom)"
-                  :model3D="getImageUrl(product.model3D)"
-                  :shape="product.shape"
-                />
-                <button class="close-3d" @click.stop="toggle3D(product._id)">
-                  ✕
-                </button>
+        <div class="layout-body">
+          <!-- Sidebar -->
+          <aside class="filter-sidebar">
+            <div class="sidebar-header">
+              <div class="filter-title">
+                <span class="icon">📊</span>
+                <span>FILTER</span>
               </div>
-              <template v-else>
-                <img
-                  :src="getImageUrl(product.image || product.imageFront)"
-                  :alt="product.name"
-                  class="product-img"
-                />
-                <button
-                  class="view-3d-btn"
-                  @click.stop="toggle3D(product._id)"
-                  v-if="has3DImages(product)"
-                >
-                  3D View
-                </button>
-              </template>
-
-              <div class="wishlist-icon">❤</div>
-            </div>
-
-            <div class="product-details">
-              <h3 class="product-title" :title="product.name">
-                {{ product.name }}
-              </h3>
-              <div class="rating-badge">4.4 ★</div>
-              <div class="price-row">
-                <span class="current-price">₹{{ product.discountPrice }}</span>
-                <span class="original-price">₹{{ product.originalPrice }}</span>
-                <span class="discount"
-                  >{{
-                    calculateDiscount(
-                      product.originalPrice,
-                      product.discountPrice
-                    )
-                  }}% off</span
-                >
-              </div>
-              <div class="offers">
-                <span>Free delivery</span>
-              </div>
-              <button class="add-to-cart-btn" @click.stop="addToCart(product)">
-                ADD TO CART
+              <button class="btn-reset" @click="resetFilters">
+                Reset filter
               </button>
             </div>
-          </div>
+
+            <div class="filter-section">
+              <h4 @click="toggleSection('delivery')">
+                Delivery method
+                <span>{{ sectionOpen.delivery ? "−" : "+" }}</span>
+              </h4>
+              <div class="section-content" v-show="sectionOpen.delivery">
+                <label><input type="checkbox" /> Delivery</label>
+                <label><input type="checkbox" /> Pickup</label>
+              </div>
+            </div>
+
+            <div class="filter-section">
+              <h4 @click="toggleSection('categories')">
+                Categories <span>{{ sectionOpen.categories ? "−" : "+" }}</span>
+              </h4>
+              <div class="section-content" v-show="sectionOpen.categories">
+                <label v-for="cat in categories" :key="cat._id">
+                  <input
+                    type="checkbox"
+                    :checked="selectedCategory === cat._id"
+                    @change="selectCategory(cat)"
+                  />
+                  {{ cat.name }}
+                </label>
+              </div>
+            </div>
+
+            <div class="filter-section">
+              <h4>Additional criterion <span>+</span></h4>
+            </div>
+          </aside>
+
+          <!-- Listing Area -->
+          <section class="listing-area">
+            <div class="listing-toolbar">
+              <p>
+                Total found: <b>{{ filteredProducts.length }}</b> products
+              </p>
+              <div class="sorting-controls">
+                <span>Sorting</span>
+                <select>
+                  <option>Featured</option>
+                </select>
+              </div>
+            </div>
+
+            <div v-if="loading" class="listing-loading">
+              <div class="loader-spinner"></div>
+            </div>
+
+            <div
+              v-else-if="filteredProducts.length === 0"
+              class="listing-empty"
+            >
+              <p>No products match your search.</p>
+            </div>
+
+            <div v-else class="product-marketplace-grid">
+              <div
+                v-for="product in filteredProducts"
+                :key="product._id"
+                class="marketplace-product-card"
+              >
+                <div class="card-thumb">
+                  <span class="top-tag">top</span>
+                  <img
+                    :src="getImageUrl(product.image || product.imageFront)"
+                    :alt="product.name"
+                  />
+                  <div class="brand-spot">
+                    <img src="@/assets/logo.jpeg" alt="Brand" />
+                  </div>
+                </div>
+
+                <div class="card-body">
+                  <h3 class="product-name">{{ product.name }}</h3>
+                  <div class="product-rating">
+                    <div class="stars">
+                      <span
+                        v-for="star in 5"
+                        :key="star"
+                        :class="{
+                          filled:
+                            star <= Math.round(product.averageRating || 0),
+                        }"
+                        class="star"
+                      >
+                        ★
+                      </span>
+                    </div>
+                    <span class="count">({{ product.ratingCount || 0 }})</span>
+                  </div>
+                  <div class="product-labels">
+                    <span
+                      >{{
+                        product.category ? product.category.name : "Wholesale"
+                      }}
+                      • Bulk • Direct</span
+                    >
+                  </div>
+                  <p class="product-teaser">
+                    {{
+                      product.description ||
+                      "Premium distribution quality product for businesses."
+                    }}
+                  </p>
+
+                  <div class="product-stats">
+                    <div class="stat">
+                      <span class="label">Min order</span>
+                      <span class="value">₹{{ product.discountPrice }}</span>
+                    </div>
+                  </div>
+
+                  <div class="card-footer">
+                    <button
+                      class="btn-view-more"
+                      @click.stop="toggle3D(product._id)"
+                    >
+                      more <span>→</span>
+                    </button>
+                    <button class="btn-buy" @click.stop="addToCart(product)">
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 3D View Modal -->
+                <div
+                  v-if="active3DProductId === product._id"
+                  class="view3d-modal"
+                >
+                  <div class="modal-content-3d">
+                    <div class="visualizer-section">
+                      <ThreeDBox
+                        :image="getImageUrl(product.image)"
+                        :image-front="getImageUrl(product.imageFront)"
+                        :image-side="getImageUrl(product.imageSide)"
+                        :image-back="getImageUrl(product.imageBack)"
+                        :image-top="getImageUrl(product.imageTop)"
+                        :image-bottom="getImageUrl(product.imageBottom)"
+                        :model3D="getImageUrl(product.model3D)"
+                        :shape="product.shape"
+                      />
+                    </div>
+
+                    <div class="details-section">
+                      <h3>Product Reviews</h3>
+                      <div
+                        v-if="productReviews.length === 0"
+                        class="no-reviews"
+                      >
+                        No reviews yet.
+                      </div>
+                      <div v-else class="reviews-list-mini">
+                        <div
+                          v-for="rev in productReviews"
+                          :key="rev._id"
+                          class="mini-review-card"
+                        >
+                          <div class="rev-header">
+                            <span class="rev-user">{{ rev.user.name }}</span>
+                            <div class="rev-stars">
+                              <span
+                                v-for="s in 5"
+                                :key="s"
+                                :class="{ filled: s <= rev.rating }"
+                                class="star"
+                                >★</span
+                              >
+                            </div>
+                          </div>
+                          <p class="rev-comment">{{ rev.comment }}</p>
+                          <span class="rev-date">
+                            {{ formatDate(rev.createdAt) }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    class="close-modal"
+                    @click.stop="toggle3D(product._id)"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pagination Indicator (Visual only) -->
+            <div class="pagination-visual">
+              <div class="dot-loader">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </main>
 
-    <!-- Profile Modal -->
+    <!-- Modals -->
     <ProfilePage v-if="showProfile" @close="showProfile = false" />
-
-    <!-- Cart Modal -->
     <CartPage
       v-if="showCart"
       @close="showCart = false"
       @cart-updated="cartCount = $event"
+      @show-scratch-card="handleShowScratchCard"
+    />
+    <ChatBot :categories="categories" :products="products" />
+    <WalletPage v-if="showWallet" @close="showWallet = false" />
+    <OrdersPage v-if="showOrders" @close="showOrders = false" />
+    <ScratchCard
+      v-if="showScratchCard"
+      :orderId="scratchCardOrderId"
+      @close="closeScratchCard"
+      @wallet-updated="updateWalletBalance"
     />
 
-    <!-- ChatBot -->
-    <ChatBot :categories="categories" :products="products" />
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-col branding-col">
+          <img src="@/assets/logo.jpeg" alt="Logo" class="footer-logo" />
+          <h3>Cochin Distributors</h3>
+          <p>Leading wholesale distribution network.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <a href="#">Help Center</a>
+          <a href="#">Contact Us</a>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <a href="#">About Us</a>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+      <div class="footer-btm">
+        <p>&copy; 2024 Cochin Distributors. All rights reserved.</p>
+      </div>
+    </footer>
   </div>
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
+import socket from "@/socket.js";
 import ThreeDBox from "@/components/ThreeDBox.vue";
 import ChatBot from "@/components/ChatBot.vue";
+import ScratchCard from "@/components/ScratchCard.vue";
 import ProfilePage from "@/views/ProfilePage.vue";
 import CartPage from "@/views/CartPage.vue";
+import WalletPage from "@/views/WalletPage.vue";
+import OrdersPage from "@/views/OrdersPage.vue";
 
 export default {
   name: "UserPage",
   components: {
     ThreeDBox,
     ChatBot,
+    ScratchCard,
     ProfilePage,
     CartPage,
+    WalletPage,
+    OrdersPage,
   },
   data() {
     return {
@@ -226,8 +370,18 @@ export default {
       cartCount: 0,
       showProfile: false,
       showCart: false,
+      showWallet: false,
+      showOrders: false,
       showWelcome: true,
       selectedCategory: null,
+      showScratchCard: false,
+      scratchCardOrderId: null,
+      walletBalance: 0,
+      sectionOpen: {
+        delivery: true,
+        categories: true,
+      },
+      productReviews: [],
     };
   },
   computed: {
@@ -258,6 +412,7 @@ export default {
     this.fetchProducts();
     this.fetchCategories();
     this.fetchCart();
+    this.fetchWalletBalance();
 
     const userStr = localStorage.getItem("user");
     if (userStr) {
@@ -270,6 +425,82 @@ export default {
         console.error("Error parsing user data", e);
       }
     }
+
+    // Socket listeners for real-time updates
+    socket.on("productAdded", (data) => {
+      this.products.unshift(data.product);
+    });
+
+    socket.on("productUpdated", (data) => {
+      const index = this.products.findIndex((p) => p._id === data.product._id);
+      if (index !== -1) {
+        this.$set(this.products, index, data.product);
+      }
+    });
+
+    socket.on("productDeleted", (data) => {
+      this.products = this.products.filter((p) => p._id !== data.productId);
+    });
+
+    socket.on("categoryAdded", (data) => {
+      this.categories.push(data.category);
+    });
+
+    socket.on("categoryUpdated", (data) => {
+      const index = this.categories.findIndex(
+        (c) => c._id === data.category._id
+      );
+      if (index !== -1) {
+        this.$set(this.categories, index, data.category);
+      }
+    });
+
+    socket.on("categoryDeleted", (data) => {
+      this.categories = this.categories.filter(
+        (c) => c._id !== data.categoryId
+      );
+    });
+
+    socket.on("cartUpdated", (data) => {
+      this.cartCount = data.cart.length;
+    });
+
+    socket.on("walletUpdated", (data) => {
+      this.walletBalance = data.balance;
+      if (this.showWallet) {
+        // Emit to WalletPage component if needed
+        this.$emit("wallet-updated", data.balance);
+      }
+    });
+
+    socket.on("orderPlaced", (data) => {
+      // Handle new order placed
+      // Maybe show a notification or refresh orders
+      if (this.showOrders) {
+        // Refresh orders list
+        this.$emit("order-placed", data.order);
+      }
+    });
+
+    socket.on("orderStatusUpdate", (data) => {
+      // Handle order status update
+      if (this.showOrders) {
+        this.$emit("order-status-updated", data);
+      }
+    });
+  },
+  beforeUnmount() {
+    // Remove socket listeners
+    socket.off("productAdded");
+    socket.off("productUpdated");
+    socket.off("productDeleted");
+    socket.off("categoryAdded");
+    socket.off("categoryUpdated");
+    socket.off("categoryDeleted");
+    socket.off("cartUpdated");
+    socket.off("walletUpdated");
+    socket.off("orderPlaced");
+    socket.off("orderStatusUpdate");
   },
   methods: {
     triggerImageUpload() {
@@ -284,15 +515,11 @@ export default {
 
       this.loading = true;
       try {
-        const res = await axios.post(
-          "http://localhost:5000/api/products/search-image",
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
+        const res = await axios.post("/api/products/search-image", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
 
         if (res.data.success) {
           this.products = res.data.products;
@@ -317,9 +544,7 @@ export default {
       try {
         const token = localStorage.getItem("token");
         if (!token) return;
-        const res = await axios.get("http://localhost:5000/api/cart", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get("/api/cart");
         this.cartCount = res.data.length;
       } catch (err) {
         console.error("Error fetching cart:", err);
@@ -333,11 +558,10 @@ export default {
           this.$router.push("/login");
           return;
         }
-        await axios.post(
-          "http://localhost:5000/api/cart/add",
-          { productId: product._id, quantity: 1 },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await axios.post("/api/cart/add", {
+          productId: product._id,
+          quantity: 10,
+        });
         this.fetchCart(); // Update count
         alert("Product added to cart!");
       } catch (err) {
@@ -352,9 +576,7 @@ export default {
     async fetchProducts() {
       this.loading = true;
       try {
-        const res = await axios.get(
-          "http://localhost:5000/api/products/getproduct"
-        );
+        const res = await axios.get("/api/products/getproduct");
         if (res.data.success) {
           this.products = res.data.products;
         }
@@ -366,7 +588,7 @@ export default {
     },
     async fetchCategories() {
       try {
-        const res = await axios.get("http://localhost:5000/api/categories");
+        const res = await axios.get("/api/categories");
         this.categories = Array.isArray(res.data)
           ? res.data
           : res.data.categories || [];
@@ -383,15 +605,44 @@ export default {
       return Math.round(((original - discount) / original) * 100);
     },
     toggle3D(productId) {
-      this.active3DProductId =
-        this.active3DProductId === productId ? null : productId;
+      if (this.active3DProductId === productId) {
+        this.active3DProductId = null;
+        this.productReviews = [];
+      } else {
+        this.active3DProductId = productId;
+        this.fetchProductReviews(productId);
+      }
+    },
+    async fetchProductReviews(productId) {
+      try {
+        const res = await axios.get(`/api/reviews/product/${productId}`);
+        if (res.data.success) {
+          this.productReviews = res.data.reviews;
+        }
+      } catch (err) {
+        console.error("Error fetching product reviews:", err);
+      }
+    },
+    formatDate(date) {
+      return new Date(date).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
     },
     has3DImages(product) {
       return product.model3D || (product.imageFront && product.imageBack);
     },
-    logout() {
-      localStorage.removeItem("token");
-      this.$router.push("/login");
+    async logout() {
+      try {
+        await axios.post("/api/auth/logout");
+      } catch (err) {
+        console.error("Logout error:", err);
+      } finally {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        this.$router.push("/login");
+      }
     },
     selectCategory(cat) {
       if (this.selectedCategory === cat._id) {
@@ -400,501 +651,840 @@ export default {
         this.selectedCategory = cat._id;
       }
     },
+    closeScratchCard() {
+      this.showScratchCard = false;
+      this.scratchCardOrderId = null;
+    },
+    updateWalletBalance() {
+      // Update wallet balance if needed, but since it's not stored here, maybe emit to parent or update local state
+      // For now, just close the scratch card
+      this.closeScratchCard();
+    },
+    handleShowScratchCard(orderId) {
+      this.scratchCardOrderId = orderId;
+      this.showScratchCard = true;
+    },
+    toggleSection(section) {
+      this.sectionOpen[section] = !this.sectionOpen[section];
+    },
+    resetFilters() {
+      this.selectedCategory = null;
+      this.searchQuery = "";
+    },
+    async fetchWalletBalance() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await axios.get("/api/wallet/balance");
+        if (res.data.success) {
+          this.walletBalance = res.data.balance;
+        }
+      } catch (err) {
+        console.error("Error fetching wallet balance:", err);
+      }
+    },
   },
 };
 </script>
 
 <style scoped>
-.flipkart-layout {
-  font-family: Roboto, Arial, sans-serif;
-  background-color: #f1f3f6;
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+.marketplace-layout {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background-color: #f7f9fb;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  color: #1f2937;
 }
 
-/* Navbar */
-.navbar {
-  background-color: #2874f0;
-  color: white;
-  height: 56px;
+/* Slim Top Nav */
+.top-nav {
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 12px 0;
   position: sticky;
   top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 }
 
-.nav-container {
-  max-width: 1248px;
+.top-nav-container {
+  max-width: 1400px;
   margin: 0 auto;
   display: flex;
   align-items: center;
-  height: 100%;
+  justify-content: space-between;
   padding: 0 20px;
-  gap: 20px;
 }
 
-.logo-section {
+.brand-section {
   display: flex;
   align-items: center;
+  gap: 12px;
   cursor: pointer;
 }
 
-.logo {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  margin-right: 8px;
-}
-
-.brand-name {
-  font-weight: bold;
-  font-style: italic;
-  font-size: 1.2rem;
-}
-
-.search-bar {
-  flex: 1;
-  display: flex;
-  background: white;
-  border-radius: 2px;
-  padding: 0 10px;
-  height: 36px;
-  align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.camera-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 1.2rem;
-  padding: 0 10px;
-  display: flex;
-  align-items: center;
-}
-.camera-btn:hover {
-  opacity: 0.7;
-}
-
-.search-bar input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 14px;
-  padding: 0 10px;
-}
-
-.search-btn {
-  background: none;
-  border: none;
-  color: #2874f0;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 30px;
-  font-weight: 500;
-}
-
-.nav-item {
-  cursor: pointer;
-  font-size: 16px;
-  white-space: nowrap;
-}
-
-.user-menu {
-  background: white;
-  color: #2874f0;
-  padding: 4px 20px;
-  border-radius: 2px;
-  border: 1px solid #dbdbdb;
-  position: relative;
-}
-
-.user-menu:hover .dropdown {
-  display: block;
-}
-
-.dropdown {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background: white;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  min-width: 150px;
-  z-index: 10;
-}
-
-/* Welcome Banner */
-.welcome-banner {
-  background: linear-gradient(90deg, #2874f0, #5ba2f4);
-  color: white;
-  padding: 12px 20px;
-  text-align: center;
-  position: relative;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  animation: slideDown 0.5s ease-out;
-}
-
-.welcome-content {
-  max-width: 1248px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-}
-
-.welcome-text {
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.close-welcome {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 18px;
-  cursor: pointer;
-  opacity: 0.8;
-  position: absolute;
-  right: 20px;
-}
-
-.close-welcome:hover {
-  opacity: 1;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Category Images */
-.category-item {
-  cursor: pointer;
-  transition: transform 0.2s;
-  padding: 5px;
+.nav-logo {
+  width: 44px;
+  height: 44px;
   border-radius: 8px;
 }
 
-.category-item:hover {
-  transform: scale(1.05);
+.brand-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.025em;
 }
 
-.category-item.active {
-  background-color: #e0f7fa; /* Light blue highlight */
-  border: 1px solid #2874f0;
+.phone-link {
+  color: #f97316;
+  font-weight: 600;
+  font-size: 1rem;
 }
 
-.cat-img-placeholder {
-  width: 64px;
-  height: 64px;
-  background-color: #fff;
-  border-radius: 50%;
-  margin-bottom: 8px;
+.top-nav-actions {
   display: flex;
   align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  gap: 20px;
 }
 
-.cat-img {
+.nav-extra-info {
+  display: flex;
+  gap: 15px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.btn-signin {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #111827;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.dropdown-trigger {
+  position: relative;
+}
+
+.nav-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  min-width: 160px;
+  margin-top: 10px;
+  z-index: 100;
+}
+
+/* Invisible bridge to prevent dropdown from closing when moving mouse across the gap */
+.nav-dropdown::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: transparent;
+}
+
+.dropdown-trigger:hover .nav-dropdown {
+  display: block;
+}
+
+.nav-dropdown a {
+  display: block;
+  padding: 12px 16px;
+  color: #374151;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.nav-dropdown a:hover {
+  background: #f9fafb;
+  color: #f97316;
+}
+
+.cart-btn {
+  position: relative;
+  cursor: pointer;
+  font-size: 1.4rem;
+}
+
+.cart-btn .badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #f97316;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.hamburger {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #4b5563;
+}
+
+/* Hero Section */
+.hero-section {
+  background: url("https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop")
+    center/cover no-repeat;
+  height: 240px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 60px;
+}
+
+.hero-section::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+.hero-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-container h1 {
+  color: #ffffff;
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+/* Main Content Wrapper */
+.main-content-wrapper {
+  margin-top: -35px;
+  padding-bottom: 60px;
+  position: relative;
+  z-index: 10;
+}
+
+.content-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Filter Ribbon */
+.search-filter-ribbon {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  display: flex;
+  padding: 15px;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.ribbon-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px 15px;
+  transition: border-color 0.2s;
+}
+
+.ribbon-item:focus-within {
+  border-color: #f97316;
+}
+
+.ribbon-item .icon {
+  margin-right: 10px;
+  color: #9ca3af;
+}
+
+.ribbon-item input,
+.ribbon-item select {
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.img-search-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  opacity: 0.6;
+}
+
+/* Layout Body */
+.layout-body {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 30px;
+}
+
+/* Sidebar */
+.filter-sidebar {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  align-self: start;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.filter-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #111827;
+}
+
+.btn-reset {
+  background: none;
+  border: none;
+  color: #f97316;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter-section {
+  margin-bottom: 24px;
+}
+
+.filter-section h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111827;
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  margin-bottom: 15px;
+}
+
+.filter-section h4 span {
+  color: #9ca3af;
+}
+
+.section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-content label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #4b5563;
+  cursor: pointer;
+}
+
+.section-content input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #f97316;
+}
+
+/* Listings Area */
+.listing-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.results-count {
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.sorting-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.sorting-controls select {
+  background: white;
+  border: 1px solid #e5e7eb;
+  padding: 5px 15px;
+  border-radius: 6px;
+  outline: none;
+}
+
+/* Marketplace Grid */
+.product-marketplace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.marketplace-product-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  position: relative;
+}
+
+.marketplace-product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.card-thumb {
+  height: 200px;
+  position: relative;
+  background: #f3f4f6;
+}
+
+.card-thumb img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-}
-
-.dropdown a {
-  display: block;
-  padding: 10px 15px;
-  color: #333;
-  text-decoration: none;
-  font-size: 14px;
-}
-
-.dropdown a:hover {
-  background-color: #f5f5f5;
-}
-
-/* Categories Bar */
-.categories-bar {
-  background: white;
-  padding: 10px 0;
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
-  overflow-x: auto;
-}
-
-.category-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  min-width: 80px;
-}
-
-.cat-img-placeholder {
-  width: 64px;
-  height: 64px;
-  background-color: #e0e0e0;
-  border-radius: 50%;
-  margin-bottom: 8px;
-}
-
-.category-item span {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-}
-
-/* Main Content */
-.main-content {
-  max-width: 1248px;
-  margin: 10px auto;
-  width: 100%;
+  object-fit: contain;
   padding: 10px;
-  flex: 1;
 }
 
-.banner-section {
-  margin-bottom: 10px;
-}
-
-.banner {
-  background: linear-gradient(90deg, #2874f0, #0056b3);
+.top-tag {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: #f97316;
   color: white;
-  padding: 40px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 8px;
   border-radius: 4px;
-  text-align: center;
 }
 
-/* Product Grid */
-.product-section {
+.brand-spot {
+  position: absolute;
+  bottom: 0;
+  left: 15px;
+  transform: translateY(50%);
+  width: 50px;
+  height: 50px;
   background: white;
-  padding: 16px;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
-}
-
-.product-section h3 {
-  font-size: 22px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 10px;
-}
-
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 16px;
-}
-
-.product-card {
-  background: white;
-  border: 1px solid #f0f0f0;
-  border-radius: 4px;
-  padding: 16px;
-  transition: box-shadow 0.2s;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-.product-card:hover {
-  box-shadow: 0 3px 16px rgba(0, 0, 0, 0.1);
-}
-
-.image-wrapper {
-  height: 200px;
-  display: flex;
-  justify-content: center;
   align-items: center;
-  margin-bottom: 12px;
-  position: relative;
+  justify-content: center;
+  z-index: 5;
+  padding: 5px;
 }
 
-.product-img {
-  max-height: 100%;
-  max-width: 100%;
+.brand-spot img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
-.model-container {
-  width: 100%;
-  height: 100%;
-  position: relative;
+.card-body {
+  padding: 35px 20px 20px;
 }
 
-.close-3d {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
+.product-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 8px;
 }
 
-.view-3d-btn {
-  position: absolute;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #ddd;
-  padding: 4px 8px;
-  font-size: 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  color: #2874f0;
-  font-weight: bold;
+.product-rating {
+  margin-bottom: 12px;
 }
 
-.wishlist-icon {
-  position: absolute;
-  top: 0;
-  right: 0;
-  color: #c2c2c2;
-  cursor: pointer;
-  font-size: 20px;
+.product-rating .stars {
+  color: #f97316;
+  font-size: 0.9rem;
 }
 
-.product-details {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.product-rating .count {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  margin-left: 5px;
 }
 
-.product-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #212121;
-  margin: 0 0 6px;
+.product-labels {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.product-teaser {
+  font-size: 0.85rem;
+  color: #4b5563;
+  line-height: 1.5;
+  margin-bottom: 20px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.4;
 }
 
-.rating-badge {
-  background-color: #388e3c;
+.product-stats {
+  display: flex;
+  gap: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #f3f4f6;
+  margin-bottom: 20px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat .label {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  text-transform: capitalize;
+}
+
+.stat .value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-view-more {
+  background: #f97316;
   color: white;
-  font-size: 12px;
-  font-weight: bold;
-  padding: 2px 6px;
-  border-radius: 3px;
-  display: inline-block;
-  width: fit-content;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+}
+
+.btn-view-more:hover {
+  background: #ea580c;
+}
+
+.btn-buy {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-buy:hover {
+  background: #e5e7eb;
+}
+
+/* 3D Modal & Details */
+.view3d-modal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #ffffff;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content-3d {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 100%;
+  overflow: hidden;
+}
+
+.visualizer-section {
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid #e5e7eb;
+}
+
+.details-section {
+  padding: 30px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.details-section h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+  color: #111827;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.no-reviews {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 40px 0;
+}
+
+.reviews-list-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.mini-review-card {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #f3f4f6;
+}
+
+.rev-header {
+  display: flex;
+  justify-content: space-between;
   margin-bottom: 8px;
 }
 
-.price-row {
+.rev-user {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.rev-stars {
+  font-size: 0.8rem;
+  color: #d1d5db;
+}
+
+.rev-stars .star.filled {
+  color: #fbbf24;
+}
+
+.rev-comment {
+  font-size: 0.9rem;
+  color: #4b5563;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.rev-date {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.stars {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 2px;
 }
 
-.current-price {
-  font-size: 18px;
-  font-weight: 500;
-  color: #212121;
+.star {
+  color: #d1d5db;
 }
 
-.original-price {
-  font-size: 14px;
-  color: #878787;
-  text-decoration: line-through;
+.star.filled {
+  color: #fbbf24;
 }
 
-.discount {
-  font-size: 13px;
-  color: #388e3c;
-  font-weight: 500;
-}
-
-.offers {
-  font-size: 12px;
-  color: #212121;
-}
-
-.loading,
-.no-products {
-  text-align: center;
-  padding: 40px;
-  color: #878787;
-}
-
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #2874f0;
+.close-modal {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+/* Pagination Visual */
+.pagination-visual {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.dot-loader {
+  display: flex;
+  gap: 8px;
+}
+
+.dot-loader span {
+  width: 8px;
+  height: 8px;
+  background: #f97316;
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: dotBlink 1.4s infinite;
+}
+
+.dot-loader span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.dot-loader span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dotBlink {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Site Footer */
+.site-footer {
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+  padding: 60px 0 20px;
+  margin-top: 40px;
+}
+
+.footer-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 40px;
+  padding: 0 20px 40px;
+}
+
+.footer-logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.footer-col h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.footer-col h4 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin-bottom: 20px;
+}
+
+.footer-col a {
+  display: block;
+  text-decoration: none;
+  color: #4b5563;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+.footer-btm {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 20px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+/* Loading States */
+.listing-loading {
+  display: flex;
+  justify-content: center;
+  padding: 60px;
+}
+
+.loader-spinner {
   width: 40px;
   height: 40px;
+  border: 4px solid #f3f4f6;
+  border-top-color: #f97316;
+  border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 10px;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
+  to {
     transform: rotate(360deg);
   }
 }
 
-.add-to-cart-btn {
-  background-color: #ff9f00;
-  color: white;
-  border: none;
-  padding: 10px;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 10px;
-  border-radius: 2px;
-  transition: background-color 0.2s;
-}
+/* Responsive */
+@media (max-width: 1024px) {
+  .layout-body {
+    grid-template-columns: 1fr;
+  }
 
-.add-to-cart-btn:hover {
-  background-color: #f39400;
-}
-
-.cart-badge {
-  background-color: #ff6161;
-  color: white;
-  border-radius: 50%;
-  padding: 2px 6px;
-  font-size: 10px;
-  vertical-align: top;
-  margin-left: 4px;
+  .filter-sidebar {
+    display: none; /* Hide sidebar on mobile for simplicity */
+  }
 }
 
 @media (max-width: 768px) {
-  .nav-links span {
+  .top-nav-center {
     display: none;
   }
-  .nav-links .cart span {
-    display: block;
-  }
-  .categories-bar {
-    justify-content: flex-start;
-    padding: 10px 20px;
+
+  .search-filter-ribbon {
+    flex-direction: column;
   }
 }
 </style>

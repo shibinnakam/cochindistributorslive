@@ -75,7 +75,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
 import "@/assets/styles/Login.css";
 
 export default {
@@ -89,7 +89,6 @@ export default {
       emailError: "",
       passwordError: "",
       loading: false,
-      API_BASE: "http://localhost:5000/api/auth",
     };
   },
   computed: {
@@ -111,7 +110,7 @@ export default {
       this.resetForm();
     },
     loginWithGoogle() {
-      window.location.href = `${this.API_BASE}/google`;
+      window.location.href = `http://localhost:5000/api/auth/google`;
     },
     resetForm() {
       this.email = "";
@@ -143,7 +142,7 @@ export default {
       try {
         if (this.isSignup) {
           // Signup
-          const { data } = await axios.post(`${this.API_BASE}/register-email`, {
+          const { data } = await axios.post(`/api/auth/register-email`, {
             email: this.email,
           });
           alert(
@@ -152,7 +151,7 @@ export default {
           this.toggleMode();
         } else {
           // Login
-          const { data } = await axios.post(`${this.API_BASE}/login`, {
+          const { data } = await axios.post(`/api/auth/login`, {
             email: this.email,
             password: this.password,
           });

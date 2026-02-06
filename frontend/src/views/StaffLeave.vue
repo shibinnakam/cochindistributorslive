@@ -123,6 +123,8 @@
 </template>
 
 <script>
+import axios from "@/utils/axios";
+
 export default {
   data() {
     return {
@@ -211,30 +213,20 @@ export default {
       this.loading = true;
 
       try {
-        const res = await fetch("http://localhost:5000/api/leaves/request", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: this.staffEmail,
-            date: this.date,
-            reason: this.reason.trim(),
-          }),
+        const res = await axios.post("/api/leaves/request", {
+          email: this.staffEmail,
+          date: this.date,
+          reason: this.reason.trim(),
         });
 
-        const data = await res.json();
-
-        if (res.ok) {
-          this.message = data.message || "Leave request submitted!";
-          this.isSuccess = true;
-          this.resetForm();
-          this.fetchLeaves();
-        } else {
-          this.message = data.error || "Failed to submit leave";
-          this.isSuccess = false;
-        }
+        this.message = res.data.message || "Leave request submitted!";
+        this.isSuccess = true;
+        this.resetForm();
+        this.fetchLeaves();
       } catch (err) {
         console.error(err);
-        this.message = "Error submitting leave. Try again later.";
+        this.message =
+          err.response?.data?.error || "Error submitting leave. Try again.";
         this.isSuccess = false;
       } finally {
         this.loading = false;
@@ -248,11 +240,8 @@ export default {
     },
     async fetchLeaves() {
       try {
-        const res = await fetch(
-          `http://localhost:5000/api/leaves/my?email=${this.staffEmail}`
-        );
-        const data = await res.json();
-        this.leaves = data || [];
+        const res = await axios.get(`/api/leaves/my?email=${this.staffEmail}`);
+        this.leaves = res.data || [];
       } catch (err) {
         console.error("Error fetching leaves:", err);
       }

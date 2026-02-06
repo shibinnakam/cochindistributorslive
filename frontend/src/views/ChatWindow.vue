@@ -188,7 +188,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
 
 export default {
   name: "ChatWindow",
@@ -201,7 +201,7 @@ export default {
       loading: false,
       sending: false,
       userEmail: "",
-      apiBase: "http://localhost:5000",
+      apiBase: "",
       defaultAvatar: "/default-avatar.png",
       unreadCount: 0,
       refreshInterval: null,
@@ -236,9 +236,7 @@ export default {
   methods: {
     async fetchContacts() {
       try {
-        const res = await axios.get("http://localhost:5000/api/messages/list", {
-          headers: { Authorization: `Bearer ${this.token}` },
-        });
+        const res = await axios.get("/api/messages/list");
 
         if (res.data.success) {
           this.contacts = res.data.data;
@@ -252,8 +250,7 @@ export default {
 
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/messages/conversation/${this.selectedContact.email}`,
-          { headers: { Authorization: `Bearer ${this.token}` } }
+          `/api/messages/conversation/${this.selectedContact.email}`
         );
 
         if (res.data.success) {
@@ -274,14 +271,10 @@ export default {
 
       this.sending = true;
       try {
-        const res = await axios.post(
-          "http://localhost:5000/api/messages/send",
-          {
-            receiverEmail: this.selectedContact.email,
-            message: this.newMessage,
-          },
-          { headers: { Authorization: `Bearer ${this.token}` } }
-        );
+        const res = await axios.post("/api/messages/send", {
+          receiverEmail: this.selectedContact.email,
+          message: this.newMessage,
+        });
 
         if (res.status === 201) {
           this.newMessage = "";
@@ -299,12 +292,7 @@ export default {
     },
     async fetchUnreadCount() {
       try {
-        const res = await axios.get(
-          "http://localhost:5000/api/messages/unread-count",
-          {
-            headers: { Authorization: `Bearer ${this.token}` },
-          }
-        );
+        const res = await axios.get("/api/messages/unread-count");
 
         if (res.data.success) {
           this.unreadCount = res.data.unreadCount;
@@ -330,9 +318,7 @@ export default {
     },
     async deleteMessageForMe(messageId) {
       try {
-        await axios.delete(`http://localhost:5000/api/messages/${messageId}`, {
-          headers: { Authorization: `Bearer ${this.token}` },
-        });
+        await axios.delete(`/api/messages/${messageId}`);
         await this.fetchMessages();
         this.hoveredMessageId = null;
       } catch (err) {
@@ -341,10 +327,7 @@ export default {
     },
     async deleteMessageForEveryone(messageId) {
       try {
-        await axios.delete(
-          `http://localhost:5000/api/messages/${messageId}/everyone`,
-          { headers: { Authorization: `Bearer ${this.token}` } }
-        );
+        await axios.delete(`/api/messages/${messageId}/everyone`);
         await this.fetchMessages();
         this.deleteMenuId = null;
         this.hoveredMessageId = null;

@@ -22,6 +22,21 @@ const orderSchema = new mongoose.Schema(
           type: Number,
           required: true,
         },
+        costPrice: {
+          type: Number,
+          required: true,
+          default: 0,
+        },
+        rating: {
+          type: Number,
+          min: 1,
+          max: 5,
+          default: null,
+        },
+        suggestion: {
+          type: String,
+          default: "",
+        },
       },
     ],
     totalAmount: {
@@ -45,6 +60,14 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: "ordered",
       enum: ["ordered", "accepted", "shipped", "delivered", "cancelled"],
+    },
+    scratchCardOffer: {
+      type: Number,
+      default: null,
+    },
+    scratchCardRevealed: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

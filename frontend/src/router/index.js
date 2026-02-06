@@ -50,63 +50,33 @@ const routes = [
     path: "/admin/add-category",
     name: "AddCategory",
     component: () => import("@/views/AddCategory.vue"),
-    beforeEnter: (to, from, next) => {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user?.role === "admin") next();
-      else next("/login");
-    },
   },
   {
     path: "/admin/add-product",
     name: "AddProduct",
     component: AddProduct,
-    beforeEnter: (to, from, next) => {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user?.role === "admin") next();
-      else next("/login");
-    },
   },
   {
     path: "/admin/products",
     name: "ProductList",
     component: () => import("@/views/ProductList.vue"),
-    beforeEnter: (to, from, next) => {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user?.role === "admin") next();
-      else next("/login");
-    },
   },
   {
     path: "/admin",
     name: "AdminPage",
     component: AdminPage,
-    beforeEnter: (to, from, next) => {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user?.role === "admin") next();
-      else next("/login");
-    },
   },
   // Admin staff management page
   {
     path: "/admin/staff-management",
     name: "AdminStaffManagement",
     component: () => import("@/views/StaffManagement.vue"),
-    beforeEnter: (to, from, next) => {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user?.role === "admin") next();
-      else next("/login");
-    },
   },
   // Admin leave management page
   {
     path: "/admin/leaves",
     name: "AdminLeaves",
     component: () => import("@/views/AdminLeaves.vue"),
-    beforeEnter: (to, from, next) => {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user?.role === "admin") next();
-      else next("/login");
-    },
   },
 
   // User route
@@ -114,11 +84,6 @@ const routes = [
     path: "/user",
     name: "UserPage",
     component: UserPage,
-    beforeEnter: (to, from, next) => {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user?.role === "user") next();
-      else next("/login");
-    },
   },
 
   // Staff route
@@ -126,28 +91,70 @@ const routes = [
     path: "/staff",
     name: "StaffPage",
     component: () => import("@/views/StaffPage.vue"),
-    beforeEnter: (to, from, next) => {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user?.role === "staff") next();
-      else next("/login");
-    },
   },
   // Staff leave request page
   {
     path: "/staff/leave",
     name: "StaffLeave",
     component: () => import("@/views/StaffLeave.vue"),
-    beforeEnter: (to, from, next) => {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user?.role === "staff") next();
-      else next("/login");
-    },
   },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+});
+
+// Global beforeEach guard for all routes
+router.beforeEach(async (to, from, next) => {
+  const publicRoutes = [
+    "Home",
+    "LoginPage",
+    "AboutPage",
+    "ContactPage",
+    "ForgotPassword",
+    "ResetPassword",
+    "SetPassword",
+    "GoogleSuccess",
+  ];
+
+  if (publicRoutes.includes(to.name)) {
+    next();
+    return;
+  }
+
+  // For protected routes, check for token and user role in localStorage
+  const token = localStorage.getItem("token");
+  const userStr = localStorage.getItem("user");
+
+  if (!token || !userStr) {
+    next("/login");
+    return;
+  }
+
+  try {
+    const user = JSON.parse(userStr);
+
+    // Check role-based access
+    if (to.path.startsWith("/admin") && user.role !== "admin") {
+      next("/login");
+      return;
+    }
+    if (to.path === "/user" && user.role !== "user") {
+      next("/login");
+      return;
+    }
+    if (to.path.startsWith("/staff") && user.role !== "staff") {
+      next("/login");
+      return;
+    }
+
+    next();
+  } catch (error) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    next("/login");
+  }
 });
 
 export default router;

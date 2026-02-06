@@ -2,171 +2,177 @@
   <div class="staff-dashboard">
     <!-- Sidebar -->
     <aside class="sidebar">
-      <h2 class="sidebar-title">Staff Panel</h2>
-      <ul>
-        <li
-          :class="{ active: currentTab === 'dashboard' }"
-          @click="currentTab = 'dashboard'"
-        >
-          <svg
-            class="sidebar-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-          </svg>
-          <span class="sidebar-text">Dashboard</span>
-        </li>
-        <li
-          :class="{ active: currentTab === 'profile' }"
-          @click="currentTab = 'profile'"
-        >
-          <svg
-            class="sidebar-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-          <span class="sidebar-text">Profile</span>
-        </li>
-        <li
-          :class="{ active: currentTab === 'items' }"
-          @click="currentTab = 'items'"
-        >
-          <svg
-            class="sidebar-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <line x1="9" y1="2" x2="9" y2="22"></line>
-            <line x1="15" y1="2" x2="15" y2="22"></line>
-            <line x1="3" y1="4" x2="21" y2="4"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-            <line x1="3" y1="16" x2="21" y2="16"></line>
-          </svg>
-          <span class="sidebar-text">Manage Items</span>
-        </li>
-
-        <li @click="toggleLeaves" class="has-submenu">
-          <svg
-            class="sidebar-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"
-            ></path>
-            <polyline points="13 2 13 9 20 9"></polyline>
-            <line x1="9" y1="13" x2="15" y2="13"></line>
-            <line x1="9" y1="17" x2="15" y2="17"></line>
-          </svg>
-          <span class="sidebar-text">Leaves</span>
-          <span class="arrow">{{ showLeaves ? "▼" : "▶" }}</span>
-        </li>
-        <ul v-if="showLeaves" class="submenu">
+      <div class="sidebar-header">
+        <div class="logo-disc">CD</div>
+        <h2 class="sidebar-title">Staff Portal</h2>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
           <li
-            :class="{ active: currentTab === 'apply-leave' }"
-            @click.stop="currentTab = 'apply-leave'"
+            :class="{ active: currentTab === 'dashboard' }"
+            @click="currentTab = 'dashboard'"
           >
-            <svg
-              class="sidebar-icon submenu-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-              ></path>
-              <path
-                d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-              ></path>
-            </svg>
-            <span class="sidebar-text">Apply for Leave</span>
+            <div class="nav-icon-wrapper">
+              <svg
+                class="sidebar-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+            </div>
+            <span class="sidebar-text">Dashboard</span>
           </li>
           <li
-            :class="{ active: currentTab === 'leave-status' }"
-            @click.stop="currentTab = 'leave-status'"
+            :class="{ active: currentTab === 'profile' }"
+            @click="currentTab = 'profile'"
           >
-            <svg
-              class="sidebar-icon submenu-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span class="sidebar-text">Leave Status</span>
+            <div class="nav-icon-wrapper">
+              <svg
+                class="sidebar-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <span class="sidebar-text">Professional Profile</span>
+          </li>
+          <li
+            :class="{ active: currentTab === 'items' }"
+            @click="currentTab = 'items'"
+          >
+            <div class="nav-icon-wrapper">
+              <svg
+                class="sidebar-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <line x1="9" y1="2" x2="9" y2="22"></line>
+                <line x1="15" y1="2" x2="15" y2="22"></line>
+                <line x1="3" y1="4" x2="21" y2="4"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <line x1="3" y1="16" x2="21" y2="16"></line>
+              </svg>
+            </div>
+            <span class="sidebar-text">Inventory Management</span>
+          </li>
+
+          <li
+            @click="toggleLeaves"
+            class="has-submenu"
+            :class="{ 'submenu-open': showLeaves }"
+          >
+            <div class="nav-icon-wrapper">
+              <svg
+                class="sidebar-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"
+                ></path>
+                <polyline points="13 2 13 9 20 9"></polyline>
+                <line x1="9" y1="13" x2="15" y2="13"></line>
+                <line x1="9" y1="17" x2="15" y2="17"></line>
+              </svg>
+            </div>
+            <span class="sidebar-text">Shift & Leaves</span>
+            <span class="arrow">{{ showLeaves ? "▼" : "▶" }}</span>
+          </li>
+          <transition name="slide">
+            <ul v-if="showLeaves" class="submenu">
+              <li
+                :class="{ active: currentTab === 'apply-leave' }"
+                @click.stop="currentTab = 'apply-leave'"
+              >
+                <span class="dot"></span>
+                <span class="sidebar-text">Apply Leave</span>
+              </li>
+              <li
+                :class="{ active: currentTab === 'leave-status' }"
+                @click.stop="currentTab = 'leave-status'"
+              >
+                <span class="dot"></span>
+                <span class="sidebar-text">Request History</span>
+              </li>
+            </ul>
+          </transition>
+
+          <li
+            :class="{ active: currentTab === 'chat' }"
+            @click="currentTab = 'chat'"
+            class="message-item"
+          >
+            <div class="nav-icon-wrapper">
+              <svg
+                class="sidebar-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                ></path>
+              </svg>
+              <span v-if="unreadMessageCount > 0" class="message-badge"></span>
+            </div>
+            <span class="sidebar-text">Team Communications</span>
+            <span v-if="unreadMessageCount > 0" class="badge-count">
+              {{ unreadMessageCount }}
+            </span>
+          </li>
+
+          <li
+            :class="{ active: currentTab === 'resignation' }"
+            @click="currentTab = 'resignation'"
+          >
+            <div class="nav-icon-wrapper">
+              <svg
+                class="sidebar-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M15 3h6v18h-6M10 17l5-5-5-5M13.8 12H3" />
+              </svg>
+            </div>
+            <span class="sidebar-text">Career Path</span>
           </li>
         </ul>
-
-        <li
-          :class="{ active: currentTab === 'chat' }"
-          @click="currentTab = 'chat'"
-          class="message-item"
-        >
-          <svg
-            class="sidebar-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-            ></path>
-          </svg>
-          <span class="sidebar-text">Messages</span>
-          <span v-if="unreadMessageCount > 0" class="message-badge">{{
-            unreadMessageCount
-          }}</span>
+      </nav>
+      <div class="sidebar-footer">
+        <li @click="logout" class="logout-item">
+          <div class="nav-icon-wrapper">
+            <svg
+              class="sidebar-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </div>
+          <span class="sidebar-text">Sign Out</span>
         </li>
-
-        <li
-          :class="{ active: currentTab === 'resignation' }"
-          @click="currentTab = 'resignation'"
-        >
-          <svg
-            class="sidebar-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path d="M15 3h6v18h-6M10 17l5-5-5-5M13.8 12H3" />
-          </svg>
-          <span class="sidebar-text">Resignation</span>
-        </li>
-
-        <li @click="logout">
-          <svg
-            class="sidebar-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-          <span class="sidebar-text">Logout</span>
-        </li>
-      </ul>
+      </div>
     </aside>
 
     <!-- Main Content -->
@@ -174,57 +180,72 @@
       <!-- Dashboard Tab -->
       <div v-if="currentTab === 'dashboard'" class="dashboard-tab">
         <!-- Hero Banner -->
-        <div class="hero-banner-staff">
-          <div class="hero-content-staff">
-            <h2>Welcome to Your Dashboard</h2>
-            <p>Track your tasks, leaves, and performance</p>
+        <div class="welcome-section">
+          <div class="welcome-text">
+            <h1>Spark your productivity, {{ staff.name.split(" ")[0] }}! ✨</h1>
+            <p>Your performance cockpit for Cochin Distributors.</p>
+          </div>
+          <div class="welcome-actions">
+            <button class="btn-primary-staff" @click="currentTab = 'items'">
+              Quick Inventory Check
+            </button>
           </div>
         </div>
 
         <!-- Modern Metrics Grid -->
         <div class="metrics-grid-staff">
-          <div class="metric-card-staff">
-            <div class="metric-icon-staff items-icon-staff">📦</div>
-            <div class="metric-body-staff">
-              <div class="metric-title-staff">Total Items</div>
-              <div class="metric-number-staff">{{ stats.totalItems }}</div>
-              <div class="metric-footer-staff">
-                <span class="trend-staff positive">↑ 8.2%</span>
-              </div>
+          <div class="metric-card-glass" @click="currentTab = 'items'">
+            <div class="glass-icon blue">📦</div>
+            <div class="glass-info">
+              <span class="glass-label">Active Items</span>
+              <h3 class="glass-value">{{ stats.totalItems }}</h3>
             </div>
+            <div class="glass-glow blue"></div>
           </div>
 
-          <div class="metric-card-staff">
-            <div class="metric-icon-staff leaves-icon-staff">🏖️</div>
-            <div class="metric-body-staff">
-              <div class="metric-title-staff">Leaves Taken</div>
-              <div class="metric-number-staff">{{ stats.leavesTaken }}</div>
-              <div class="metric-footer-staff">
-                <span class="trend-staff positive">↓ 2.1%</span>
-              </div>
+          <div
+            class="metric-card-glass"
+            @click="
+              showLeaves = true;
+              currentTab = 'leave-status';
+            "
+          >
+            <div class="glass-icon yellow">🏖️</div>
+            <div class="glass-info">
+              <span class="glass-label">Total Leaves</span>
+              <h3 class="glass-value">{{ stats.leavesTaken }}</h3>
             </div>
+            <div class="glass-glow yellow"></div>
           </div>
 
-          <div class="metric-card-staff">
-            <div class="metric-icon-staff pending-icon-staff">⏳</div>
-            <div class="metric-body-staff">
-              <div class="metric-title-staff">Pending Leaves</div>
-              <div class="metric-number-staff">{{ stats.pendingLeaves }}</div>
-              <div class="metric-footer-staff">
-                <span class="trend-staff positive">↑ 5.3%</span>
-              </div>
+          <div
+            class="metric-card-glass"
+            @click="
+              showLeaves = true;
+              currentTab = 'leave-status';
+            "
+          >
+            <div class="glass-icon orange">⏳</div>
+            <div class="glass-info">
+              <span class="glass-label">Pending</span>
+              <h3 class="glass-value">{{ stats.pendingLeaves }}</h3>
             </div>
+            <div class="glass-glow orange"></div>
           </div>
 
-          <div class="metric-card-staff">
-            <div class="metric-icon-staff completed-icon-staff">✅</div>
-            <div class="metric-body-staff">
-              <div class="metric-title-staff">Approved Leaves</div>
-              <div class="metric-number-staff">{{ stats.approvedLeaves }}</div>
-              <div class="metric-footer-staff">
-                <span class="trend-staff positive">↑ 12.5%</span>
-              </div>
+          <div
+            class="metric-card-glass"
+            @click="
+              showLeaves = true;
+              currentTab = 'leave-status';
+            "
+          >
+            <div class="glass-icon green">✅</div>
+            <div class="glass-info">
+              <span class="glass-label">Approved</span>
+              <h3 class="glass-value">{{ stats.approvedLeaves }}</h3>
             </div>
+            <div class="glass-glow green"></div>
           </div>
         </div>
       </div>
@@ -500,7 +521,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
 import StaffLeave from "./StaffLeave.vue";
 import ChatWindow from "./ChatWindow.vue";
 import jsPDF from "jspdf";
@@ -533,7 +554,7 @@ export default {
       leaveStatus: [],
       selectedFile: null,
       message: "",
-      apiBase: "http://localhost:5000",
+      apiBase: "",
       defaultPhoto: "/default-avatar.png",
       showProfileModal: false,
       showEditProfile: false,
@@ -544,10 +565,7 @@ export default {
   methods: {
     async fetchProfile() {
       try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(`${this.apiBase}/api/staff/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get(`/api/staff/me`);
         this.staff = res.data.staff;
       } catch {
         this.message = "Error loading profile";
@@ -555,21 +573,13 @@ export default {
     },
     async fetchStats() {
       try {
-        const token = localStorage.getItem("token");
         const user = JSON.parse(localStorage.getItem("user"));
-        const email = user?.email;
-
-        const productsRes = await axios.get(
-          `${this.apiBase}/api/products/getproduct`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        let leavesRes = [];
-        if (email) {
+        let leavesRes = { data: [] };
+        const productsRes = await axios.get(`/api/products/getproduct`);
+        if (user && user.email) {
           try {
-            leavesRes = await axios.get(`${this.apiBase}/api/leaves/my`, {
-              headers: { Authorization: `Bearer ${token}` },
-              params: { email },
+            leavesRes = await axios.get(`/api/leaves/my`, {
+              params: { email: user.email },
             });
           } catch (err) {
             console.error("Error fetching leaves:", err);
@@ -597,7 +607,6 @@ export default {
     },
     async updateProfile() {
       try {
-        const token = localStorage.getItem("token");
         const formData = new FormData();
         Object.keys(this.staff).forEach((key) => {
           if (key !== "email") formData.append(key, this.staff[key]);
@@ -605,16 +614,11 @@ export default {
         if (this.selectedFile)
           formData.append("profilePhoto", this.selectedFile);
 
-        const res = await axios.put(
-          `${this.apiBase}/api/staff/update`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
+        const res = await axios.put(`/api/staff/update`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
         this.message = res.data.message;
         this.fetchProfile();
         this.showEditProfile = false;
@@ -631,9 +635,16 @@ export default {
     toggleLeaves() {
       this.showLeaves = !this.showLeaves;
     },
-    logout() {
-      localStorage.removeItem("token");
-      this.$router.push("/login");
+    async logout() {
+      try {
+        await axios.post("/api/auth/logout");
+      } catch (err) {
+        console.error("Logout error:", err);
+      } finally {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        this.$router.push("/login");
+      }
     },
     async fetchLeaveStatus() {
       try {
@@ -790,342 +801,323 @@ export default {
   min-height: 100vh;
 }
 
-/* Sidebar */
+/* Sidebar Redesign */
 .sidebar {
-  width: 260px;
-  background: #1e293b;
-  color: white;
+  width: 280px;
+  background: #0f172a; /* Deeper dark */
+  color: #f8fafc;
   padding: 0;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  overflow-y: auto;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-header {
+  padding: 32px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-disc {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: white;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .sidebar-title {
-  text-align: center;
-  font-size: 16px;
-  margin: 0;
-  padding: 24px 20px;
+  font-size: 18px;
   font-weight: 700;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: #3b82f6;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 0 16px;
 }
 
 .sidebar ul {
   list-style: none;
-  padding: 12px 0;
-  flex: 1;
+  padding: 0;
+  margin: 0;
 }
 
 .sidebar li {
-  padding: 12px 20px;
+  padding: 12px 16px;
+  margin-bottom: 4px;
   cursor: pointer;
-  border-radius: 0;
-  transition: all 0.3s ease;
-  border-left: 3px solid transparent;
-  position: relative;
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: 12px;
+  transition: all 0.2s ease;
   color: #94a3b8;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.sidebar-icon {
-  font-size: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  opacity: 0.6;
-  transition: opacity 0.3s ease;
-  color: #94a3b8;
-  stroke: currentColor;
-}
-
-.sidebar li:hover .sidebar-icon {
-  opacity: 0.9;
-  color: white;
-}
-
-.sidebar li.active .sidebar-icon {
-  opacity: 1;
-  color: #3b82f6;
-}
-
-.sidebar-text {
-  flex: 1;
-}
-
-.message-item {
-  position: relative;
-}
-
-.message-badge {
-  position: absolute;
-  right: 16px;
-  background: #ef4444;
-  color: white;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
+.nav-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
-  animation: pulse 2s infinite;
-  flex-shrink: 0;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
+.sidebar-icon {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  transition: all 0.2s ease;
 }
 
 .sidebar li:hover {
   background: rgba(255, 255, 255, 0.05);
-  color: white;
-  border-left-color: #3b82f6;
+  color: #fff;
+}
+
+.sidebar li:hover .nav-icon-wrapper {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .sidebar li.active {
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(59, 130, 246, 0.1);
   color: #3b82f6;
-  border-left-color: #3b82f6;
   font-weight: 600;
 }
 
-.has-submenu {
-  font-weight: 600;
+.sidebar li.active .nav-icon-wrapper {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
 }
 
-.arrow {
-  font-size: 12px;
-  margin-left: auto;
-  flex-shrink: 0;
+.sidebar-text {
+  font-size: 14px;
 }
 
+/* Submenu Styles */
 .submenu {
-  margin-left: 0;
-  padding: 8px 0;
-  background: rgba(59, 130, 246, 0.05);
+  margin: 4px 0 12px 28px;
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  padding-left: 12px !important;
 }
 
 .submenu li {
-  padding: 10px 20px;
-  background: transparent;
-  border-radius: 0;
-  margin: 0;
+  padding: 8px 12px;
   font-size: 13px;
-  color: #cbd5e1;
-  border-left: 3px solid transparent;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.submenu-icon {
-  font-size: 14px !important;
-  width: 18px !important;
-  height: 18px !important;
-  opacity: 0.5;
-  color: #cbd5e1;
-}
-
-.submenu li:hover .submenu-icon {
-  opacity: 0.8;
-  color: #e0e7ff;
-}
-
-.submenu li.active .submenu-icon {
-  opacity: 1;
-  color: #3b82f6;
-}
-
-.submenu li:hover {
-  background: rgba(59, 130, 246, 0.1);
-  color: #e0e7ff;
-  border-left-color: #3b82f6;
-}
-
-.submenu li.active {
-  background: rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
-  border-left-color: #3b82f6;
-  font-weight: 600;
-}
-
-/* Content Area */
-.content {
-  flex: 1;
-  padding: 28px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  display: block;
-  overflow-y: auto;
-}
-
-/* Modern Staff Dashboard */
-
-.hero-banner-staff {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 50%, #1e3a8a 100%);
-  border-radius: 16px;
-  padding: 40px 32px;
-  margin-bottom: 32px;
-  color: white;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.15);
-}
-
-.hero-banner-staff::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  right: -10%;
-  width: 300px;
-  height: 300px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  animation: float-staff 6s ease-in-out infinite;
-}
-
-@keyframes float-staff {
-  0%,
-  100% {
-    transform: translateY(0px) translateX(0px);
-  }
-  50% {
-    transform: translateY(-20px) translateX(-10px);
-  }
-}
-
-.hero-content-staff {
-  position: relative;
-  z-index: 1;
-}
-
-.hero-banner-staff h2 {
-  margin: 0 0 8px 0;
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-
-.hero-banner-staff p {
-  margin: 0;
-  font-size: 16px;
-  opacity: 0.95;
-  font-weight: 400;
-}
-
-/* Metrics Grid Staff */
-.metrics-grid-staff {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 32px;
-}
-
-.metric-card-staff {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  display: flex;
-  gap: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid #e2e8f0;
-  cursor: pointer;
-}
-
-.metric-card-staff:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
-  border-color: #cbd5e1;
-}
-
-.metric-icon-staff {
-  font-size: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  flex-shrink: 0;
-}
-
-.items-icon-staff {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-}
-
-.leaves-icon-staff {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-}
-
-.pending-icon-staff {
-  background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
-}
-
-.completed-icon-staff {
-  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-}
-
-.metric-body-staff {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.metric-title-staff {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
-}
-
-.metric-number-staff {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1e293b;
-  line-height: 1;
-  margin-bottom: 8px;
-}
-
-.metric-footer-staff {
-  display: flex;
-  align-items: center;
   gap: 8px;
 }
 
-.trend-staff {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 6px;
-  display: inline-block;
+.dot {
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+  border-radius: 50%;
+  opacity: 0.4;
 }
 
-.trend-staff.positive {
-  color: #059669;
-  background: #d1fae5;
+.message-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid #0f172a;
+}
+
+.badge-count {
+  margin-left: auto;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.sidebar-footer {
+  padding: 24px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logout-item {
+  color: #ef4444 !important;
+}
+
+.logout-item:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Content Area Redesign */
+.content {
+  flex: 1;
+  background: #f1f5f9;
+  padding: 40px;
+  overflow-y: auto;
+}
+
+.welcome-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 40px;
+}
+
+.welcome-text h1 {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+  letter-spacing: -1px;
+}
+
+.welcome-text p {
+  color: #64748b;
+  margin: 0;
+  font-size: 16px;
+}
+
+.btn-primary-staff {
+  background: #0f172a;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary-staff:hover {
+  background: #1e293b;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Glass Metrics */
+.metrics-grid-staff {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.metric-card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.metric-card-glass:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.glass-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  z-index: 1;
+}
+
+.glass-icon.blue {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+.glass-icon.yellow {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+.glass-icon.orange {
+  background: #fff7ed;
+  color: #f97316;
+}
+.glass-icon.green {
+  background: #f0fdf4;
+  color: #22c55e;
+}
+
+.glass-info {
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+.glass-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.glass-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 4px 0 0 0;
+  letter-spacing: -1px;
+}
+
+.glass-glow {
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.15;
+  transition: all 0.3s ease;
+}
+
+.glass-glow.blue {
+  background: #3b82f6;
+}
+.glass-glow.yellow {
+  background: #f59e0b;
+}
+.glass-glow.orange {
+  background: #f97316;
+}
+.glass-glow.green {
+  background: #22c55e;
+}
+
+.metric-card-glass:hover .glass-glow {
+  opacity: 0.3;
+  transform: scale(1.2);
 }
 
 /* Profile Tab */
@@ -1133,21 +1125,58 @@ export default {
   padding: 20px;
 }
 
-/* Leave Table */
+/* Leave Table Redesign */
+.leave-status-tab {
+  background: white;
+  padding: 32px;
+  border-radius: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  border: 1px solid #e2e8f0;
+}
+
+.leave-status-tab h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+}
+
 .leave-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 8px;
   margin-top: 15px;
 }
-.leave-table th,
-.leave-table td {
-  border: 1px solid #ccc;
-  padding: 10px;
-  text-align: center;
-}
+
 .leave-table th {
-  background: #34495e;
-  color: white;
+  padding: 12px 20px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.leave-table td {
+  padding: 16px 20px;
+  background: #f8fafc;
+  font-size: 14px;
+  color: #334155;
+  font-weight: 600;
+}
+
+.leave-table tr td:first-child {
+  border-radius: 12px 0 0 12px;
+}
+
+.leave-table tr td:last-child {
+  border-radius: 0 12px 12px 0;
+}
+
+.leave-table tr:hover td {
+  background: #f1f5f9;
 }
 
 /* Responsive Metrics Grid Staff */
@@ -1234,22 +1263,25 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 10000;
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .profile-modal-container {
   background: white;
-  border-radius: 20px;
+  border-radius: 32px;
   width: 90%;
-  max-width: 400px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: slideUp 0.3s ease-in-out;
+  max-width: 440px;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 @keyframes fadeIn {
@@ -1263,249 +1295,264 @@ export default {
 
 @keyframes slideUp {
   from {
-    transform: translateY(50px);
+    transform: translateY(60px) scale(0.95);
     opacity: 0;
   }
   to {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
     opacity: 1;
   }
 }
 
 /* Profile View Card */
 .profile-view-card {
-  padding: 30px 20px;
+  padding: 40px;
   text-align: center;
   position: relative;
 }
 
 .profile-photo-section {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  position: relative;
+  display: inline-block;
 }
 
 .profile-photo-large {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  border-radius: 40px;
   object-fit: cover;
-  border: 4px solid #2563eb;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  border: 4px solid #fff;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  background: #f1f5f9;
 }
 
 .profile-name {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 800;
   color: #1e293b;
   margin-bottom: 24px;
+  letter-spacing: -0.5px;
 }
 
 .profile-info-container {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 32px;
 }
 
 .profile-info-item {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 14px 16px;
+  padding: 16px;
   background: #f8fafc;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  transition: all 0.2s ease;
+  border-radius: 16px;
+  border: 1px solid #f1f5f9;
+  transition: all 0.3s ease;
 }
 
 .profile-info-item:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  transform: translateX(4px);
+  background: #fff;
+  border-color: #e2e8f0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .profile-info-icon {
   font-size: 20px;
-  width: 32px;
+  width: 40px;
+  height: 40px;
+  background: #fff;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .profile-info-content {
   flex: 1;
   text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 .profile-info-label {
   font-size: 11px;
-  font-weight: 600;
-  color: #64748b;
+  font-weight: 700;
+  color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  display: block;
+  margin-bottom: 2px;
 }
 
 .profile-info-value {
   font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
+  font-weight: 700;
+  color: #334155;
 }
 
 .btn-edit-profile {
   width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  padding: 16px;
+  background: #0f172a;
   color: white;
   border: none;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
 .btn-edit-profile:hover {
+  background: #1e293b;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
 .btn-close-modal {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 32px;
-  height: 32px;
-  background: none;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  background: #f8fafc;
   border: none;
-  font-size: 24px;
+  font-size: 20px;
   color: #64748b;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 12px;
   transition: all 0.2s ease;
-  padding: 0;
 }
 
 .btn-close-modal:hover {
-  color: #1e293b;
-  background: #f1f5f9;
-  border-radius: 8px;
+  color: #ef4444;
+  background: #fef2f2;
 }
 
 /* Profile Edit Card */
 .profile-edit-card {
-  padding: 30px 20px;
+  padding: 40px;
 }
 
 .profile-edit-card h3 {
-  margin: 0 0 20px 0;
-  font-size: 20px;
-  font-weight: 700;
+  margin: 0 0 24px 0;
+  font-size: 22px;
+  font-weight: 800;
   color: #1e293b;
   text-align: center;
+  letter-spacing: -0.5px;
 }
 
 .edit-photo-section {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .profile-photo-edit {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
+  width: 110px;
+  height: 110px;
+  border-radius: 36px;
   object-fit: cover;
-  margin-bottom: 12px;
-  border: 4px solid #2563eb;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  margin-bottom: 16px;
+  border: 4px solid #fff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .file-input {
   display: block;
   margin: 0 auto;
   font-size: 12px;
+  color: #64748b;
 }
 
 .profile-edit-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .form-group label {
   font-size: 13px;
-  font-weight: 600;
-  color: #1e293b;
+  font-weight: 700;
+  color: #475569;
+  padding-left: 4px;
 }
 
 .form-group input,
 .form-group select {
-  padding: 10px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  padding: 14px 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
   font-size: 14px;
+  background: #f8fafc;
+  color: #1e293b;
   transition: all 0.2s ease;
 }
 
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
 }
 
 .form-group input:disabled {
-  background: #f8fafc;
+  background: #f1f5f9;
   color: #94a3b8;
   cursor: not-allowed;
+  border-style: dashed;
 }
 
 .form-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 12px;
+  margin-top: 24px;
 }
 
 .btn-save,
 .btn-cancel {
   flex: 1;
-  padding: 12px;
+  padding: 14px;
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-save {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  background: #0f172a;
   color: white;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
 .btn-save:hover {
+  background: #1e293b;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .btn-cancel {
-  background: #e2e8f0;
+  background: #f1f5f9;
   color: #64748b;
 }
 
 .btn-cancel:hover {
-  background: #cbd5e1;
+  background: #e2e8f0;
+  color: #1e293b;
 }
 
 .btn-view-profile {
@@ -1564,114 +1611,151 @@ export default {
   height: 600px;
 }
 
-/* Resignation Tab */
+/* Resignation Tab Redesign */
 .resignation-tab {
-  padding: 32px;
+  padding: 40px;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  max-width: 800px;
+  border-radius: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  max-width: 850px;
   margin: 0 auto;
+  border: 1px solid #e2e8f0;
 }
 
 .resignation-tab h2 {
   color: #1e293b;
   font-size: 24px;
-  margin-bottom: 24px;
-  font-weight: 700;
-  border-bottom: 2px solid #e2e8f0;
-  padding-bottom: 12px;
+  margin-bottom: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.resignation-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .status-box {
-  padding: 24px;
-  border-radius: 12px;
-  margin-bottom: 20px;
+  padding: 32px;
+  border-radius: 20px;
   text-align: center;
+  transition: all 0.3s ease;
+}
+
+.status-box h3 {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.status-box p {
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 8px;
 }
 
 .status-box.pending {
-  background-color: #fff7ed;
-  border: 1px solid #fed7aa;
-  color: #9a3412;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  color: #92400e;
 }
 
 .status-box.approved {
-  background-color: #f0fdf4;
-  border: 1px solid #86efac;
+  background: #f0fdf4;
+  border: 1px solid #dcfce7;
   color: #166534;
 }
 
 .status-box.rejected {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
   color: #991b1b;
-}
-
-.status-box h3 {
-  margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 20px;
-}
-
-.apply-box {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
 }
 
 .reason-input {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  resize: vertical;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
   font-family: inherit;
+  font-size: 15px;
+  resize: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.reason-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
 }
 
 .btn-submit-resignation {
-  background-color: #ef4444;
+  width: 100%;
+  padding: 16px;
+  background: #ef4444;
   color: white;
-  padding: 12px 24px;
   border: none;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 15px;
   cursor: pointer;
-  align-self: flex-start;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  margin-top: 12px;
 }
 
-.btn-submit-resignation:hover {
-  background-color: #dc2626;
+.btn-submit-resignation:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(239, 68, 68, 0.2);
 }
 
 .btn-submit-resignation:disabled {
-  background-color: #fca5a5;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .btn-download {
-  background-color: #2563eb;
+  margin-top: 20px;
+  background: #0f172a;
   color: white;
-  padding: 10px 20px;
   border: none;
-  border-radius: 8px;
-  font-weight: 600;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-weight: 700;
   cursor: pointer;
-  margin-top: 16px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  transition: all 0.2s ease;
 }
 
-.btn-retry {
-  background-color: #4b5563;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-top: 12px;
+.btn-download:hover {
+  background: #1e293b;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 80px;
+    padding: 24px 12px;
+  }
+  .sidebar-text,
+  .sidebar-title,
+  .arrow,
+  .nav-icon-wrapper + span {
+    display: none;
+  }
+  .content {
+    padding: 20px;
+  }
+  .welcome-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .metrics-grid-staff {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

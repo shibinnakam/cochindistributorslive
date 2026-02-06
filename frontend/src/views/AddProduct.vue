@@ -5,10 +5,12 @@
       <form @submit.prevent="addProduct" class="form-grid">
         <!-- Row 1: Name & Quantity -->
         <div class="form-group">
+          <label for="name">Item Name</label>
           <input id="name" v-model="name" type="text" placeholder="Item Name" />
           <p v-if="errors.name" class="error">{{ errors.name }}</p>
         </div>
         <div class="form-group">
+          <label for="quantity">Quantity</label>
           <input
             id="quantity"
             v-model.number="quantity"
@@ -19,8 +21,9 @@
           <p v-if="errors.quantity" class="error">{{ errors.quantity }}</p>
         </div>
 
-        <!-- Row 2: Original Price & Discount Price -->
+        <!-- Row 2: Original Price & Discount Price & Cost Price -->
         <div class="form-group">
+          <label for="originalPrice">Original Price</label>
           <input
             id="originalPrice"
             v-model.number="originalPrice"
@@ -32,6 +35,7 @@
           </p>
         </div>
         <div class="form-group">
+          <label for="discountPrice">Discount Price</label>
           <input
             id="discountPrice"
             v-model.number="discountPrice"
@@ -40,6 +44,18 @@
           />
           <p v-if="errors.discountPrice" class="error">
             {{ errors.discountPrice }}
+          </p>
+        </div>
+        <div class="form-group">
+          <label for="costPrice">Cost Price</label>
+          <input
+            id="costPrice"
+            v-model.number="costPrice"
+            type="number"
+            placeholder="Cost Price"
+          />
+          <p v-if="errors.costPrice" class="error">
+            {{ errors.costPrice }}
           </p>
         </div>
 
@@ -63,6 +79,7 @@
 
         <!-- Row 4: Batch Number & Rack Number -->
         <div class="form-group">
+          <label for="batchNumber">Batch Number</label>
           <input
             id="batchNumber"
             v-model="batchNumber"
@@ -74,6 +91,7 @@
           </p>
         </div>
         <div class="form-group">
+          <label for="rackNumber">Rack Number</label>
           <input
             id="rackNumber"
             v-model.number="rackNumber"
@@ -108,6 +126,7 @@
 
         <!-- Row 6: Description (Full Width) -->
         <div class="form-group full-width">
+          <label for="description">Description (4-20 chars)</label>
           <textarea
             id="description"
             v-model="description"
@@ -229,7 +248,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
 
 export default {
   name: "AddProduct",
@@ -245,6 +264,7 @@ export default {
       description: "",
       originalPrice: "",
       discountPrice: "",
+      costPrice: "",
       quantity: "",
       manufacturingDate: "",
       expiryDate: "",
@@ -300,7 +320,7 @@ export default {
 
     async loadCategories() {
       try {
-        const res = await axios.get("http://localhost:5000/api/categories");
+        const res = await axios.get("/api/categories");
         this.categories = Array.isArray(res.data)
           ? res.data
           : Array.isArray(res.data.categories)
@@ -348,6 +368,8 @@ export default {
       if (this.discountPrice > this.originalPrice)
         this.errors.discountPrice =
           "Discount cannot be greater than original price";
+      if (!this.costPrice || this.costPrice < 1 || this.costPrice > 1000)
+        this.errors.costPrice = "Cost price must be 1-1000";
       if (this.quantity < 0)
         this.errors.quantity = "Quantity must be 0 or greater";
       if (!this.manufacturingDate)
@@ -383,6 +405,7 @@ export default {
         formData.append("description", this.description);
         formData.append("originalPrice", this.originalPrice);
         formData.append("discountPrice", this.discountPrice);
+        formData.append("costPrice", this.costPrice);
         formData.append("quantity", this.quantity);
         formData.append("manufacturingDate", this.manufacturingDate);
         formData.append("expiryDate", this.expiryDate);
@@ -403,11 +426,9 @@ export default {
           formData.append("model3D", this.model3D);
         }
 
-        const res = await axios.post(
-          "http://localhost:5000/api/products/addproduct",
-          formData,
-          { headers: { "Content-Type": "multipart/form-data" } }
-        );
+        const res = await axios.post("/api/products/addproduct", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
 
         if (this.isModal) {
           this.$emit("close");

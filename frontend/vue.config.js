@@ -18,6 +18,10 @@ module.exports = defineConfig({
         changeOrigin: true,
         pathRewrite: { "^/api": "/api" },
       },
+      "/uploads": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
+      },
     },
   },
 });

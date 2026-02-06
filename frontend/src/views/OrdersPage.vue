@@ -25,7 +25,7 @@
             </div>
             <div class="order-items">
               <div
-                v-for="item in order.items"
+                v-for="item in filteredItems(order)"
                 :key="item._id"
                 class="order-item"
               >
@@ -39,6 +39,43 @@
                 <div class="item-info">
                   <h4>{{ item.product.name }}</h4>
                   <p>Qty: {{ item.quantity }} | ₹{{ item.price }}</p>
+                  <!-- Rating Form for Delivered Orders -->
+                  <div
+                    v-if="order.status === 'delivered' && !item.rating"
+                    class="rating-form"
+                  >
+                    <h5>Rate this product:</h5>
+                    <div class="stars">
+                      <span
+                        v-for="star in 5"
+                        :key="star"
+                        @click="setRating(order._id, item._id, star)"
+                        :class="{ active: item.tempRating >= star }"
+                        class="star"
+                      >
+                        ★
+                      </span>
+                    </div>
+                    <textarea
+                      v-model="item.tempSuggestion"
+                      placeholder="Leave a suggestion (optional)"
+                      class="suggestion-textarea"
+                    ></textarea>
+                    <button
+                      @click="submitRating(order._id, item)"
+                      class="submit-rating-btn"
+                      :disabled="!item.tempRating"
+                    >
+                      Submit Rating
+                    </button>
+                  </div>
+                  <!-- Display Rating if Already Rated -->
+                  <div v-if="item.rating" class="existing-rating">
+                    <p>Your Rating: {{ item.rating }} ★</p>
+                    <p v-if="item.suggestion">
+                      Suggestion: {{ item.suggestion }}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -56,7 +93,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
 import socket from "@/socket";
 
 export default {
@@ -73,8 +110,15 @@ export default {
   },
   beforeUnmount() {
     socket.off("orderStatusUpdate");
+    socket.off("orderPlaced");
+    socket.off("walletUpdated");
   },
   methods: {
+    filteredItems(order) {
+      return order.items.filter(function (item) {
+        return item.product;
+      });
+    },
     connectSocket() {
       const token = localStorage.getItem("token");
       if (token) {
@@ -91,14 +135,17 @@ export default {
     async fetchOrders() {
       this.loading = true;
       try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(
-          "http://localhost:5000/api/orders/my-orders",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await axios.get("/api/orders/my-orders");
         this.orders = res.data;
+        // Initialize tempRating and tempSuggestion for unrated items
+        this.orders.forEach((order) => {
+          order.items.forEach((item) => {
+            if (order.status === "delivered" && !item.rating) {
+              item.tempRating = null;
+              item.tempSuggestion = "";
+            }
+          });
+        });
       } catch (err) {
         console.error("Error fetching orders:", err);
       } finally {
@@ -107,7 +154,7 @@ export default {
     },
     getImageUrl(path) {
       if (!path) return null;
-      return path.startsWith("/") ? `http://localhost:5000${path}` : path;
+      return path.startsWith("/") ? path : path;
     },
     formatDate(date) {
       return new Date(date).toLocaleDateString("en-IN", {
@@ -117,6 +164,36 @@ export default {
         hour: "2-digit",
         minute: "2-digit",
       });
+    },
+    setRating(orderId, itemId, rating) {
+      const order = this.orders.find((o) => o._id === orderId);
+      if (order) {
+        const item = order.items.find((i) => i._id === itemId);
+        if (item) {
+          item.tempRating = rating;
+        }
+      }
+    },
+    async submitRating(orderId, item) {
+      if (!item.tempRating) return;
+
+      try {
+        await axios.patch("/api/orders/rate-item", {
+          orderId,
+          itemId: item._id,
+          rating: item.tempRating,
+          suggestion: item.tempSuggestion || "",
+        });
+
+        // Update the item with the rating
+        item.rating = item.tempRating;
+        item.suggestion = item.tempSuggestion || "";
+        delete item.tempRating;
+        delete item.tempSuggestion;
+      } catch (err) {
+        console.error("Error submitting rating:", err);
+        alert("Failed to submit rating. Please try again.");
+      }
     },
   },
 };
@@ -267,5 +344,84 @@ export default {
   border-radius: 2px;
   cursor: pointer;
   margin-top: 20px;
+}
+
+.rating-form {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #f9f9f9;
+}
+
+.rating-form h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #2874f0;
+}
+
+.stars {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.star {
+  font-size: 20px;
+  color: #ddd;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.star.active {
+  color: #ffc107;
+}
+
+.star:hover {
+  color: #ffc107;
+}
+
+.suggestion-textarea {
+  width: 100%;
+  height: 60px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 14px;
+  resize: vertical;
+  margin-bottom: 8px;
+}
+
+.submit-rating-btn {
+  background: #ff9f00;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.submit-rating-btn:hover:not(:disabled) {
+  background: #f39400;
+}
+
+.submit-rating-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.existing-rating {
+  margin-top: 10px;
+  padding: 8px;
+  background: #e8f5e8;
+  border-radius: 4px;
+}
+
+.existing-rating p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #388e3c;
 }
 </style>

@@ -183,7 +183,8 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
+import socket from "@/socket.js";
 import ThreeDBox from "@/components/ThreeDBox.vue";
 
 export default {
@@ -247,15 +248,31 @@ export default {
   },
   mounted() {
     this.fetchProducts();
+
+    // Socket listeners for real-time updates
+    socket.on("productAdded", (data) => {
+      this.products.unshift(data.product);
+    });
+
+    socket.on("productUpdated", (data) => {
+      const index = this.products.findIndex((p) => p._id === data.product._id);
+      if (index !== -1) {
+        this.products[index] = data.product;
+      }
+    });
+
+    socket.on("productDeleted", (data) => {
+      this.products = this.products.filter((p) => p._id !== data.productId);
+    });
   },
   methods: {
     getImageUrl(path) {
-      if (!path) return null;
-      return path.startsWith("/") ? `http://localhost:5000${path}` : path;
+      if (!path) return "";
+      return path.startsWith("/") ? path : `/${path}`;
     },
     getModelUrl(path) {
       if (!path) return null;
-      return path.startsWith("/") ? `http://localhost:5000${path}` : path;
+      return path.startsWith("/") ? path : path;
     },
     toggle3D(productId) {
       if (this.active3DProductId === productId) {
@@ -276,9 +293,7 @@ export default {
     async fetchProducts() {
       this.loading = true;
       try {
-        const res = await axios.get(
-          "http://localhost:5000/api/products/getproduct"
-        );
+        const res = await axios.get("/api/products/getproduct");
         if (res.data.success) {
           this.products = res.data.products;
         }
@@ -305,7 +320,7 @@ export default {
       this.deletingId = this.deleteId;
       try {
         const res = await axios.delete(
-          `http://localhost:5000/api/products/deleteproduct/${this.deleteId}`
+          `/api/products/deleteproduct/${this.deleteId}`
         );
         if (res.data.success) {
           this.products = this.products.filter((p) => p._id !== this.deleteId);

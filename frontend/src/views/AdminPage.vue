@@ -96,6 +96,15 @@
               unreadMessageCount
             }}</span>
           </a>
+          <a
+            href="#"
+            class="nav-item"
+            :class="{ active: selectedMenu === 'reviews' }"
+            @click.prevent="selectedMenu = 'reviews'"
+          >
+            <span class="icon">⭐</span>
+            Reviews
+          </a>
         </div>
 
         <div class="nav-section">
@@ -209,6 +218,60 @@
             </div>
           </div>
 
+          <!-- Sales Timeframe Selector -->
+          <div class="timeframe-selector mt-4">
+            <button
+              v-for="timeframe in ['all', 'today', 'month', 'year']"
+              :key="timeframe"
+              :class="{ active: salesTimeframe === timeframe }"
+              @click="
+                salesTimeframe = timeframe;
+                updateDisplayedStats();
+              "
+              class="timeframe-btn"
+            >
+              {{ timeframe.charAt(0).toUpperCase() + timeframe.slice(1) }}
+            </button>
+          </div>
+
+          <!-- Sales Stats Row -->
+          <div class="stats-grid mt-2">
+            <div class="stat-card">
+              <div class="stat-icon green-bg">💰</div>
+              <div class="stat-details">
+                <span class="stat-value"
+                  >₹{{ displayedPurchases.toLocaleString() }}</span
+                >
+                <span class="stat-label"
+                  >{{
+                    salesTimeframe === "all"
+                      ? "Total"
+                      : salesTimeframe.charAt(0).toUpperCase() +
+                        salesTimeframe.slice(1)
+                  }}
+                  Purchases</span
+                >
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon blue-bg">📈</div>
+              <div class="stat-details">
+                <span class="stat-value"
+                  >₹{{ displayedProfit.toLocaleString() }}</span
+                >
+                <span class="stat-label"
+                  >{{
+                    salesTimeframe === "all"
+                      ? "Total"
+                      : salesTimeframe.charAt(0).toUpperCase() +
+                        salesTimeframe.slice(1)
+                  }}
+                  Profit</span
+                >
+              </div>
+            </div>
+          </div>
+
           <!-- Recent Activity Section (Mockup for professional look) -->
           <div class="dashboard-sections">
             <div class="section-card recent-orders">
@@ -258,6 +321,98 @@
         <AdminOrders v-if="selectedMenu === 'orders'" />
         <AdminLeaves v-if="selectedMenu === 'approve-leaves'" />
         <ChatWindow v-if="selectedMenu === 'chat'" />
+
+        <!-- Reviews View -->
+        <div v-if="selectedMenu === 'reviews'" class="reviews-section">
+          <div class="section-card">
+            <div class="section-header">
+              <h3>User Reviews Management</h3>
+              <div class="review-tabs">
+                <button class="tab-btn active">All Reviews</button>
+              </div>
+            </div>
+
+            <div class="reviews-list">
+              <div v-if="reviewsLoading" class="loading">
+                Loading reviews...
+              </div>
+              <div v-else-if="currentReviews.length === 0" class="no-reviews">
+                No reviews found.
+              </div>
+              <div v-else class="reviews-grid">
+                <div
+                  v-for="review in currentReviews"
+                  :key="review._id"
+                  class="review-card"
+                >
+                  <div class="review-header">
+                    <div class="user-info">
+                      <div class="avatar">
+                        {{ review.user.name.charAt(0).toUpperCase() }}
+                      </div>
+                      <div class="user-details">
+                        <span class="user-name">{{ review.user.name }}</span>
+                        <span class="user-email">{{ review.user.email }}</span>
+                      </div>
+                    </div>
+                    <div class="review-rating">
+                      <div class="stars">
+                        <span
+                          v-for="star in 5"
+                          :key="star"
+                          :class="{ filled: star <= review.rating }"
+                          class="star"
+                        >
+                          ★
+                        </span>
+                      </div>
+                      <span class="rating-text">{{ review.rating }}/5</span>
+                    </div>
+                  </div>
+
+                  <div class="review-product">
+                    <div class="product-info">
+                      <img
+                        v-if="review.product.imageFront"
+                        :src="`/${review.product.imageFront}`"
+                        alt="Product Image"
+                        class="product-image"
+                      />
+                      <div class="product-details">
+                        <span class="product-label">Product:</span>
+                        <span class="product-name">{{
+                          review.product.name
+                        }}</span>
+                        <span class="product-id"
+                          >ID: {{ review.product._id }}</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="review-comment">
+                    <p>{{ review.comment }}</p>
+                  </div>
+
+                  <div class="review-footer">
+                    <span class="review-date">
+                      {{ formatDate(review.createdAt) }}
+                    </span>
+                    <div class="review-actions">
+                      <button
+                        @click="deleteReview(review._id)"
+                        class="btn-delete"
+                        :disabled="actionLoading"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- Change Password View -->
         <div
@@ -402,7 +557,8 @@
 
 <script>
 import "@/assets/styles/AdminPage.css";
-import axios from "axios";
+import axios from "@/utils/axios";
+import socket from "@/socket";
 import AddProduct from "@/views/AddProduct.vue";
 import ProductList from "@/views/ProductList.vue";
 import ProductEdit from "@/views/ProductEdit.vue";
@@ -413,7 +569,7 @@ import AdminOrders from "@/views/AdminOrders.vue";
 import AdminLeaves from "@/views/AdminLeaves.vue";
 import ChatWindow from "@/views/ChatWindow.vue";
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "/api";
 
 export default {
   name: "AdminPage",
@@ -446,6 +602,16 @@ export default {
       totalInventory: 0,
       unreadMessageCount: 0,
       totalEnquiries: 0,
+      pendingReviews: 0,
+      totalPurchases: 0,
+      totalProfit: 0,
+      salesTimeframe: "all",
+      analyticsData: null,
+      displayedPurchases: 0,
+      displayedProfit: 0,
+      reviewsLoading: false,
+      currentReviews: [],
+      actionLoading: false,
 
       messageInterval: null,
 
@@ -466,9 +632,55 @@ export default {
     this.messageInterval = setInterval(() => {
       this.fetchUnreadMessages();
     }, 5000); // Reduced frequency
+
+    // Socket listeners for real-time updates
+    socket.on("productAdded", () => {
+      this.fetchDashboardStats();
+    });
+
+    socket.on("productUpdated", () => {
+      this.fetchDashboardStats();
+    });
+
+    socket.on("productDeleted", () => {
+      this.fetchDashboardStats();
+    });
+
+    socket.on("categoryAdded", () => {
+      this.fetchDashboardStats();
+    });
+
+    socket.on("categoryUpdated", () => {
+      this.fetchDashboardStats();
+    });
+
+    socket.on("categoryDeleted", () => {
+      this.fetchDashboardStats();
+    });
+
+    socket.on("orderPlaced", () => {
+      this.fetchDashboardStats();
+    });
   },
   beforeUnmount() {
     if (this.messageInterval) clearInterval(this.messageInterval);
+
+    // Remove socket listeners
+    socket.off("productAdded");
+    socket.off("productUpdated");
+    socket.off("productDeleted");
+    socket.off("categoryAdded");
+    socket.off("categoryUpdated");
+    socket.off("categoryDeleted");
+    socket.off("orderPlaced");
+    socket.off("statsUpdated");
+  },
+  watch: {
+    selectedMenu(newVal) {
+      if (newVal === "reviews") {
+        this.fetchReviews();
+      }
+    },
   },
   methods: {
     getPageTitle(menu) {
@@ -497,17 +709,10 @@ export default {
       this.passwordLoading = true;
 
       try {
-        const token = localStorage.getItem("token");
-        const res = await axios.post(
-          `${API_BASE_URL}/auth/change-password`,
-          {
-            currentPassword: this.passwordForm.currentPassword,
-            newPassword: this.passwordForm.newPassword,
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await axios.post(`${API_BASE_URL}/auth/change-password`, {
+          currentPassword: this.passwordForm.currentPassword,
+          newPassword: this.passwordForm.newPassword,
+        });
 
         this.passwordSuccess = res.data.msg || "Password changed successfully.";
         this.passwordForm = {
@@ -525,13 +730,21 @@ export default {
     async fetchDashboardStats() {
       this.dashboardLoading = true;
       try {
-        const [productsRes, categoriesRes, staffRes, leavesRes] =
-          await Promise.all([
-            axios.get(`${API_BASE_URL}/products/getproduct`),
-            axios.get(`${API_BASE_URL}/categories`),
-            axios.get(`${API_BASE_URL}/staff`),
-            axios.get(`${API_BASE_URL}/leaves/all`),
-          ]);
+        const [
+          productsRes,
+          categoriesRes,
+          staffRes,
+          leavesRes,
+          reviewsRes,
+          salesRes,
+        ] = await Promise.all([
+          axios.get(`${API_BASE_URL}/products/getproduct`),
+          axios.get(`${API_BASE_URL}/categories`),
+          axios.get(`${API_BASE_URL}/staff`),
+          axios.get(`${API_BASE_URL}/leaves/all`),
+          axios.get(`${API_BASE_URL}/reviews/admin/pending`),
+          axios.get(`${API_BASE_URL}/orders/admin/sales-analytics`),
+        ]);
 
         if (productsRes.data.success && productsRes.data.products) {
           this.totalProducts = productsRes.data.products.length;
@@ -560,31 +773,72 @@ export default {
             (l) => l.status === "Approved"
           ).length;
         }
+
+        if (Array.isArray(reviewsRes.data)) {
+          this.pendingReviews = reviewsRes.data.length;
+        }
+
+        if (salesRes.data) {
+          this.analyticsData = salesRes.data;
+          this.totalPurchases = salesRes.data.totalPurchases;
+          this.totalProfit = salesRes.data.totalProfit;
+          this.updateDisplayedStats();
+        }
       } catch (error) {
         console.error("Error loading stats:", error);
       } finally {
         this.dashboardLoading = false;
       }
     },
+    updateDisplayedStats() {
+      if (!this.analyticsData) return;
+
+      if (this.salesTimeframe === "all") {
+        this.displayedPurchases = this.totalPurchases;
+        this.displayedProfit = this.totalProfit;
+      } else {
+        const now = new Date();
+        let key = "";
+        let dataSet = null;
+
+        if (this.salesTimeframe === "today") {
+          key = now.toISOString().split("T")[0];
+          dataSet = this.analyticsData.daily;
+        } else if (this.salesTimeframe === "month") {
+          key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+            2,
+            "0"
+          )}`;
+          dataSet = this.analyticsData.monthly;
+        } else if (this.salesTimeframe === "year") {
+          key = now.getFullYear().toString();
+          dataSet = this.analyticsData.yearly;
+        }
+
+        if (dataSet) {
+          this.displayedPurchases = dataSet.purchases[key] || 0;
+          this.displayedProfit = dataSet.profit[key] || 0;
+        }
+      }
+    },
     async fetchUnreadMessages() {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        const res = await axios.get(
-          "http://localhost:5000/api/messages/unread-count",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await axios.get("/api/messages/unread-count");
         if (res.data.success) this.unreadMessageCount = res.data.unreadCount;
       } catch (e) {
         console.error("Msg Error", e);
       }
     },
-    logout() {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      this.$router.push("/");
+    async logout() {
+      try {
+        await axios.post("/api/auth/logout");
+      } catch (err) {
+        console.error("Logout error:", err);
+      } finally {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        this.$router.push("/");
+      }
     },
     closeAddProductModal() {
       this.showAddProductModal = false;
@@ -602,6 +856,46 @@ export default {
       this.showEditProductModal = false;
       this.showListProductsModal = false;
       this.fetchDashboardStats();
+    },
+    async fetchReviews() {
+      this.reviewsLoading = true;
+      try {
+        const res = await axios.get("/api/reviews/admin/all");
+        if (res.data.success) {
+          this.currentReviews = res.data.reviews;
+        }
+      } catch (err) {
+        console.error("Error fetching reviews:", err);
+      } finally {
+        this.reviewsLoading = false;
+      }
+    },
+    async deleteReview(id) {
+      if (!confirm("Are you sure you want to delete this review?")) return;
+      this.actionLoading = true;
+      try {
+        const res = await axios.delete(`/api/reviews/admin/delete/${id}`);
+        if (res.data.success) {
+          this.fetchReviews();
+          this.fetchDashboardStats();
+        }
+      } catch (err) {
+        console.error("Error deleting review:", err);
+        alert("Failed to delete review");
+      } finally {
+        this.actionLoading = false;
+      }
+    },
+    getImageUrl(path) {
+      if (!path) return "/placeholder.jpg";
+      return path.startsWith("/") ? path : `/${path}`;
+    },
+    formatDate(date) {
+      return new Date(date).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
     },
   },
 };

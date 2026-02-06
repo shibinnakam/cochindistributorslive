@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs'); // For password hashing
 const http = require('http');
 const socketIo = require('socket.io');
@@ -18,6 +19,7 @@ const cartRoutes = require("./routes/cartRoutes");
 const chatRoutes = require("./routes/ChatRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const walletRoutes = require("./routes/walletRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -38,8 +40,14 @@ io.on('connection', (socket) => {
       try {
         const jwt = require('jsonwebtoken');
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        socket.join(decoded.user.id);
-        console.log(`User ${decoded.user.id} joined room`);
+        socket.join(decoded.id);
+        console.log(`User ${decoded.id} joined room`);
+
+        // If user is admin, also join admin room
+        if (decoded.role === 'admin') {
+          socket.join('admin');
+          console.log(`Admin ${decoded.id} joined admin room`);
+        }
       } catch (error) {
         console.error('Invalid token for socket join:', error);
       }
@@ -52,7 +60,11 @@ io.on('connection', (socket) => {
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:8080",
+  credentials: true
+}));
+app.use(cookieParser());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
@@ -62,36 +74,44 @@ mongoose
   .then(async () => {
     console.log('Connected to MongoDB');
 
-    // Create default admin user if not exists
+    // Create or update default admin user
     const adminEmail = 'admincd@gmail.com';
+    const adminPassword = 'admin@123';
     const existingAdmin = await User.findOne({ email: adminEmail });
 
     if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash('admin', 10);
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
       const adminUser = new User({
         email: adminEmail,
         password: hashedPassword,
         role: 'admin',
+        name: 'Admin',
       });
       await adminUser.save();
       console.log('Default admin user created');
     } else {
-      console.log('Admin user already exists');
+      // Ensure the admin has the correct password and role
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+      existingAdmin.password = hashedPassword;
+      existingAdmin.role = 'admin';
+      await existingAdmin.save();
+      console.log('Admin user updated with requested credentials');
     }
   })
   .catch((err) => console.error('MongoDB Error:', err.message));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/categories', categoryRoutes);
+app.use('/api/products', productRoutes(io)); // Pass io to productRoutes
+app.use('/api/categories', categoryRoutes(io)); // Pass io to categoryRoutes
 app.use("/api/staff", staffRoutes);
 app.use("/api/leaves", leaveRoutes);
 app.use("/api/messages", messageRoutes);
-app.use("/api/cart", cartRoutes);
+app.use("/api/cart", cartRoutes(io)); // Pass io to cartRoutes
 app.use("/api/chat", chatRoutes);
 app.use("/api/orders", orderRoutes(io)); // Pass io to orderRoutes
-app.use("/api/wallet", walletRoutes);
+app.use("/api/wallet", walletRoutes(io)); // Pass io to walletRoutes
+app.use("/api/reviews", reviewRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;

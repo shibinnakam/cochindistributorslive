@@ -8,66 +8,83 @@ const sgMail = require("@sendgrid/mail");
 const passport = require("passport");
 const Staff = require("../models/Staff");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:5000/api/auth/google/callback",
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        const email = profile.emails[0].value.toLowerCase();
+// Google OAuth setup only if environment variables are properly set
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET &&
+  process.env.GOOGLE_CLIENT_ID.trim() !== '' && process.env.GOOGLE_CLIENT_SECRET.trim() !== '') {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: "http://localhost:5000/api/auth/google/callback",
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          const email = profile.emails[0].value.toLowerCase();
 
-        // 1️⃣ Check if this email exists in Staff collection
-        let staff = await Staff.findOne({ email });
-        if (staff) {
-          // If staff account found → treat as staff
+          // 1️⃣ Check if this email exists in Staff collection
+          let staff = await Staff.findOne({ email });
+          if (staff) {
+            // If staff account found → treat as staff
+            return done(null, {
+              _id: staff._id,
+              email: staff.email,
+              role: "staff",
+              name: staff.name || profile.displayName,
+            });
+          }
+
+          // 2️⃣ Otherwise, check in User collection
+          let user = await User.findOne({ googleId: profile.id });
+          if (!user) {
+            user = await User.findOne({ email });
+          }
+
+          // If no user exists → create new user
+          if (!user) {
+            user = new User({
+              googleId: profile.id,
+              email,
+              role: "user",
+            });
+            await user.save();
+          }
+
           return done(null, {
-            _id: staff._id,
-            email: staff.email,
-            role: "staff",
-            name: staff.name || profile.displayName,
+            _id: user._id,
+            email: user.email,
+            role: user.role || "user",
+            name: profile.displayName,
           });
+        } catch (err) {
+          return done(err, null);
         }
-
-        // 2️⃣ Otherwise, check in User collection
-        let user = await User.findOne({ googleId: profile.id });
-        if (!user) {
-          user = await User.findOne({ email });
-        }
-
-        // If no user exists → create new user
-        if (!user) {
-          user = new User({
-            googleId: profile.id,
-            email,
-            role: "user",
-          });
-          await user.save();
-        }
-
-        return done(null, {
-          _id: user._id,
-          email: user.email,
-          role: user.role || "user",
-          name: profile.displayName,
-        });
-      } catch (err) {
-        return done(err, null);
       }
-    }
-  )
-);
+    )
+  );
+}
 
 
 // Validation regex
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const passwordRegex =
   /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+// Token generation helpers
+const generateTokens = (id, role) => {
+  const accessToken = jwt.sign({ id, role }, process.env.JWT_SECRET, {
+    expiresIn: "15m",
+  });
+  const refreshToken = jwt.sign({ id, role }, process.env.JWT_REFRESH_SECRET || "refresh_secret_keys_123", {
+    expiresIn: "7d",
+  });
+  return { accessToken, refreshToken };
+};
 
 // Middleware: Authenticate JWT token
 const authMiddleware = (req, res, next) => {
@@ -82,7 +99,7 @@ const authMiddleware = (req, res, next) => {
     req.user = decoded; // { id, role }
     next();
   } catch (err) {
-    res.status(401).json({ msg: "Invalid or expired token" });
+    res.status(401).json({ msg: "Invalid or expired token", expired: true });
   }
 };
 
@@ -119,12 +136,14 @@ router.post("/register", async (req, res) => {
     await newUser.save();
 
     // Send welcome email (non-blocking)
-    sgMail.send({
-      to: email,
-      from: process.env.FROM_EMAIL,
-      subject: "Welcome to Our Service!",
-      html: `<p>Hello,</p><p>Thank you for registering with us.</p><p>Best regards,<br/>Your Company Team</p>`,
-    }).catch(err => console.error("Email send error:", err));
+    sgMail
+      .send({
+        to: email,
+        from: process.env.FROM_EMAIL,
+        subject: "Welcome to Our Service!",
+        html: `<p>Hello,</p><p>Thank you for registering with us.</p><p>Best regards,<br/>Your Company Team</p>`,
+      })
+      .catch((err) => console.error("Email send error:", err));
 
     res.status(201).json({ msg: "User registered successfully" });
   } catch (err) {
@@ -136,9 +155,6 @@ router.post("/register", async (req, res) => {
 /**
  * 📌 LOGIN
  */
-
-
-// ✅ Login route (User or Staff)
 router.post("/login", async (req, res) => {
   let { email, password } = req.body;
   email = email?.trim().toLowerCase();
@@ -151,23 +167,27 @@ router.post("/login", async (req, res) => {
       if (!isMatch)
         return res.status(400).json({ msg: "Invalid email or password" });
 
-      const role = user.role || "user"; // default is "user"
+      const role = user.role || "user";
+      const { accessToken, refreshToken } = generateTokens(user._id, role);
 
-      const token = jwt.sign(
-        { id: user._id, role },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }
-      );
+      // Save refresh token to user
+      user.refreshTokens = user.refreshTokens || [];
+      user.refreshTokens.push(refreshToken);
+      await user.save();
 
-      // ✅ Use route paths, not .vue files
-      let redirectPath = "/user";
-      if (role === "admin") redirectPath = "/admin";
+      // Set cookie for refresh token
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
 
       return res.json({
         msg: `${role} login successful`,
-        token,
+        token: accessToken,
         user: { id: user._id, email: user.email, role },
-        redirect: redirectPath,
+        redirect: role === "admin" ? "/admin" : "/user",
       });
     }
 
@@ -186,27 +206,99 @@ router.post("/login", async (req, res) => {
         .json({ msg: "Your account is not active. Contact admin." });
     }
 
-    const token = jwt.sign(
-      { id: staff._id, role: "staff" },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    const { accessToken, refreshToken } = generateTokens(staff._id, "staff");
+
+    // Save refresh token to staff
+    staff.refreshTokens = staff.refreshTokens || [];
+    staff.refreshTokens.push(refreshToken);
+    await staff.save();
+
+    // Set cookie for refresh token
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
 
     return res.json({
       msg: "Staff login successful",
-      token,
+      token: accessToken,
       user: {
         id: staff._id,
         email: staff.email,
         role: "staff",
         name: staff.name,
       },
-      redirect: "/staff", // ✅ Use route path
+      redirect: "/staff",
     });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ msg: "Server error during login" });
   }
+});
+
+/**
+ * 📌 REFRESH TOKEN
+ */
+router.post("/refresh-token", async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) return res.status(401).json({ msg: "No refresh token" });
+
+  try {
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET || "refresh_secret_keys_123"
+    );
+
+    // Check if token exists in either User or Staff
+    let account = await User.findById(decoded.id);
+    if (!account) {
+      account = await Staff.findById(decoded.id);
+    }
+
+    if (!account || !account.refreshTokens.includes(refreshToken)) {
+      return res.status(403).json({ msg: "Invalid refresh token" });
+    }
+
+    // Issue new access token
+    const newAccessToken = jwt.sign(
+      { id: account._id, role: account.role || "user" },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    res.json({ token: newAccessToken });
+  } catch (err) {
+    res.status(403).json({ msg: "Refresh token expired or invalid" });
+  }
+});
+
+/**
+ * 📌 LOGOUT
+ */
+router.post("/logout", async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (refreshToken) {
+    try {
+      const decoded = jwt.verify(
+        refreshToken,
+        process.env.JWT_REFRESH_SECRET || "refresh_secret_keys_123"
+      );
+      // Remove token from User or Staff
+      await User.findByIdAndUpdate(decoded.id, {
+        $pull: { refreshTokens: refreshToken },
+      });
+      await Staff.findByIdAndUpdate(decoded.id, {
+        $pull: { refreshTokens: refreshToken },
+      });
+    } catch (err) {
+      // Ignore token decoding errors on logout
+    }
+  }
+
+  res.clearCookie("refreshToken");
+  res.json({ msg: "Logged out successfully" });
 });
 
 
@@ -256,11 +348,11 @@ router.get("/profile", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ msg: "User not found" });
-    
+
     const userObj = user.toObject();
     const hasPassword = !!user.password;
     delete userObj.password;
-    
+
     res.json({ user: { ...userObj, hasPassword } });
   } catch (err) {
     console.error("Profile error:", err);
@@ -273,7 +365,7 @@ router.get("/profile", authMiddleware, async (req, res) => {
  */
 router.put("/profile", authMiddleware, async (req, res) => {
   const { name, phone, storeName, storeAddress, pincode, landmark } = req.body;
-  
+
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ msg: "User not found" });
@@ -451,12 +543,23 @@ router.get("/google",
 router.get(
   "/google/callback",
   passport.authenticate("google", { session: false, failureRedirect: "/" }),
-  (req, res) => {
-    const token = jwt.sign(
-      { id: req.user._id, role: req.user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+  async (req, res) => {
+    const { accessToken, refreshToken } = generateTokens(req.user._id, req.user.role);
+
+    // Save refresh token to User or Staff
+    if (req.user.role === "staff") {
+      await Staff.findByIdAndUpdate(req.user._id, { $push: { refreshTokens: refreshToken } });
+    } else {
+      await User.findByIdAndUpdate(req.user._id, { $push: { refreshTokens: refreshToken } });
+    }
+
+    // Set cookie for refresh token
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
     // Redirect based on role
     let redirectPath = "/user";
@@ -464,7 +567,7 @@ router.get(
     if (req.user.role === "admin") redirectPath = "/admin";
 
     res.redirect(
-      `http://localhost:8080/google-success?token=${token}&user=${encodeURIComponent(
+      `http://localhost:8080/google-success?token=${accessToken}&user=${encodeURIComponent(
         JSON.stringify(req.user)
       )}&redirect=${redirectPath}`
     );
@@ -516,6 +619,39 @@ router.post("/reset-password", async (req, res) => {
     res.status(500).json({ msg: "Server error during password reset" });
   }
 });
+/**
+ * 📌 VERIFY TOKEN (check if token is valid)
+ */
+router.get("/verify", authMiddleware, async (req, res) => {
+  try {
+    // If we reach here, token is valid (authMiddleware passed)
+    // Try to find user in User collection
+    let account = await User.findById(req.user.id).select("-password");
+
+    // If not found, try in Staff collection
+    if (!account) {
+      account = await Staff.findById(req.user.id).select("-password");
+    }
+
+    if (!account) {
+      return res.status(401).json({ msg: "Account not found" });
+    }
+
+    res.json({
+      valid: true,
+      user: {
+        id: account._id,
+        email: account.email,
+        role: account.role || "user",
+        name: account.name,
+      }
+    });
+  } catch (err) {
+    console.error("Verify error:", err);
+    res.status(500).json({ msg: "Server error during verification" });
+  }
+});
+
 /**
  * 📌 CREATE ADMIN (one-time setup via Postman)
  */

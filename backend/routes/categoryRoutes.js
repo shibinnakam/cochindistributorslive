@@ -1,5 +1,6 @@
 const express = require("express");
-const router = express.Router();
+module.exports = (io) => {
+  const router = express.Router();
 const Category = require("../models/Category");
 const multer = require("multer");
 const path = require("path");
@@ -77,6 +78,9 @@ router.post("/", upload.single('image'), async (req, res) => {
     const category = new Category({ name: name.trim(), image });
     await category.save();
 
+    // Emit real-time update to all connected clients
+    io.emit('categoryAdded', { category });
+
     res.status(201).json(category);
   } catch (err) {
     console.error("Error adding category:", err.message);
@@ -135,6 +139,9 @@ router.delete("/:id", async (req, res) => {
   try {
     const deleted = await Category.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ error: "Category not found" });
+    // Emit real-time update to all connected clients
+    io.emit('categoryDeleted', { categoryId: req.params.id });
+
     res.json({ message: "Category deleted successfully" });
   } catch (err) {
     console.error("Error deleting category:", err.message);
@@ -142,4 +149,5 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-module.exports = router;
+  return router;
+};

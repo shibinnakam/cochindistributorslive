@@ -26,7 +26,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
 
 export default {
   data() {
@@ -66,10 +66,11 @@ export default {
 
       this.loading = true;
       try {
-        const res = await axios.post(
-          `${process.env.VUE_APP_API_URL}/api/auth/set-password`,
-          { token, email, password: this.password }
-        );
+        const res = await axios.post("/api/auth/set-password", {
+          token,
+          email,
+          password: this.password,
+        });
 
         this.message = res.data.msg || "Password set successfully!";
         this.isError = false;

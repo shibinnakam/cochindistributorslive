@@ -150,7 +150,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
 
 export default {
   name: "AddCategory",
@@ -171,11 +171,11 @@ export default {
     },
     getImageUrl(path) {
       if (!path) return null;
-      return path.startsWith("/") ? `http://localhost:5000${path}` : path;
+      return path.startsWith("/") ? path : path;
     },
     async fetchCategories() {
       try {
-        const res = await axios.get("http://localhost:5000/api/categories");
+        const res = await axios.get("/api/categories");
         this.categories = res.data;
       } catch (err) {
         console.error("Error fetching categories:", err);
@@ -191,15 +191,11 @@ export default {
           formData.append("image", this.imageFile);
         }
 
-        const res = await axios.post(
-          "http://localhost:5000/api/categories",
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
+        const res = await axios.post("/api/categories", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
         this.categories.unshift(res.data);
         this.name = "";
         this.imageFile = null;
@@ -222,12 +218,9 @@ export default {
       if (!this.editName.trim()) return;
 
       try {
-        const res = await axios.put(
-          `http://localhost:5000/api/categories/${id}`,
-          {
-            name: this.editName,
-          }
-        );
+        const res = await axios.put(`/api/categories/${id}`, {
+          name: this.editName,
+        });
         const index = this.categories.findIndex((c) => c._id === id);
         if (index !== -1) this.categories[index] = res.data;
         this.editId = null;
@@ -248,9 +241,7 @@ export default {
     },
     async confirmDelete() {
       try {
-        await axios.delete(
-          `http://localhost:5000/api/categories/${this.deleteId}`
-        );
+        await axios.delete(`/api/categories/${this.deleteId}`);
         this.categories = this.categories.filter(
           (c) => c._id !== this.deleteId
         );

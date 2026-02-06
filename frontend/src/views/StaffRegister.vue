@@ -75,7 +75,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
 
 export default {
   data() {
@@ -114,10 +114,7 @@ export default {
       }
 
       try {
-        const res = await axios.post(
-          "http://localhost:5000/api/staff/check-submitted",
-          { token }
-        );
+        const res = await axios.post("/api/staff/check-submitted", { token });
         if (res.data.submitted) {
           this.message = "You have already submitted your registration.";
           this.submitted = true;
@@ -179,11 +176,9 @@ export default {
         formData.append("pincode", this.pincode);
         formData.append("profilePhoto", this.profilePhoto);
 
-        const res = await axios.post(
-          "http://localhost:5000/api/staff/register",
-          formData,
-          { headers: { "Content-Type": "multipart/form-data" } }
-        );
+        const res = await axios.post("/api/staff/register", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
 
         this.message = res.data.message || "Registration successful!";
         this.submitted = true;

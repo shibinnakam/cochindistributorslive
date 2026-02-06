@@ -58,7 +58,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
 
 export default {
   name: "UserList",
@@ -71,9 +71,7 @@ export default {
   methods: {
     async fetchUsers() {
       try {
-        const res = await axios.get(
-          "http://localhost:5000/api/admin/uservarificationroute"
-        );
+        const res = await axios.get("/api/admin/uservarificationroute");
         this.users = res.data;
         this.loading = false;
       } catch (err) {
@@ -82,9 +80,7 @@ export default {
     },
     async toggleBlock(userId) {
       try {
-        await axios.put(
-          `http://localhost:5000/api/admin/uservarificationroute/${userId}/block`
-        );
+        await axios.put(`/api/admin/uservarificationroute/${userId}/block`);
         this.fetchUsers(); // refresh list
       } catch (err) {
         console.error("Error updating user", err);

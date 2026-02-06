@@ -84,7 +84,8 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
+import socket from "@/socket";
 
 export default {
   name: "AdminOrders",
@@ -96,18 +97,30 @@ export default {
   },
   mounted() {
     this.fetchOrders();
+
+    // Socket listeners for real-time updates
+    socket.on("orderPlaced", () => {
+      this.fetchOrders();
+    });
+
+    socket.on("orderStatusUpdate", (data) => {
+      // Update the specific order status
+      const order = this.orders.find((o) => o._id === data.orderId);
+      if (order) {
+        order.status = data.status;
+      }
+    });
+  },
+  beforeUnmount() {
+    // Remove socket listeners
+    socket.off("orderPlaced");
+    socket.off("orderStatusUpdate");
   },
   methods: {
     async fetchOrders() {
       this.loading = true;
       try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(
-          "http://localhost:5000/api/orders/admin/all-orders",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await axios.get("/api/orders/admin/all-orders");
         this.orders = res.data;
       } catch (err) {
         console.error("Error fetching admin orders:", err);
@@ -117,12 +130,9 @@ export default {
     },
     async updateStatus(orderId, newStatus) {
       try {
-        const token = localStorage.getItem("token");
-        await axios.patch(
-          `http://localhost:5000/api/orders/admin/orders/${orderId}/status`,
-          { status: newStatus },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await axios.patch(`/api/orders/admin/orders/${orderId}/status`, {
+          status: newStatus,
+        });
         alert("Order status updated successfully");
       } catch (err) {
         console.error("Error updating order status:", err);

@@ -29,15 +29,15 @@
                 id="amount"
                 v-model="addAmount"
                 placeholder="Enter amount"
-                min="1"
-                max="10000"
+                min="100"
+                max="1000"
                 :disabled="loading"
               />
             </div>
             <button
               class="add-money-btn"
               @click="addMoney"
-              :disabled="loading || !addAmount || addAmount < 1"
+              :disabled="loading || !addAmount || addAmount < 100"
             >
               {{ loading ? "Processing..." : "Add Money" }}
             </button>
@@ -49,9 +49,9 @@
           <p>Quick Add:</p>
           <div class="amount-buttons">
             <button @click="setAmount(100)" :disabled="loading">₹100</button>
+            <button @click="setAmount(200)" :disabled="loading">₹200</button>
             <button @click="setAmount(500)" :disabled="loading">₹500</button>
             <button @click="setAmount(1000)" :disabled="loading">₹1000</button>
-            <button @click="setAmount(2000)" :disabled="loading">₹2000</button>
           </div>
         </div>
       </div>
@@ -60,7 +60,8 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
+import socket from "@/socket.js";
 
 export default {
   name: "WalletPage",
@@ -73,17 +74,20 @@ export default {
   },
   mounted() {
     this.fetchBalance();
+
+    // Socket listeners for real-time updates
+    socket.on("walletUpdated", (data) => {
+      this.balance = data.balance;
+    });
+  },
+  beforeUnmount() {
+    // Remove socket listeners
+    socket.off("walletUpdated");
   },
   methods: {
     async fetchBalance() {
       try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(
-          "http://localhost:5000/api/wallet/balance",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await axios.get("/api/wallet/balance");
         if (res.data.success) {
           this.balance = res.data.balance;
         }
@@ -98,21 +102,17 @@ export default {
     },
 
     async addMoney() {
-      if (!this.addAmount || this.addAmount < 1) {
-        alert("Please enter a valid amount");
+      if (!this.addAmount || this.addAmount < 100 || this.addAmount > 1000) {
+        alert("Please enter an amount between ₹100 and ₹1000");
         return;
       }
 
       this.loading = true;
       try {
-        const token = localStorage.getItem("token");
-
         // Create Razorpay order
-        const res = await axios.post(
-          "http://localhost:5000/api/wallet/add-money",
-          { amount: this.addAmount },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const res = await axios.post("/api/wallet/add-money", {
+          amount: this.addAmount,
+        });
 
         if (res.data.success) {
           // Initialize Razorpay checkout
@@ -149,17 +149,12 @@ export default {
 
     async verifyPayment(razorpayResponse, amount) {
       try {
-        const token = localStorage.getItem("token");
-        const res = await axios.post(
-          "http://localhost:5000/api/wallet/verify-payment",
-          {
-            razorpay_order_id: razorpayResponse.razorpay_order_id,
-            razorpay_payment_id: razorpayResponse.razorpay_payment_id,
-            razorpay_signature: razorpayResponse.razorpay_signature,
-            amount: amount,
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const res = await axios.post("/api/wallet/verify-payment", {
+          razorpay_order_id: razorpayResponse.razorpay_order_id,
+          razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+          razorpay_signature: razorpayResponse.razorpay_signature,
+          amount: amount,
+        });
 
         if (res.data.success) {
           alert("Payment successful! Wallet updated.");

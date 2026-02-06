@@ -6,6 +6,7 @@ const productSchema = new mongoose.Schema(
     description: { type: String, required: true },
     originalPrice: { type: Number, required: true },
     discountPrice: { type: Number, required: true },
+    costPrice: { type: Number, required: true, default: 0 },
     image: { type: String, required: false }, // legacy - single image
     imageFront: { type: String, required: false }, // front view image path
     imageSide: { type: String, required: false }, // side view image path (optional)
@@ -13,15 +14,15 @@ const productSchema = new mongoose.Schema(
     imageTop: { type: String, required: false }, // top view image path (optional)
     imageBottom: { type: String, required: false }, // bottom view image path (optional)
     model3D: { type: String, required: false }, // uploaded 3D model path (optional)
-    shape: { 
-      type: String, 
-      enum: ['box', 'cylinder', 'pillow'], 
-      default: 'box' 
+    shape: {
+      type: String,
+      enum: ['box', 'cylinder', 'pillow', 'exact'],
+      default: 'box'
     }, // 3D shape type
-    category: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: "Category", 
-      required: true 
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true
     },
     quantity: { type: Number, required: true, min: 10 },
 
@@ -30,6 +31,10 @@ const productSchema = new mongoose.Schema(
     expiryDate: { type: Date, required: true },
     batchNumber: { type: String, required: true },
     rackNumber: { type: String, required: true },
+
+    // ✅ Rating fields
+    averageRating: { type: Number, default: 0 },
+    ratingCount: { type: Number, default: 0 },
 
     // ✅ Status flags
     isExpired: { type: Boolean, default: false },

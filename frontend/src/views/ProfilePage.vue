@@ -128,7 +128,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
 
 export default {
   name: "ProfilePage",
@@ -167,9 +167,7 @@ export default {
           this.$router.push("/login");
           return;
         }
-        const res = await axios.get("http://localhost:5000/api/auth/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get("/api/auth/profile");
         this.user = res.data.user;
       } catch (err) {
         console.error("Error fetching profile:", err);
@@ -181,10 +179,7 @@ export default {
     async updateProfile() {
       this.updating = true;
       try {
-        const token = localStorage.getItem("token");
-        await axios.put("http://localhost:5000/api/auth/profile", this.user, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await axios.put("/api/auth/profile", this.user);
         alert("Profile updated successfully!");
       } catch (err) {
         console.error("Error updating profile:", err);
@@ -201,18 +196,10 @@ export default {
 
       this.passwordUpdating = true;
       try {
-        const token = localStorage.getItem("token");
-
-        await axios.post(
-          "http://localhost:5000/api/auth/change-password",
-          {
-            currentPassword: this.passwordForm.currentPassword,
-            newPassword: this.passwordForm.newPassword,
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        await axios.post("/api/auth/change-password", {
+          currentPassword: this.passwordForm.currentPassword,
+          newPassword: this.passwordForm.newPassword,
+        });
 
         alert("Password updated successfully!");
         this.passwordForm = {

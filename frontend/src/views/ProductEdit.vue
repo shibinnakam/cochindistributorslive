@@ -9,9 +9,11 @@
       >
         <!-- Row 1: Name & Quantity -->
         <div class="form-group">
+          <label>Item Name</label>
           <input v-model="form.name" type="text" placeholder="Item Name" />
         </div>
         <div class="form-group">
+          <label>Quantity</label>
           <input
             v-model.number="form.quantity"
             type="number"
@@ -20,8 +22,9 @@
           />
         </div>
 
-        <!-- Row 2: Original Price & Discount Price -->
+        <!-- Row 2: Original Price & Discount Price & Cost Price -->
         <div class="form-group">
+          <label>Original Price</label>
           <input
             v-model.number="form.originalPrice"
             type="number"
@@ -29,68 +32,204 @@
           />
         </div>
         <div class="form-group">
+          <label>Discount Price</label>
           <input
             v-model.number="form.discountPrice"
             type="number"
             placeholder="Discount Price"
           />
         </div>
+        <div class="form-group">
+          <label>Cost Price</label>
+          <input
+            v-model.number="form.costPrice"
+            type="number"
+            placeholder="Cost Price"
+          />
+        </div>
 
-        <!-- Row 3: Description (Full Width) -->
+        <!-- Row 3: Manufacturing Date & Expiry Date -->
+        <div class="form-group">
+          <label>Mfg Date</label>
+          <input v-model="form.manufacturingDate" type="date" />
+        </div>
+        <div class="form-group">
+          <label>Expiry Date</label>
+          <input v-model="form.expiryDate" type="date" />
+        </div>
+
+        <!-- Row 4: Batch Number & Rack Number -->
+        <div class="form-group">
+          <label>Batch Number</label>
+          <input
+            v-model="form.batchNumber"
+            type="text"
+            placeholder="Batch Number"
+          />
+        </div>
+        <div class="form-group">
+          <label>Rack Number</label>
+          <input
+            v-model.number="form.rackNumber"
+            type="number"
+            min="1"
+            max="155"
+            placeholder="Rack (1-155)"
+          />
+        </div>
+
+        <!-- Row 5: Category & Shape Selection -->
+        <div class="form-group">
+          <label>Category</label>
+          <select v-model="form.category">
+            <option value="" disabled>Select Category</option>
+            <option v-for="c in categories" :key="c._id" :value="c._id">
+              {{ c.name }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>3D Shape</label>
+          <select v-model="form.shape">
+            <option value="box">Box (Carton)</option>
+            <option value="pillow">Pillow (Packet/Chips)</option>
+            <option value="cylinder">Cylinder (Bottle/Can)</option>
+            <option value="exact">Exact Shape (From Image)</option>
+          </select>
+        </div>
+
+        <!-- Row 6: Description (Full Width) -->
         <div class="form-group full-width">
+          <label>Description (4-20 chars)</label>
           <textarea
             v-model="form.description"
             placeholder="Description (4-20 chars)"
           ></textarea>
         </div>
 
-        <!-- Row 4: Shape Selection -->
+        <!-- Row 7: Multi-Image Uploads for 3D Visualization -->
         <div class="form-group full-width">
-          <label>3D Shape</label>
-          <select v-model="form.shape">
-            <option value="box">Box (Carton)</option>
-            <option value="pillow">Pillow (Packet/Chips)</option>
-            <option value="cylinder">Cylinder (Bottle/Can)</option>
-          </select>
+          <label>Product Images (Upload to replace existing)</label>
+          <div class="image-upload-grid">
+            <!-- Front Image -->
+            <div class="image-upload-item">
+              <label class="upload-label">Front Image</label>
+              <input
+                type="file"
+                @change="(e) => handleImageUpload(e, 'imageFront')"
+                accept="image/*"
+              />
+              <div
+                v-if="previews.imageFront || form.imageFront"
+                class="image-preview-mini"
+              >
+                <img
+                  :src="previews.imageFront || getImageUrl(form.imageFront)"
+                  alt="Front"
+                />
+              </div>
+            </div>
+            <!-- Back Image -->
+            <div class="image-upload-item">
+              <label class="upload-label">Back Image</label>
+              <input
+                type="file"
+                @change="(e) => handleImageUpload(e, 'imageBack')"
+                accept="image/*"
+              />
+              <div
+                v-if="previews.imageBack || form.imageBack"
+                class="image-preview-mini"
+              >
+                <img
+                  :src="previews.imageBack || getImageUrl(form.imageBack)"
+                  alt="Back"
+                />
+              </div>
+            </div>
+            <!-- Side Image -->
+            <div class="image-upload-item">
+              <label class="upload-label">Side Image</label>
+              <input
+                type="file"
+                @change="(e) => handleImageUpload(e, 'imageSide')"
+                accept="image/*"
+              />
+              <div
+                v-if="previews.imageSide || form.imageSide"
+                class="image-preview-mini"
+              >
+                <img
+                  :src="previews.imageSide || getImageUrl(form.imageSide)"
+                  alt="Side"
+                />
+              </div>
+            </div>
+            <!-- Top Image -->
+            <div class="image-upload-item">
+              <label class="upload-label">Top Image</label>
+              <input
+                type="file"
+                @change="(e) => handleImageUpload(e, 'imageTop')"
+                accept="image/*"
+              />
+              <div
+                v-if="previews.imageTop || form.imageTop"
+                class="image-preview-mini"
+              >
+                <img
+                  :src="previews.imageTop || getImageUrl(form.imageTop)"
+                  alt="Top"
+                />
+              </div>
+            </div>
+            <!-- Bottom Image -->
+            <div class="image-upload-item">
+              <label class="upload-label">Bottom Image</label>
+              <input
+                type="file"
+                @change="(e) => handleImageUpload(e, 'imageBottom')"
+                accept="image/*"
+              />
+              <div
+                v-if="previews.imageBottom || form.imageBottom"
+                class="image-preview-mini"
+              >
+                <img
+                  :src="previews.imageBottom || getImageUrl(form.imageBottom)"
+                  alt="Bottom"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Row 5: File Upload -->
+        <!-- Legacy/Single Image Support -->
         <div class="form-group full-width">
-          <label>Product Image</label>
+          <label>Legacy Image (fallback)</label>
           <input
-            id="image"
             type="file"
-            @change="handleFileUpload"
+            @change="(e) => handleImageUpload(e, 'image')"
             accept="image/*"
           />
+          <div v-if="previews.image || form.image" class="image-preview-mini">
+            <img
+              :src="previews.image || getImageUrl(form.image)"
+              alt="Legacy"
+            />
+          </div>
         </div>
 
-        <!-- New Row: 3D Model Upload -->
+        <!-- 3D Model Upload -->
         <div class="form-group full-width">
           <label>3D Model (.glb, .gltf) - Optional</label>
-          <input
-            id="model3D"
-            type="file"
-            @change="handleModelUpload"
-            accept=".glb,.gltf"
-          />
+          <input type="file" @change="handleModelUpload" accept=".glb,.gltf" />
+          <div v-if="form.model3D" class="file-hint">
+            Current: {{ form.model3D }}
+          </div>
         </div>
 
-        <!-- Current Image Preview -->
-        <div v-if="form.image && !imageFile" class="image-preview-container">
-          <img
-            :src="getImageUrl(form.image)"
-            alt="Current Product"
-            class="image-preview"
-          />
-        </div>
-
-        <!-- New Image Preview -->
-        <div v-if="newImagePreview" class="image-preview-container">
-          <img :src="newImagePreview" alt="New Preview" class="image-preview" />
-        </div>
-
-        <!-- Row 5: Submit Button (Full Width) -->
+        <!-- Submit Button -->
         <div class="form-group full-width button-group">
           <button type="submit" :disabled="loading" class="btn-submit">
             {{ loading ? "Updating..." : "Update Product" }}
@@ -102,7 +241,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
 
 export default {
   name: "ProductEdit",
@@ -119,85 +258,138 @@ export default {
         description: "",
         originalPrice: null,
         discountPrice: null,
+        costPrice: null,
         quantity: null,
-        image: "",
-        model3D: "",
+        manufacturingDate: "",
+        expiryDate: "",
+        batchNumber: "",
+        rackNumber: "",
+        category: "",
         shape: "box",
+        image: "",
+        imageFront: "",
+        imageBack: "",
+        imageSide: "",
+        imageTop: "",
+        imageBottom: "",
+        model3D: "",
       },
-      imageFile: null,
-      model3DFile: null,
-      newImagePreview: null,
+      categories: [],
+      files: {
+        image: null,
+        imageFront: null,
+        imageBack: null,
+        imageSide: null,
+        imageTop: null,
+        imageBottom: null,
+        model3D: null,
+      },
+      previews: {
+        image: null,
+        imageFront: null,
+        imageBack: null,
+        imageSide: null,
+        imageTop: null,
+        imageBottom: null,
+      },
       loading: false,
     };
   },
   async mounted() {
-    await this.fetchProduct();
+    await Promise.all([this.loadCategories(), this.fetchProduct()]);
   },
   methods: {
     getImageUrl(path) {
-      return path.startsWith("/") ? `http://localhost:5000${path}` : path;
+      if (!path) return "";
+      return path.startsWith("/") ? path : `/${path}`;
+    },
+    async loadCategories() {
+      try {
+        const res = await axios.get("/api/categories");
+        this.categories = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data.categories)
+          ? res.data.categories
+          : [];
+      } catch (err) {
+        console.error("Error loading categories:", err.message);
+      }
     },
     async fetchProduct() {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/products/getproduct/${this.productId}`
+          `/api/products/getproduct/${this.productId}`
         );
         if (res.data.success) {
-          const product = res.data.product;
+          const p = res.data.product;
+
+          // Format dates for input[type="date"]
+          const mfg = p.manufacturingDate
+            ? new Date(p.manufacturingDate).toISOString().split("T")[0]
+            : "";
+          const exp = p.expiryDate
+            ? new Date(p.expiryDate).toISOString().split("T")[0]
+            : "";
+
           this.form = {
-            name: product.name,
-            description: product.description,
-            originalPrice: product.originalPrice,
-            discountPrice: product.discountPrice,
-            quantity: product.quantity,
-            image: product.image || "",
-            model3D: product.model3D || "",
-            shape: product.shape || "box",
+            name: p.name,
+            description: p.description,
+            originalPrice: p.originalPrice,
+            discountPrice: p.discountPrice,
+            costPrice: p.costPrice,
+            quantity: p.quantity,
+            manufacturingDate: mfg,
+            expiryDate: exp,
+            batchNumber: p.batchNumber || "",
+            rackNumber: p.rackNumber || "",
+            category: p.category?._id || p.category || "",
+            shape: p.shape || "box",
+            image: p.image || "",
+            imageFront: p.imageFront || "",
+            imageBack: p.imageBack || "",
+            imageSide: p.imageSide || "",
+            imageTop: p.imageTop || "",
+            imageBottom: p.imageBottom || "",
+            model3D: p.model3D || "",
           };
         }
       } catch (err) {
-        console.error(
-          "Error fetching product:",
-          err.response?.data || err.message
-        );
+        console.error("Error fetching product:", err.message);
       }
     },
-    handleFileUpload(e) {
-      this.imageFile = e.target.files[0];
-      if (this.imageFile) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          this.newImagePreview = event.target.result;
-        };
-        reader.readAsDataURL(this.imageFile);
+    handleImageUpload(e, type) {
+      const file = e.target.files[0];
+      if (file) {
+        this.files[type] = file;
+        this.previews[type] = URL.createObjectURL(file);
       }
     },
     handleModelUpload(e) {
-      this.model3DFile = e.target.files[0];
+      this.files.model3D = e.target.files[0];
     },
     async updateProduct() {
       this.loading = true;
       try {
         const formData = new FormData();
 
+        // Append basic fields
         Object.keys(this.form).forEach((key) => {
-          if (this.form[key] !== null && this.form[key] !== "") {
-            if (key !== "image" && key !== "model3D") {
+          if (!key.startsWith("image") && key !== "model3D") {
+            if (this.form[key] !== null && this.form[key] !== "") {
               formData.append(key, this.form[key]);
             }
           }
         });
 
-        if (this.imageFile) {
-          formData.append("image", this.imageFile);
-        }
-
-        if (this.model3DFile) {
-          formData.append("model3D", this.model3DFile);
-        }
+        // Append new files if any
+        Object.keys(this.files).forEach((key) => {
+          if (this.files[key]) {
+            formData.append(key, this.files[key]);
+          }
+        });
 
         const res = await axios.put(
-          `http://localhost:5000/api/products/updateproduct/${this.productId}`,
+          `/api/products/updateproduct/${this.productId}`,
           formData,
           { headers: { "Content-Type": "multipart/form-data" } }
         );
@@ -206,7 +398,8 @@ export default {
           this.$emit("updated");
         }
       } catch (err) {
-        console.error(err.response?.data || err.message);
+        console.error("Update error:", err.response?.data || err.message);
+        alert(err.response?.data?.message || "Failed to update product");
       } finally {
         this.loading = false;
       }
@@ -308,22 +501,50 @@ export default {
   cursor: not-allowed;
 }
 
-.image-preview-container {
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: center;
-  padding: 8px 0;
+.image-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 5px;
 }
 
-.image-preview {
-  max-width: 120px;
-  max-height: 120px;
-  border-radius: 8px;
-  border: 2px solid #e2e8f0;
+.image-upload-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: #f8fafc;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.upload-label {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.image-preview-mini {
+  width: 100%;
+  height: 60px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  background: white;
+}
+
+.image-preview-mini img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
+.file-hint {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
 .button-group {
-  margin-top: 8px;
+  margin-top: 10px;
 }
 </style>

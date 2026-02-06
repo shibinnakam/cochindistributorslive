@@ -342,7 +342,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -410,7 +410,7 @@ export default {
   methods: {
     async fetchStaff() {
       try {
-        const res = await axios.get("http://localhost:5000/api/staff");
+        const res = await axios.get("/api/staff");
         this.staff = res.data.staff;
       } catch (err) {
         this.showToast("Failed to fetch staff", true);
@@ -418,7 +418,7 @@ export default {
     },
     async inviteStaff() {
       try {
-        await axios.post("http://localhost:5000/api/staff/invite", {
+        await axios.post("/api/staff/invite", {
           email: this.email,
         });
         this.showToast("Invitation sent!");
@@ -438,10 +438,7 @@ export default {
           position: data.position,
           salary: data.salary,
         };
-        const res = await axios.put(
-          `http://localhost:5000/api/staff/approve/${id}`,
-          payload
-        );
+        const res = await axios.put(`/api/staff/approve/${id}`, payload);
         this.showToast(res.data.message || "Staff approved successfully");
         this.fetchStaff();
       } catch (err) {
@@ -486,13 +483,10 @@ export default {
     },
     async updateStaffDetails(id, data) {
       try {
-        const res = await axios.put(
-          `http://localhost:5000/api/staff/update-details/${id}`,
-          {
-            position: data.position,
-            salary: data.salary,
-          }
-        );
+        const res = await axios.put(`/api/staff/update-details/${id}`, {
+          position: data.position,
+          salary: data.salary,
+        });
         this.showToast(res.data.message || "Details updated");
         this.fetchStaff();
       } catch (err) {
@@ -504,9 +498,7 @@ export default {
     },
     async approveResignation(id) {
       try {
-        const res = await axios.put(
-          `http://localhost:5000/api/staff/resign/approve/${id}`
-        );
+        const res = await axios.put(`/api/staff/resign/approve/${id}`);
         this.showToast(res.data.message || "Resignation approved successfully");
         this.fetchStaff();
       } catch (err) {
@@ -518,9 +510,7 @@ export default {
     },
     async rejectResignation(id) {
       try {
-        const res = await axios.put(
-          `http://localhost:5000/api/staff/resign/reject/${id}`
-        );
+        const res = await axios.put(`/api/staff/resign/reject/${id}`);
         this.showToast(res.data.message || "Resignation rejected");
         this.fetchStaff();
       } catch (err) {
@@ -532,7 +522,7 @@ export default {
     },
     async setStatus(id, status) {
       try {
-        await axios.put(`http://localhost:5000/api/staff/status/${id}`, {
+        await axios.put(`/api/staff/status/${id}`, {
           status,
         });
         this.showToast("Status updated successfully");
@@ -553,7 +543,7 @@ export default {
     },
     async confirmDelete() {
       try {
-        await axios.delete(`http://localhost:5000/api/staff/${this.deleteId}`);
+        await axios.delete(`/api/staff/${this.deleteId}`);
         this.showToast("Staff deleted successfully");
         this.fetchStaff();
       } catch (err) {
@@ -598,7 +588,7 @@ export default {
 
       if (staff.profilePhoto) {
         const staffImg = new Image();
-        staffImg.src = `http://localhost:5000${staff.profilePhoto}`;
+        staffImg.src = `${staff.profilePhoto}`;
         doc.addImage(staffImg, "JPEG", 160, 10, 35, 35);
       }
 
