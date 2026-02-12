@@ -1,7 +1,7 @@
 {
   "scripts": {
     "install-deps": "npm install --legacy-peer-deps && cd backend && npm install --legacy-peer-deps && cd ../frontend && npm install --legacy-peer-deps",
-    "build": "npm run install-deps && cd frontend && npm run build",
+    "build": "npm run install-deps && cd frontend && npm run lint -- --fix && npm run build",
     "start": "cd backend && node server.js"
   },
   "dependencies": {

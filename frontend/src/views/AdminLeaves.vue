@@ -123,14 +123,11 @@ export default {
     async updateStatus(id, status) {
       try {
         const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
-        const res = await fetch(
-          `${apiUrl}/api/leaves/update/${id}`,
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status }),
-          }
-        );
+        const res = await fetch(`${apiUrl}/api/leaves/update/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        });
         if (res.ok) {
           const updatedLeave = await res.json();
           this.leaves = this.leaves.map((l) =>
@@ -153,12 +150,9 @@ export default {
       if (!this.deleteId) return;
       try {
         const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
-        const res = await fetch(
-          `${apiUrl}/api/leaves/delete/${this.deleteId}`,
-          {
-            method: "DELETE",
-          }
-        );
+        const res = await fetch(`${apiUrl}/api/leaves/delete/${this.deleteId}`, {
+          method: "DELETE",
+        });
         if (res.ok) {
           this.leaves = this.leaves.filter((l) => l._id !== this.deleteId);
           this.closeDeleteModal();

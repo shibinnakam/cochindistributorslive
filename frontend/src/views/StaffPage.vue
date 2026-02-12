@@ -677,12 +677,9 @@ export default {
         if (!token) return;
 
         const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
-        const res = await axios.get(
-          `${apiUrl}/api/messages/unread-count`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await axios.get(`${apiUrl}/api/messages/unread-count`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         if (res.data.success) {
           this.unreadMessageCount = res.data.unreadCount;
@@ -694,11 +691,11 @@ export default {
     async submitResignation() {
       try {
         const token = localStorage.getItem("token");
-        await axios.post(
-          `${this.apiBase}/api/staff/resign`,
-          { reason: this.resignationReason },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await axios.post(`${this.apiBase}/api/staff/resign`, {
+          reason: this.resignationReason,
+        }, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         this.staff.resignationStatus = "pending";
         this.staff.resignationDate = new Date();
         this.message = "Resignation submitted successfully";
