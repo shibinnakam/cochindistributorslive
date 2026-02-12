@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: distribution-agency
+    env: node
+    plan: free # Change to starter/pro if needed
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        fromConfigVar: MONGO_URI
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://distribution-agency.onrender.com # Update with your service name
+      - key: PORT
+        value: 5000
