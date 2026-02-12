@@ -2,154 +2,211 @@
   <div class="home-page">
     <!-- Hero Section -->
     <section class="hero">
-      <div class="hero-overlay"></div>
-      <div class="hero-content">
-        <div class="hero-badge" :class="{ 'fade-in': animate }">
-          <span class="badge-icon">🏆</span>
-          <span>Trusted Distributor Since 2020</span>
-        </div>
-        <h1 class="hero-title" :class="{ 'slide-up': animate }">
-          Welcome to <span class="gradient-text">Cochin Distributors</span>
-        </h1>
-        <p class="hero-subtitle" :class="{ 'slide-up-delay': animate }">
-          Your trusted partner for premium baking supplies and quality products
-        </p>
-        <div class="hero-cta" :class="{ 'fade-in-delay': animate }">
-          <button class="btn-primary" @click="scrollToProducts">
-            <span>Explore Products</span>
-            <span class="btn-icon">→</span>
-          </button>
-          <button class="btn-secondary" @click="learnMore">
-            <span>Learn More</span>
-          </button>
-        </div>
+      <div class="hero-bg-overlay"></div>
+      <div class="hero-particles">
+        <div
+          v-for="n in 20"
+          :key="n"
+          class="particle"
+          :style="getParticleStyle(n)"
+        ></div>
+      </div>
 
-        <!-- Stats Section -->
-        <div class="stats-container" :class="{ 'fade-in-late': animate }">
-          <div class="stat-card">
-            <div class="stat-number">500+</div>
-            <div class="stat-label">Premium Products</div>
+      <div class="hero-content container">
+        <div class="hero-text-wrapper">
+          <div class="hero-badge" :class="{ 'fade-in': animate }">
+            <span class="badge-icon">👑</span>
+            <span class="badge-text"
+              >Kerala's Premier Distribution Partner</span
+            >
           </div>
-          <div class="stat-card">
-            <div class="stat-number">1000+</div>
-            <div class="stat-label">Happy Customers</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">24/7</div>
-            <div class="stat-label">Support Available</div>
+
+          <h1 class="hero-title" :class="{ 'slide-up': animate }">
+            Elevating <span class="gradient-text">Baking Excellence</span>
+          </h1>
+
+          <p class="hero-subtitle" :class="{ 'slide-up-delay': animate }">
+            Supplying premium ingredients and equipment to passionate bakers and
+            commercial kitchens since 2020.
+          </p>
+
+          <div class="hero-cta-group" :class="{ 'fade-in-delay': animate }">
+            <button class="btn-primary" @click="scrollToProducts">
+              <span>View Catalog</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="btn-icon"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </button>
+            <button class="btn-secondary" @click="scrollToAbout">
+              <span>Our Story</span>
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Animated background -->
-      <div class="hero-bg-pattern"></div>
+      <!-- Floating Stats Bar -->
+      <div class="stats-bar container" :class="{ 'slide-up-late': animate }">
+        <div v-for="(stat, index) in stats" :key="index" class="stat-item">
+          <div class="stat-number">{{ stat.number }}</div>
+          <div class="stat-label">{{ stat.label }}</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Categories Section -->
+    <section class="section categories-section">
+      <div class="container">
+        <div class="section-header text-center" v-animate-on-scroll>
+          <span class="section-badge">Our Selection</span>
+          <h2 class="section-title">Premium Categories</h2>
+          <p class="section-desc">
+            Everything you need to create your masterpiece
+          </p>
+        </div>
+
+        <div class="categories-grid">
+          <div
+            v-for="(cat, index) in categories"
+            :key="index"
+            class="category-card"
+            v-animate-on-scroll
+            :style="{ transitionDelay: `${index * 100}ms` }"
+          >
+            <div class="category-bg" :style="cat.style"></div>
+            <div class="category-content">
+              <span class="category-icon">{{ cat.icon }}</span>
+              <h3 class="category-name">{{ cat.name }}</h3>
+              <button class="btn-link">Explore →</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- About Section -->
-    <section class="about-section" id="about">
+    <section id="about" class="section about-section">
       <div class="container">
-        <div class="section-header" :class="{ visible: sectionsVisible.about }">
-          <span class="section-label">Who We Are</span>
-          <h2 class="section-title">
-            Your Trusted Partner in Quality Distribution
-          </h2>
-          <p class="section-description">
-            Delivering excellence across Kerala with premium baking supplies
-          </p>
-        </div>
-
         <div class="about-grid">
-          <!-- Feature Cards -->
-          <div
-            v-for="(feature, index) in features"
-            :key="index"
-            class="feature-card"
-            :class="{ visible: sectionsVisible.about }"
-            :style="{ transitionDelay: `${index * 0.1}s` }"
-          >
-            <div class="feature-icon">{{ feature.icon }}</div>
-            <h3 class="feature-title">{{ feature.title }}</h3>
-            <p class="feature-description">{{ feature.description }}</p>
+          <div class="about-content" v-animate-on-scroll>
+            <span class="section-badge">Who We Are</span>
+            <h2 class="section-title">
+              Passion for Quality,<br />Dedication to Service
+            </h2>
+            <p class="about-text">
+              At Cochin Distributors, we see ourselves as more than just
+              suppliers; we are partners in your baking journey. Founded in
+              2020, we have grown to become Kerala's most trusted source for
+              professional baking supplies.
+            </p>
+            <div class="feature-list">
+              <div
+                v-for="(feature, i) in features"
+                :key="i"
+                class="feature-item"
+              >
+                <div class="feature-icon-box">{{ feature.icon }}</div>
+                <div>
+                  <h4 class="feature-title-sm">{{ feature.title }}</h4>
+                  <p class="feature-desc-sm">{{ feature.desc }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="about-visual" v-animate-on-scroll>
+            <div class="visual-card main-card">
+              <div class="card-gradient gradient-blue"></div>
+              <span class="visual-icon">🏭</span>
+              <span>Large Scale Warehousing</span>
+            </div>
+            <div class="visual-card float-card">
+              <div class="card-gradient gradient-gold"></div>
+              <div class="rating-box">
+                <span class="stars">⭐⭐⭐⭐⭐</span>
+                <span class="rating-text">Top Rated Service</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Why Choose Us Section -->
-    <section class="why-choose-section">
+    <!-- Why Choose Us -->
+    <section class="section why-us-section">
       <div class="container">
-        <div class="why-choose-content">
-          <div
-            class="why-choose-left"
-            :class="{ visible: sectionsVisible.whyChoose }"
-          >
-            <span class="section-label">Why Choose Us</span>
-            <h2 class="section-title">Excellence in Every Delivery</h2>
-            <p class="why-choose-text">
-              At Cochin Distributors, we believe in delivering the finest
-              quality baking products to every kitchen, whether you're a home
-              baker or a commercial chef. Our commitment to excellence and
-              customer satisfaction sets us apart in the industry.
-            </p>
+        <div class="section-header text-center" v-animate-on-scroll>
+          <span class="section-badge">Why Choose Us</span>
+          <h2 class="section-title">The Cochin Advantage</h2>
+        </div>
 
-            <div class="value-points">
-              <div
-                v-for="(value, index) in values"
-                :key="index"
-                class="value-point"
-              >
-                <div class="value-check">✓</div>
-                <div class="value-text">{{ value }}</div>
+        <div class="values-grid">
+          <div
+            v-for="(val, i) in values"
+            :key="i"
+            class="value-card"
+            v-animate-on-scroll
+          >
+            <div class="value-icon-wrapper">{{ val.icon }}</div>
+            <h3 class="value-title">{{ val.title }}</h3>
+            <p class="value-text">{{ val.text }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="section testimonials-section">
+      <div class="container">
+        <div class="section-header text-center" v-animate-on-scroll>
+          <span class="section-badge">Testimonials</span>
+          <h2 class="section-title">Trusted by the Best</h2>
+        </div>
+
+        <div class="testimonials-grid">
+          <div
+            v-for="(testim, i) in testimonials"
+            :key="i"
+            class="testimonial-card"
+            v-animate-on-scroll
+          >
+            <div class="quote-icon">"</div>
+            <p class="testimonial-text">{{ testim.text }}</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">{{ testim.initials }}</div>
+              <div class="author-info">
+                <h4 class="author-name">{{ testim.name }}</h4>
+                <span class="author-role">{{ testim.role }}</span>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-            <button class="btn-contact" @click="contactUs">
-              Contact Us Today
+    <!-- Newsletter / CTA -->
+    <section class="section newsletter-section">
+      <div class="container">
+        <div class="newsletter-box" v-animate-on-scroll>
+          <div class="newsletter-content">
+            <h2 class="newsletter-title">Ready to Elevate Your Baking?</h2>
+            <p class="newsletter-desc">
+              Join our network and get access to exclusive products and
+              wholesale prices.
+            </p>
+          </div>
+          <div class="newsletter-action">
+            <button class="btn-primary btn-large" @click="scrollToProducts">
+              Get Started Now
             </button>
           </div>
-
-          <div
-            class="why-choose-right"
-            :class="{ visible: sectionsVisible.whyChoose }"
-          >
-            <div class="image-grid">
-              <div class="grid-item grid-primary">
-                <div class="image-placeholder gradient-1">
-                  <span class="image-icon">📦</span>
-                  <span class="image-label">Quality Products</span>
-                </div>
-              </div>
-              <div class="grid-item grid-secondary">
-                <div class="image-placeholder gradient-2">
-                  <span class="image-icon">🚚</span>
-                  <span class="image-label">Fast Delivery</span>
-                </div>
-              </div>
-              <div class="grid-item grid-tertiary">
-                <div class="image-placeholder gradient-3">
-                  <span class="image-icon">⭐</span>
-                  <span class="image-label">Premium Service</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section">
-      <div class="cta-container">
-        <div class="cta-content">
-          <h2 class="cta-title">Ready to Get Started?</h2>
-          <p class="cta-description">
-            Join hundreds of satisfied customers who trust us for their
-            distribution needs
-          </p>
-          <button class="btn-cta" @click="getStarted">
-            <span>Get Started Now</span>
-            <span class="btn-arrow">→</span>
-          </button>
         </div>
       </div>
     </section>
@@ -162,41 +219,95 @@ export default {
   data() {
     return {
       animate: false,
-      sectionsVisible: {
-        about: false,
-        whyChoose: false,
-      },
-      features: [
+      stats: [
+        { number: "500+", label: "Premium Products" },
+        { number: "1k+", label: "Happy Partners" },
+        { number: "24/7", label: "Expert Support" },
+        { number: "100%", label: "Quality Guarantee" },
+      ],
+      categories: [
         {
-          icon: "🎯",
-          title: "Quality Assurance",
-          description:
-            "Every product goes through rigorous quality checks to ensure you receive only the best.",
+          name: "Bakery Fats & Margarines",
+          icon: "🧈",
+          style: {
+            background: "linear-gradient(135deg, #FFEFBA 0%, #FFFFFF 100%)",
+          },
         },
+        {
+          name: "Chocolates & Fillings",
+          icon: "🍫",
+          style: {
+            background: "linear-gradient(135deg, #E0C3FC 0%, #8EC5FC 100%)",
+          },
+        },
+        {
+          name: "Yeast & Improvers",
+          icon: "🍞",
+          style: {
+            background: "linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%)",
+          },
+        },
+        {
+          name: "Cake Premixes",
+          icon: "🎂",
+          style: {
+            background: "linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)",
+          },
+        },
+      ],
+      features: [
         {
           icon: "⚡",
           title: "Fast Delivery",
-          description:
-            "Quick and reliable delivery service across Kerala, ensuring your orders arrive on time.",
+          desc: "Same-day dispatch for orders within city limits.",
+        },
+        {
+          icon: "🛡️",
+          title: "Quality Assured",
+          desc: "Every product is vetted for professional standards.",
         },
         {
           icon: "💰",
-          title: "Competitive Pricing",
-          description:
-            "Best prices in the market without compromising on quality or service.",
-        },
-        {
-          icon: "🤝",
-          title: "Dedicated Support",
-          description:
-            "Our expert team is always ready to assist you with any queries or concerns.",
+          title: "Wholesale Pricing",
+          desc: "Competitive rates designed for business growth.",
         },
       ],
       values: [
-        "Premium quality products from trusted brands",
-        "Transparent pricing with no hidden costs",
-        "On-time delivery guaranteed",
-        "Excellent customer service and support",
+        {
+          icon: "🤝",
+          title: "Reliability",
+          text: "We deliver on our promises, every single time.",
+        },
+        {
+          icon: "📦",
+          title: "Wide Range",
+          text: "From basics to specialty items, we stock it all.",
+        },
+        {
+          icon: "💡",
+          title: "Expertise",
+          text: "Our team understands baking and helps you choose right.",
+        },
+      ],
+      testimonials: [
+        {
+          text: "Cochin Distributors transformed how we source ingredients. The quality is unmatched.",
+          name: "Sarah J.",
+          role: "Home Baker",
+          initials: "SJ",
+        },
+        {
+          text: "Reliable delivery and great customer support. Highly recommended for commercial needs.",
+          name: "Rahul M.",
+          role: "Bakery Owner",
+          initials: "RM",
+        },
+        {
+          text: "The best selection of premium chocolate compounds in the market.",
+          name: "Anjali P.",
+          role: "Pastry Chef",
+          initials: "AP",
+        },
       ],
     };
   },
@@ -204,665 +315,754 @@ export default {
     setTimeout(() => {
       this.animate = true;
     }, 100);
-
-    // Intersection Observer for scroll animations
-    this.setupScrollAnimations();
-  },
-  beforeUnmount() {
-    if (this.observer) {
-      this.observer.disconnect();
-    }
   },
   methods: {
-    setupScrollAnimations() {
-      const options = {
-        threshold: 0.2,
-        rootMargin: "0px 0px -100px 0px",
-      };
-
-      this.observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const section = entry.target.dataset.section;
-            if (section) {
-              this.sectionsVisible[section] = true;
-            }
-          }
-        });
-      }, options);
-
-      this.$nextTick(() => {
-        const aboutSection = document.querySelector(".about-section");
-        const whyChooseSection = document.querySelector(".why-choose-section");
-
-        if (aboutSection) {
-          aboutSection.dataset.section = "about";
-          this.observer.observe(aboutSection);
-        }
-        if (whyChooseSection) {
-          whyChooseSection.dataset.section = "whyChoose";
-          this.observer.observe(whyChooseSection);
-        }
-      });
-    },
     scrollToProducts() {
-      // Navigate to products page or scroll to products section
       this.$router.push("/products");
     },
-    learnMore() {
-      const aboutSection = document.getElementById("about");
-      if (aboutSection) {
-        aboutSection.scrollIntoView({ behavior: "smooth" });
-      }
+    scrollToAbout() {
+      document.getElementById("about").scrollIntoView({ behavior: "smooth" });
     },
-    contactUs() {
-      // Implement contact functionality
-      alert("Contact functionality - you can route to contact page here");
+    getParticleStyle() {
+      return {
+        top: Math.random() * 100 + "%",
+        left: Math.random() * 100 + "%",
+        animationDelay: Math.random() * 5 + "s",
+        animationDuration: 10 + Math.random() * 20 + "s",
+      };
     },
-    getStarted() {
-      this.$router.push("/products");
+  },
+  directives: {
+    animateOnScroll: {
+      mounted(el) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                el.classList.add("is-visible");
+                observer.unobserve(el);
+              }
+            });
+          },
+          { threshold: 0.1 }
+        );
+        observer.observe(el);
+      },
     },
   },
 };
 </script>
 
 <style scoped>
-/* Modern CSS Variables */
-:root {
-  --primary-color: #2563eb;
-  --secondary-color: #7c3aed;
-  --accent-color: #f59e0b;
-  --text-dark: #1f2937;
-  --text-light: #6b7280;
-  --bg-light: #f9fafb;
-  --border-light: #e5e7eb;
-  --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  --gradient-hero: linear-gradient(
-    135deg,
-    #1e3a8a 0%,
-    #3730a3 50%,
-    #7c2d12 100%
-  );
-}
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+:root {
+  --primary: #1e3a8a; /* Royal Blue */
+  --primary-dark: #172554;
+  --accent: #d97706; /* Gold/Amber */
+  --accent-light: #fbbf24;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+  --text-main: #0f172a;
+  --text-body: #475569;
+  --border: #e2e8f0;
 }
 
 .home-page {
-  min-height: 100vh;
-  background: #fff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  color: #0f172a;
+  background-color: #ffffff;
   overflow-x: hidden;
 }
 
-/* Hero Section */
+/* --- Utilities --- */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.section {
+  padding: 6rem 0;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.section-header {
+  margin-bottom: 4rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-badge {
+  display: inline-block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #1e3a8a;
+  background: #eff6ff;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+.section-desc {
+  font-size: 1.125rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+/* --- Animations --- */
+.fade-in {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+.slide-up {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+.slide-up-delay {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+.fade-in-delay {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+.slide-up-late {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+[v-animate-on-scroll] {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+[v-animate-on-scroll].is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --- Hero Section --- */
 .hero {
   position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: var(--gradient-hero);
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
   overflow: hidden;
-  padding: 2rem;
+  padding-top: 4rem; /* For fixed nav if any */
+  padding-bottom: 6rem;
 }
 
-.hero-overlay {
+.hero-bg-overlay {
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    circle at 50% 50%,
-    rgba(255, 255, 255, 0.1) 0%,
-    transparent 50%
-  );
+      circle at top right,
+      rgba(251, 191, 36, 0.1),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(30, 58, 138, 0.2),
+      transparent 40%
+    );
+  z-index: 1;
+}
+
+.hero-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   pointer-events: none;
 }
 
-.hero-bg-pattern {
+.particle {
   position: absolute;
-  inset: 0;
-  background-image: radial-gradient(
-      circle at 20% 30%,
-      rgba(255, 255, 255, 0.05) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 80% 70%,
-      rgba(255, 255, 255, 0.05) 0%,
-      transparent 50%
-    );
-  animation: float 20s ease-in-out infinite;
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  animation: float 20s infinite linear;
 }
 
 @keyframes float {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
   }
-  50% {
-    transform: translateY(-20px) scale(1.05);
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) translateX(20px);
+    opacity: 0;
   }
 }
 
 .hero-content {
   position: relative;
-  z-index: 2;
-  max-width: 1200px;
+  z-index: 10;
   width: 100%;
+}
+
+.hero-text-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
   text-align: center;
-  color: white;
 }
 
 .hero-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
   background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
   margin-bottom: 2rem;
+  color: #fff;
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.8s ease;
 }
 
-.hero-badge.fade-in {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.badge-icon {
-  font-size: 1.2rem;
+.badge-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 .hero-title {
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-size: clamp(3rem, 6vw, 4.5rem);
   font-weight: 800;
-  line-height: 1.2;
+  color: #ffffff;
+  line-height: 1.1;
   margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
   opacity: 0;
   transform: translateY(30px);
   transition: all 0.8s ease 0.2s;
 }
 
-.hero-title.slide-up {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 .gradient-text {
-  background: linear-gradient(90deg, #fff 0%, #fbbf24 50%, #fff 100%);
-  background-size: 200% auto;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: shimmer 3s linear infinite;
-}
-
-@keyframes shimmer {
-  to {
-    background-position: 200% center;
-  }
 }
 
 .hero-subtitle {
-  font-size: clamp(1.1rem, 2vw, 1.3rem);
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.25rem;
+  color: #cbd5e1;
   margin-bottom: 3rem;
-  max-width: 700px;
+  max-width: 600px;
   margin-left: auto;
   margin-right: auto;
   opacity: 0;
   transform: translateY(30px);
-  transition: all 0.8s ease 0.4s;
+  transition: all 0.8s ease 0.3s;
 }
 
-.hero-subtitle.slide-up-delay {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.hero-cta {
+.hero-cta-group {
   display: flex;
   gap: 1rem;
   justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: 4rem;
   opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.8s ease 0.6s;
-}
-
-.hero-cta.fade-in-delay {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.btn-primary,
-.btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 2rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  transform: translateY(20px);
+  transition: all 0.8s ease 0.4s;
 }
 
 .btn-primary {
-  background: white;
-  color: var(--primary-color);
-  box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  color: #ffffff;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(255, 255, 255, 0.3);
-}
-
-.btn-primary .btn-icon {
-  transition: transform 0.3s ease;
-}
-
-.btn-primary:hover .btn-icon {
-  transform: translateX(5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
-}
-
-/* Stats Container */
-.stats-container {
-  display: flex;
-  gap: 2rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.8s ease 0.8s;
-}
-
-.stats-container.fade-in-late {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.stat-card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  padding: 2rem 3rem;
-  text-align: center;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
   transition: all 0.3s ease;
 }
 
-.stat-card:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-5px);
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.btn-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* --- Floating Stats Bar --- */
+.stats-bar {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 50%); /* Half overlap */
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  justify-content: space-between;
+  padding: 2.5rem 4rem;
+  width: calc(100% - 3rem);
+  max-width: 1000px;
+  z-index: 20;
+  opacity: 0;
+  /* Transform handled by slide-up-late class which will override translate */
+  transition: all 0.8s ease 0.6s;
+}
+
+/* Fix for animation override */
+.stats-bar.slide-up-late {
+  transform: translate(-50%, 50%) !important;
+  opacity: 1 !important;
+}
+
+.stat-item {
+  text-align: center;
 }
 
 .stat-number {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #fbbf24;
-  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.25rem;
 }
 
 .stat-label {
-  font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 500;
-}
-
-/* About Section */
-.about-section {
-  padding: 6rem 2rem;
-  background: var(--bg-light);
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.section-header {
-  text-align: center;
-  margin-bottom: 4rem;
-  opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.8s ease;
-}
-
-.section-header.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.section-label {
-  display: inline-block;
-  padding: 0.5rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 50px;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   font-weight: 600;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 1rem;
+  letter-spacing: 0.05em;
 }
 
-.section-title {
-  font-size: clamp(2rem, 4vw, 3rem);
-  color: var(--text-dark);
-  font-weight: 800;
-  margin-bottom: 1rem;
+/* --- Categories Section --- */
+.categories-section {
+  padding-top: 10rem; /* Space for stats bar */
+  background: #f8fafc;
 }
 
-.section-description {
-  font-size: 1.1rem;
-  color: var(--text-light);
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.about-grid {
+.categories-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 2rem;
 }
 
-.feature-card {
-  background: white;
-  padding: 2.5rem;
-  border-radius: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  transition: all 0.4s ease;
-  opacity: 0;
-  transform: translateY(30px);
+.category-card {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  height: 300px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: transform 0.3s ease;
 }
 
-.feature-card.visible {
-  opacity: 1;
-  transform: translateY(0);
+.category-card:hover {
+  transform: translateY(-5px);
 }
 
-.feature-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+.category-bg {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.5s ease;
 }
 
-.feature-icon {
+.category-card:hover .category-bg {
+  transform: scale(1.1);
+}
+
+.category-content {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.category-icon {
   font-size: 3rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
-
-.feature-title {
-  font-size: 1.4rem;
+.category-name {
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-dark);
+  color: #1e3a8a;
   margin-bottom: 1rem;
 }
 
-.feature-description {
+.btn-link {
+  background: transparent;
+  border: none;
+  color: #d97706;
+  font-weight: 700;
   font-size: 1rem;
-  color: var(--text-light);
-  line-height: 1.7;
+  cursor: pointer;
 }
 
-/* Why Choose Section */
-.why-choose-section {
-  padding: 6rem 2rem;
-  background: white;
-}
-
-.why-choose-content {
+/* --- About Section --- */
+.about-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 4rem;
   align-items: center;
 }
 
-.why-choose-left,
-.why-choose-right {
-  opacity: 0;
-  transform: translateX(-50px);
-  transition: all 0.8s ease;
-}
-
-.why-choose-right {
-  transform: translateX(50px);
-}
-
-.why-choose-left.visible,
-.why-choose-right.visible {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.why-choose-text {
-  font-size: 1.1rem;
-  color: var(--text-light);
-  line-height: 1.8;
-  margin-bottom: 2rem;
-}
-
-.value-points {
-  margin-bottom: 2rem;
-}
-
-.value-point {
+.feature-list {
+  margin-top: 2rem;
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.value-check {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 0.85rem;
-}
-
-.value-text {
-  font-size: 1rem;
-  color: var(--text-dark);
-  line-height: 1.6;
-}
-
-.btn-contact {
-  padding: 1rem 2.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-}
-
-.btn-contact:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
-}
-
-/* Image Grid */
-.image-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  flex-direction: column;
   gap: 1.5rem;
 }
 
-.grid-item {
-  border-radius: 20px;
-  overflow: hidden;
+.feature-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
 }
 
-.grid-primary {
-  grid-column: 1 / -1;
+.feature-icon-box {
+  width: 48px;
+  height: 48px;
+  background: #eff6ff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #1e3a8a;
+  flex-shrink: 0;
 }
 
-.image-placeholder {
-  aspect-ratio: 16/9;
+.feature-title-sm {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.25rem;
+}
+.feature-desc-sm {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.about-visual {
+  position: relative;
+  height: 500px;
+}
+
+.visual-card {
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
   padding: 2rem;
-  color: white;
-  font-weight: 600;
+  text-align: center;
+  overflow: hidden;
+}
+
+.main-card {
+  width: 80%;
+  height: 80%;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+.float-card {
+  width: 60%;
+  height: 60%;
+  bottom: 0;
+  right: 0;
+  z-index: 2;
+  background: #ffffff;
+}
+
+.card-gradient {
+  position: absolute;
+  inset: 0;
+  opacity: 0.1;
+}
+.gradient-blue {
+  background: radial-gradient(circle at top right, #1e3a8a, transparent);
+}
+.gradient-gold {
+  background: radial-gradient(circle at bottom left, #f59e0b, transparent);
+}
+
+.visual-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+.rating-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.rating-text {
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+/* --- Why Choose Us --- */
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.value-card {
+  background: #fff;
+  padding: 2.5rem 2rem;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
   transition: all 0.3s ease;
 }
 
-.grid-primary .image-placeholder {
-  aspect-ratio: 21/9;
+.value-card:hover {
+  border-color: #f59e0b;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 }
 
-.image-placeholder:hover {
-  transform: scale(1.05);
+.value-icon-wrapper {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+.value-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #0f172a;
+}
+.value-text {
+  color: #64748b;
+  line-height: 1.6;
 }
 
-.gradient-1 {
-  background: var(--gradient-1);
-}
-
-.gradient-2 {
-  background: var(--gradient-2);
-}
-
-.gradient-3 {
-  background: var(--gradient-3);
-}
-
-.image-icon {
-  font-size: 3rem;
-}
-
-.image-label {
-  font-size: 1.2rem;
-}
-
-/* CTA Section */
-.cta-section {
-  padding: 6rem 2rem;
-  background: linear-gradient(135deg, #1e3a8a 0%, #7c2d12 100%);
-}
-
-.cta-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.cta-content {
-  text-align: center;
+/* --- Testimonials --- */
+.testimonials-section {
+  background: #0f172a;
   color: white;
 }
+.testimonials-section .section-title {
+  color: white;
+}
+.testimonials-section .section-badge {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fbbf24;
+}
+.testimonials-section .section-desc {
+  color: #94a3b8;
+}
 
-.cta-title {
-  font-size: clamp(2rem, 4vw, 3rem);
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.testimonial-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2.5rem;
+  border-radius: 20px;
+  position: relative;
+}
+
+.quote-icon {
+  position: absolute;
+  top: 1rem;
+  right: 2rem;
+  font-size: 4rem;
+  color: rgba(255, 255, 255, 0.05);
+  font-family: serif;
+}
+
+.testimonial-text {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #e2e8f0;
+  margin-bottom: 2rem;
+  font-style: italic;
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.author-avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #fbbf24, #d97706);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #78350f;
+}
+
+.author-name {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+.author-role {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+/* --- Newsletter --- */
+.newsletter-box {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  border-radius: 32px;
+  padding: 4rem;
+  text-align: center;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.newsletter-content {
+  text-align: left;
+  max-width: 500px;
+}
+.newsletter-title {
+  font-size: 2rem;
   font-weight: 800;
   margin-bottom: 1rem;
 }
-
-.cta-description {
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 2.5rem;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.btn-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1.25rem 3rem;
-  background: white;
-  color: var(--primary-color);
-  border: none;
-  border-radius: 12px;
+.newsletter-desc {
   font-size: 1.1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
+  color: #bfdbfe;
 }
 
-.btn-cta:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 15px 40px rgba(255, 255, 255, 0.3);
+.btn-large {
+  padding: 1.25rem 3rem;
+  font-size: 1.1rem;
+  background: #ffffff;
+  color: #1e3a8a;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
 }
 
-.btn-arrow {
-  font-size: 1.5rem;
-  transition: transform 0.3s ease;
+.btn-large:hover {
+  background: #f8fafc;
+  transform: translateY(-2px);
+  color: #1e3a8a; /* Ensure text color stays readable */
 }
 
-.btn-cta:hover .btn-arrow {
-  transform: translateX(5px);
+/* --- Responsive --- */
+@media (max-width: 1024px) {
+  .about-grid,
+  .values-grid {
+    grid-template-columns: 1fr;
+  }
+  .about-visual {
+    display: none;
+  } /* Simplify for tablet/mobile */
+  .stats-bar {
+    position: relative;
+    width: 100%;
+    top: auto;
+    left: auto;
+    transform: none;
+    bottom: auto;
+    margin-top: -3rem;
+    flex-wrap: wrap;
+    gap: 2rem;
+    justify-content: center;
+  }
+  .stats-bar.slide-up-late {
+    transform: none !important;
+    opacity: 1 !important;
+  }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
-  .hero {
-    padding: 1.5rem;
+  .hero-title {
+    font-size: 2.5rem;
   }
-
-  .stats-container {
-    gap: 1rem;
+  .newsletter-box {
+    flex-direction: column;
+    text-align: center;
+    padding: 2.5rem;
   }
-
-  .stat-card {
-    padding: 1.5rem 2rem;
+  .newsletter-content {
+    text-align: center;
   }
-
-  .about-section,
-  .why-choose-section,
-  .cta-section {
-    padding: 4rem 1.5rem;
+  .section {
+    padding: 4rem 0;
   }
-
-  .why-choose-content {
-    gap: 3rem;
-  }
-
-  .image-grid {
-    gap: 1rem;
+  .stats-bar {
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2rem;
+    margin-top: 0;
+  } /* Adjusted stats bar for mobile */
+  .categories-section {
+    padding-top: 4rem;
   }
 }
 </style>
