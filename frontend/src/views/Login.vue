@@ -110,7 +110,8 @@ export default {
       this.resetForm();
     },
     loginWithGoogle() {
-      window.location.href = `http://localhost:5000/api/auth/google`;
+      const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
+      window.location.href = `${apiUrl}/api/auth/google`;
     },
     resetForm() {
       this.email = "";

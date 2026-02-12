@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -23,9 +24,11 @@ const reviewRoutes = require("./routes/reviewRoutes");
 
 const app = express();
 const server = http.createServer(app);
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:8080";
+
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:8080",
+    origin: FRONTEND_URL,
     methods: ["GET", "POST"]
   }
 });
@@ -61,7 +64,7 @@ io.on('connection', (socket) => {
 
 // Middleware
 app.use(cors({
-  origin: "http://localhost:8080",
+  origin: FRONTEND_URL,
   credentials: true
 }));
 app.use(cookieParser());
@@ -112,6 +115,19 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/orders", orderRoutes(io)); // Pass io to orderRoutes
 app.use("/api/wallet", walletRoutes(io)); // Pass io to walletRoutes
 app.use("/api/reviews", reviewRoutes);
+
+// Serve Static Files and Handle SPA Routing in Production
+if (process.env.NODE_ENV === 'production') {
+  const distPath = path.join(__dirname, '../frontend/dist');
+  app.use(express.static(distPath));
+
+  app.get('*', (req, res) => {
+    // Only serve index.html for non-API routes
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(distPath, 'index.html'));
+    }
+  });
+}
 
 // Start server
 const PORT = process.env.PORT || 5000;

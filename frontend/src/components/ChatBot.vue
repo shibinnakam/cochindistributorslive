@@ -80,7 +80,8 @@ export default {
     },
     async processResponse(input) {
       try {
-        const res = await axios.post("http://localhost:5000/api/chat/message", {
+        const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
+        const res = await axios.post(`${apiUrl}/api/chat/message`, {
           message: input,
         });
 

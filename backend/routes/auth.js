@@ -21,7 +21,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET &&
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: "http://localhost:5000/api/auth/google/callback",
+        callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:5000/api/auth/google/callback",
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
@@ -566,8 +566,9 @@ router.get(
     if (req.user.role === "staff") redirectPath = "/staff";
     if (req.user.role === "admin") redirectPath = "/admin";
 
+    const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:8080";
     res.redirect(
-      `http://localhost:8080/google-success?token=${accessToken}&user=${encodeURIComponent(
+      `${FRONTEND_URL}/google-success?token=${accessToken}&user=${encodeURIComponent(
         JSON.stringify(req.user)
       )}&redirect=${redirectPath}`
     );

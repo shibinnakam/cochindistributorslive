@@ -200,8 +200,9 @@ export default {
 
       try {
         const token = localStorage.getItem("token");
+        const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
         const res = await axios.post(
-          "http://localhost:5000/api/orders/scratch-card",
+          `${apiUrl}/api/orders/scratch-card`,
           { orderId: this.orderId },
           { headers: { Authorization: `Bearer ${token}` } }
         );

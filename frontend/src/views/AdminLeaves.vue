@@ -111,7 +111,8 @@ export default {
   methods: {
     async fetchLeaves() {
       try {
-        const res = await fetch("http://localhost:5000/api/leaves/all");
+        const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
+        const res = await fetch(`${apiUrl}/api/leaves/all`);
         if (res.ok) {
           this.leaves = await res.json();
         }
@@ -121,8 +122,9 @@ export default {
     },
     async updateStatus(id, status) {
       try {
+        const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
         const res = await fetch(
-          `http://localhost:5000/api/leaves/update/${id}`,
+          `${apiUrl}/api/leaves/update/${id}`,
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -150,8 +152,9 @@ export default {
     async confirmDelete() {
       if (!this.deleteId) return;
       try {
+        const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
         const res = await fetch(
-          `http://localhost:5000/api/leaves/delete/${this.deleteId}`,
+          `${apiUrl}/api/leaves/delete/${this.deleteId}`,
           {
             method: "DELETE",
           }

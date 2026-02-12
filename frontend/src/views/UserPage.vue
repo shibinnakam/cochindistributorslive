@@ -598,7 +598,8 @@ export default {
     },
     getImageUrl(path) {
       if (!path) return null;
-      return path.startsWith("/") ? `http://localhost:5000${path}` : path;
+      const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
+      return path.startsWith("/") ? `${apiUrl}${path}` : path;
     },
     calculateDiscount(original, discount) {
       if (!original || !discount) return 0;

@@ -676,8 +676,9 @@ export default {
         const token = localStorage.getItem("token");
         if (!token) return;
 
+        const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
         const res = await axios.get(
-          "http://localhost:5000/api/messages/unread-count",
+          `${apiUrl}/api/messages/unread-count`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
