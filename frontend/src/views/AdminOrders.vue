@@ -152,7 +152,21 @@ export default {
 
 <style scoped>
 .admin-orders-container {
-  padding: 20px;
+  padding: 15px;
+}
+
+.orders-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background: white;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
 }
 
 .user-info {

@@ -239,7 +239,7 @@ export default {
 .leave-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 800px;
+  min-width: 900px;
 }
 
 .leave-table th {

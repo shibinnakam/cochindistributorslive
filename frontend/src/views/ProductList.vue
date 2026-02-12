@@ -792,4 +792,18 @@ export default {
   cursor: pointer;
   font-weight: 600;
 }
+@media (max-width: 600px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+    padding: 0 15px 30px;
+  }
+
+  .header-section {
+    padding: 15px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+}
 </style>

@@ -288,4 +288,15 @@ button:hover {
   max-width: 100px;
   border-radius: 8px;
 }
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+  }
+  
+  .staff-register {
+    margin: 10px;
+    padding: 20px;
+  }
+}
 </style>

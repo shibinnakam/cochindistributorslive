@@ -424,4 +424,29 @@ export default {
   font-size: 14px;
   color: #388e3c;
 }
+@media (max-width: 600px) {
+  .modal-content {
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .order-item {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .order-header {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .order-footer {
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+}
 </style>

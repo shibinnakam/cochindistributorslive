@@ -16,12 +16,12 @@
           <div class="nav-extra-info">
             <span class="wallet-balance">💰 ₹{{ walletBalance }}</span>
           </div>
-          <div class="user-action dropdown-trigger">
+          <div class="user-action dropdown-trigger desktop-only">
             <span class="btn-signin">👤 {{ userName || "SIGN IN" }}</span>
             <div class="nav-dropdown">
-              <a href="#" @click.prevent="showProfile = true">My Profile</a>
-              <a href="#" @click.prevent="showWallet = true">My Wallet</a>
-              <a href="#" @click.prevent="showOrders = true">My Orders</a>
+              <a href="#" @click.prevent="openUserTab('profile')">My Profile</a>
+              <a href="#" @click.prevent="openUserTab('wallet')">My Wallet</a>
+              <a href="#" @click.prevent="openUserTab('orders')">My Orders</a>
               <a href="#" @click.prevent="logout">Logout</a>
             </div>
           </div>
@@ -29,10 +29,36 @@
             <span>🛒</span>
             <span class="badge" v-if="cartCount > 0">{{ cartCount }}</span>
           </div>
-          <button class="hamburger">☰</button>
+          <button class="hamburger" @click="isMobileMenuOpen = true">☰</button>
         </div>
       </div>
     </nav>
+
+    <!-- Mobile Drawer -->
+    <div
+      class="mobile-drawer-overlay"
+      :class="{ active: isMobileMenuOpen }"
+      @click="isMobileMenuOpen = false"
+    ></div>
+    <aside class="mobile-drawer" :class="{ active: isMobileMenuOpen }">
+      <div class="drawer-header">
+        <h3>Menu</h3>
+        <button class="close-drawer" @click="isMobileMenuOpen = false">✕</button>
+      </div>
+      <div class="drawer-user-info">
+        <div class="drawer-avatar">👤</div>
+        <div class="drawer-details">
+          <span class="drawer-name">{{ userName || "User" }}</span>
+          <span class="drawer-balance">Balance: ₹{{ walletBalance }}</span>
+        </div>
+      </div>
+      <nav class="drawer-nav">
+        <a href="#" @click.prevent="openUserTab('profile')">👤 My Profile</a>
+        <a href="#" @click.prevent="openUserTab('wallet')">💰 My Wallet</a>
+        <a href="#" @click.prevent="openUserTab('orders')">📦 My Orders</a>
+        <a href="#" @click.prevent="logout" class="logout-link">🚪 Logout</a>
+      </nav>
+    </aside>
 
     <!-- Hero Section -->
     <header class="hero-section">
@@ -80,16 +106,31 @@
         </div>
 
         <div class="layout-body">
+          <!-- Mobile Filter Toggle -->
+          <button class="mobile-filter-btn" @click="isFilterOpen = true">
+            🔍 Filters & Sorting
+          </button>
+
+          <!-- Sidebar Overlay -->
+          <div
+            class="filter-overlay"
+            :class="{ active: isFilterOpen }"
+            @click="isFilterOpen = false"
+          ></div>
+
           <!-- Sidebar -->
-          <aside class="filter-sidebar">
+          <aside class="filter-sidebar" :class="{ 'mobile-open': isFilterOpen }">
             <div class="sidebar-header">
               <div class="filter-title">
                 <span class="icon">📊</span>
                 <span>FILTER</span>
               </div>
-              <button class="btn-reset" @click="resetFilters">
-                Reset filter
-              </button>
+              <div class="sidebar-actions">
+                <button class="btn-reset" @click="resetFilters">Reset</button>
+                <button class="btn-close-filter" @click="isFilterOpen = false">
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div class="filter-section">
@@ -373,6 +414,8 @@ export default {
       showWallet: false,
       showOrders: false,
       showWelcome: true,
+      isMobileMenuOpen: false,
+      isFilterOpen: false,
       selectedCategory: null,
       showScratchCard: false,
       scratchCardOrderId: null,
@@ -683,6 +726,12 @@ export default {
       } catch (err) {
         console.error("Error fetching wallet balance:", err);
       }
+    },
+    openUserTab(tab) {
+      this.isMobileMenuOpen = false;
+      if (tab === "profile") this.showProfile = true;
+      if (tab === "wallet") this.showWallet = true;
+      if (tab === "orders") this.showOrders = true;
     },
   },
 };
@@ -1475,17 +1524,255 @@ export default {
   }
 
   .filter-sidebar {
-    display: none; /* Hide sidebar on mobile for simplicity */
+    position: fixed;
+    left: -100%;
+    top: 0;
+    bottom: 0;
+    width: 300px;
+    background: white;
+    z-index: 2000;
+    padding: 30px 20px;
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1);
+    display: block; /* Override previous display: none */
+  }
+
+  .filter-sidebar.mobile-open {
+    left: 0;
+  }
+
+  .filter-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1500;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .filter-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .mobile-filter-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px;
+    background: #1e293b;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    cursor: pointer;
+  }
+
+  .btn-close-filter {
+    display: block;
+    background: #f1f5f9;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .sidebar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 }
 
+/* Mobile Drawer Styles */
+.mobile-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 2100;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.mobile-drawer-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 280px;
+  height: 100vh;
+  background: white;
+  z-index: 2200;
+  transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-drawer.active {
+  right: 0;
+}
+
+.drawer-header {
+  padding: 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.drawer-header h3 {
+  font-weight: 800;
+  margin: 0;
+}
+
+.close-drawer {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.drawer-user-info {
+  padding: 24px;
+  background: #f8fafc;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.drawer-avatar {
+  width: 50px;
+  height: 50px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.drawer-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-name {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.drawer-balance {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.drawer-nav {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.drawer-nav a {
+  text-decoration: none;
+  color: #334155;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.drawer-nav a:hover {
+  background: #f1f5f9;
+}
+
+.logout-link {
+  color: #ef4444 !important;
+  margin-top: 20px;
+}
+
+.desktop-only {
+  display: block;
+}
+
+.mobile-filter-btn {
+  display: none;
+}
+
+.btn-close-filter {
+  display: none;
+}
+
 @media (max-width: 768px) {
+  .desktop-only {
+    display: none;
+  }
+
   .top-nav-center {
     display: none;
   }
 
+  .brand-title {
+    font-size: 1.1rem;
+  }
+
   .search-filter-ribbon {
     flex-direction: column;
+    padding: 20px;
+    gap: 15px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  }
+
+  .ribbon-item {
+    width: 100%;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  .hero-section {
+    padding: 60px 20px;
+  }
+
+  .hero-section h1 {
+    font-size: 1.75rem;
+  }
+
+  .product-marketplace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content-3d {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .visualizer-section {
+    height: 300px;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .details-section {
+    padding: 20px;
+  }
+
+  .btn-view-more,
+  .btn-buy {
+    flex: 1;
+    justify-content: center;
   }
 }
 </style>

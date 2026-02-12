@@ -345,4 +345,18 @@ textarea {
 .btn-secondary:hover {
   background-color: #e05c15;
 }
+@media (max-width: 600px) {
+  .profile-card {
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+    padding: 20px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}
 </style>

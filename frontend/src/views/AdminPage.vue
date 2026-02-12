@@ -1,7 +1,7 @@
 <template>
   <div class="admin-container">
     <!-- Sidebar Navigation -->
-    <aside class="sidebar">
+    <aside class="sidebar" :class="{ 'mobile-open': isSidebarOpen }">
       <div class="brand">
         <div class="brand-logo">🛍️</div>
         <div class="brand-text">ShopAdmin</div>
@@ -14,7 +14,7 @@
             href="#"
             class="nav-item"
             :class="{ active: selectedMenu === 'dashboard' }"
-            @click.prevent="selectedMenu = 'dashboard'"
+            @click.prevent="selectMenu('dashboard')"
           >
             <span class="icon">📊</span>
             Dashboard
@@ -27,7 +27,7 @@
             href="#"
             class="nav-item"
             :class="{ active: selectedMenu === 'addProduct' }"
-            @click.prevent="showAddProductModal = true"
+            @click.prevent="openAddProductModal"
           >
             <span class="icon">➕</span>
             Add Product
@@ -36,7 +36,7 @@
             href="#"
             class="nav-item"
             :class="{ active: selectedMenu === 'listProducts' }"
-            @click.prevent="showListProductsModal = true"
+            @click.prevent="openListProductsModal"
           >
             <span class="icon">📦</span>
             Product List
@@ -45,7 +45,7 @@
             href="#"
             class="nav-item"
             :class="{ active: selectedMenu === 'addCategory' }"
-            @click.prevent="selectedMenu = 'addCategory'"
+            @click.prevent="selectMenu('addCategory')"
           >
             <span class="icon">🏷️</span>
             Categories
@@ -58,7 +58,7 @@
             href="#"
             class="nav-item"
             :class="{ active: selectedMenu === 'staffManagement' }"
-            @click.prevent="selectedMenu = 'staffManagement'"
+            @click.prevent="selectMenu('staffManagement')"
           >
             <span class="icon">👥</span>
             Staff
@@ -67,7 +67,7 @@
             href="#"
             class="nav-item"
             :class="{ active: selectedMenu === 'orders' }"
-            @click.prevent="selectedMenu = 'orders'"
+            @click.prevent="selectMenu('orders')"
           >
             <span class="icon">📦</span>
             Orders
@@ -76,7 +76,7 @@
             href="#"
             class="nav-item"
             :class="{ active: selectedMenu === 'approve-leaves' }"
-            @click.prevent="selectedMenu = 'approve-leaves'"
+            @click.prevent="selectMenu('approve-leaves')"
           >
             <span class="icon">📅</span>
             Leaves
@@ -88,7 +88,7 @@
             href="#"
             class="nav-item"
             :class="{ active: selectedMenu === 'chat' }"
-            @click.prevent="selectedMenu = 'chat'"
+            @click.prevent="selectMenu('chat')"
           >
             <span class="icon">💬</span>
             Messages
@@ -100,7 +100,7 @@
             href="#"
             class="nav-item"
             :class="{ active: selectedMenu === 'reviews' }"
-            @click.prevent="selectedMenu = 'reviews'"
+            @click.prevent="selectMenu('reviews')"
           >
             <span class="icon">⭐</span>
             Reviews
@@ -113,7 +113,7 @@
             href="#"
             class="nav-item"
             :class="{ active: selectedMenu === 'changePassword' }"
-            @click.prevent="selectedMenu = 'changePassword'"
+            @click.prevent="selectMenu('changePassword')"
           >
             <span class="icon">🔑</span>
             Change Password
@@ -126,11 +126,16 @@
       </nav>
     </aside>
 
+    <div class="sidebar-overlay" :class="{ 'active': isSidebarOpen }" @click="isSidebarOpen = false"></div>
+
     <!-- Main Content Area -->
     <main class="main-content">
       <!-- Top Header -->
       <header class="top-header">
         <div class="header-left">
+          <button class="sidebar-toggle" @click="isSidebarOpen = !isSidebarOpen">
+            ☰
+          </button>
           <h1 class="page-title">
             {{ getPageTitle(selectedMenu) }}
           </h1>
@@ -586,6 +591,7 @@ export default {
   data() {
     return {
       selectedMenu: "dashboard",
+      isSidebarOpen: false,
       showAddProductModal: false,
       showListProductsModal: false,
       showEditProductModal: false,
@@ -696,6 +702,18 @@ export default {
         changePassword: "Change Password",
       };
       return titles[menu] || "Dashboard";
+    },
+    selectMenu(menu) {
+      this.selectedMenu = menu;
+      this.isSidebarOpen = false;
+    },
+    openAddProductModal() {
+      this.showAddProductModal = true;
+      this.isSidebarOpen = false;
+    },
+    openListProductsModal() {
+      this.showListProductsModal = true;
+      this.isSidebarOpen = false;
     },
     async handleChangePassword() {
       this.passwordError = "";

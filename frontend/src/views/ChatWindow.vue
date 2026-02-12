@@ -1,6 +1,6 @@
 <template>
   <div class="chat-container">
-    <div class="chat-sidebar">
+    <div class="chat-sidebar" :class="{ 'mobile-hidden': selectedContact }">
       <div class="chat-header">
         <h3>💬 Messages</h3>
         <span v-if="unreadCount > 0" class="unread-badge">{{
@@ -58,9 +58,12 @@
       </div>
     </div>
 
-    <div class="chat-main">
+    <div class="chat-main" :class="{ 'mobile-hidden': !selectedContact }">
       <div v-if="selectedContact" class="chat-window">
         <div class="chat-header-window">
+          <button class="back-btn" @click="selectedContact = null">
+            ←
+          </button>
           <img
             :src="
               selectedContact.profilePhoto
@@ -923,9 +926,21 @@ export default {
   font-weight: 500;
 }
 
+.back-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  margin-right: 10px;
+  padding: 5px;
+}
+
 @media (max-width: 768px) {
   .chat-container {
-    min-height: 400px;
+    height: calc(100vh - 100px);
+    border-radius: 0;
   }
 
   .chat-sidebar {
@@ -933,15 +948,28 @@ export default {
   }
 
   .chat-main {
-    display: none;
+    width: 100%;
   }
 
-  .chat-item.active ~ .chat-main {
-    display: flex;
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  .back-btn {
+    display: block;
   }
 
   .message-wrapper .message {
     max-width: 85%;
+  }
+
+  .chat-header-window {
+    padding: 10px 15px;
+  }
+
+  .header-avatar {
+    width: 36px;
+    height: 36px;
   }
 }
 </style>

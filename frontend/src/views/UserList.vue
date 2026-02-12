@@ -4,56 +4,58 @@
 
     <div v-if="loading">Loading users...</div>
 
-    <table v-else class="user-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Phone</th>
-          <th>Pincode</th>
-          <th>Store Name</th>
-          <th>Store Address</th>
-          <th>Landmark</th>
-          <th>Role</th>
-          <th>Verification</th>
-          <th>Status</th>
-          <th>Block/Unblock</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="user in users" :key="user._id">
-          <td>{{ user.name }}</td>
-          <td>{{ user.email }}</td>
-          <td>{{ user.phone }}</td>
-          <td>{{ user.pincode }}</td>
-          <td>{{ user.storeName }}</td>
-          <td>{{ user.storeAddress }}</td>
-          <td>{{ user.landmark }}</td>
-          <td>{{ user.role }}</td>
-          <td>
-            <span
-              :class="{
-                verified: user.verificationStatus === 'verified',
-                pending: user.verificationStatus === 'pending',
-                notverified: user.verificationStatus === 'not_verified',
-              }"
-            >
-              {{ user.verificationStatus }}
-            </span>
-          </td>
-          <td>
-            <span :class="user.isBlocked ? 'blocked' : 'active'">
-              {{ user.isBlocked ? "Blocked" : "Active" }}
-            </span>
-          </td>
-          <td>
-            <button @click="toggleBlock(user._id)">
-              {{ user.isBlocked ? "Unblock" : "Block" }}
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table v-else class="user-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Pincode</th>
+            <th>Store Name</th>
+            <th>Store Address</th>
+            <th>Landmark</th>
+            <th>Role</th>
+            <th>Verification</th>
+            <th>Status</th>
+            <th>Block/Unblock</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="user in users" :key="user._id">
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.phone }}</td>
+            <td>{{ user.pincode }}</td>
+            <td>{{ user.storeName }}</td>
+            <td>{{ user.storeAddress }}</td>
+            <td>{{ user.landmark }}</td>
+            <td>{{ user.role }}</td>
+            <td>
+              <span
+                :class="{
+                  verified: user.verificationStatus === 'verified',
+                  pending: user.verificationStatus === 'pending',
+                  notverified: user.verificationStatus === 'not_verified',
+                }"
+              >
+                {{ user.verificationStatus }}
+              </span>
+            </td>
+            <td>
+              <span :class="user.isBlocked ? 'blocked' : 'active'">
+                {{ user.isBlocked ? "Blocked" : "Active" }}
+              </span>
+            </td>
+            <td>
+              <button @click="toggleBlock(user._id)" class="btn-block">
+                {{ user.isBlocked ? "Unblock" : "Block" }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -98,33 +100,66 @@ export default {
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
+  min-width: 1200px;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
 
 .user-table th,
 .user-table td {
-  padding: 10px;
+  padding: 12px;
   border: 1px solid #ddd;
   text-align: left;
+  font-size: 14px;
+}
+
+.btn-block {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  background: white;
+  transition: all 0.2s;
+}
+
+.btn-block:hover {
+  background: #f5f5f5;
 }
 
 .blocked {
-  color: red;
+  color: #ef4444;
   font-weight: bold;
 }
 .active {
-  color: green;
+  color: #10b981;
   font-weight: bold;
 }
 .verified {
-  color: green;
+  color: #10b981;
   font-weight: bold;
 }
 .pending {
-  color: orange;
+  color: #f59e0b;
   font-weight: bold;
 }
 .notverified {
-  color: red;
+  color: #ef4444;
   font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .user-list {
+    padding: 10px;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+  }
 }
 </style>

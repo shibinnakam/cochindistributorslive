@@ -1,7 +1,14 @@
-<template>
   <div class="staff-dashboard">
+    <!-- Mobile Header -->
+    <header class="mobile-staff-header">
+      <button class="sidebar-toggle" @click="isSidebarOpen = !isSidebarOpen">
+        ☰
+      </button>
+      <h2 class="mobile-title">Staff Portal</h2>
+    </header>
+
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" :class="{ 'mobile-open': isSidebarOpen }">
       <div class="sidebar-header">
         <div class="logo-disc">CD</div>
         <h2 class="sidebar-title">Staff Portal</h2>
@@ -10,7 +17,7 @@
         <ul>
           <li
             :class="{ active: currentTab === 'dashboard' }"
-            @click="currentTab = 'dashboard'"
+            @click="setTab('dashboard')"
           >
             <div class="nav-icon-wrapper">
               <svg
@@ -30,7 +37,7 @@
           </li>
           <li
             :class="{ active: currentTab === 'profile' }"
-            @click="currentTab = 'profile'"
+            @click="setTab('profile')"
           >
             <div class="nav-icon-wrapper">
               <svg
@@ -48,7 +55,7 @@
           </li>
           <li
             :class="{ active: currentTab === 'items' }"
-            @click="currentTab = 'items'"
+            @click="setTab('items')"
           >
             <div class="nav-icon-wrapper">
               <svg
@@ -96,14 +103,14 @@
             <ul v-if="showLeaves" class="submenu">
               <li
                 :class="{ active: currentTab === 'apply-leave' }"
-                @click.stop="currentTab = 'apply-leave'"
+                @click.stop="setTab('apply-leave')"
               >
                 <span class="dot"></span>
                 <span class="sidebar-text">Apply Leave</span>
               </li>
               <li
                 :class="{ active: currentTab === 'leave-status' }"
-                @click.stop="currentTab = 'leave-status'"
+                @click.stop="setTab('leave-status')"
               >
                 <span class="dot"></span>
                 <span class="sidebar-text">Request History</span>
@@ -113,7 +120,7 @@
 
           <li
             :class="{ active: currentTab === 'chat' }"
-            @click="currentTab = 'chat'"
+            @click="setTab('chat')"
             class="message-item"
           >
             <div class="nav-icon-wrapper">
@@ -138,7 +145,7 @@
 
           <li
             :class="{ active: currentTab === 'resignation' }"
-            @click="currentTab = 'resignation'"
+            @click="setTab('resignation')"
           >
             <div class="nav-icon-wrapper">
               <svg
@@ -174,6 +181,12 @@
         </li>
       </div>
     </aside>
+
+    <div
+      class="sidebar-overlay"
+      :class="{ active: isSidebarOpen }"
+      @click="isSidebarOpen = false"
+    ></div>
 
     <!-- Main Content -->
     <main class="content">
@@ -532,6 +545,7 @@ export default {
   data() {
     return {
       currentTab: "dashboard",
+      isSidebarOpen: false,
       showLeaves: false,
       staff: {
         name: "",
@@ -631,6 +645,10 @@ export default {
           this.message = "";
         }, 3000);
       }
+    },
+    setTab(tab) {
+      this.currentTab = tab;
+      this.isSidebarOpen = false;
     },
     toggleLeaves() {
       this.showLeaves = !this.showLeaves;
@@ -1733,27 +1751,109 @@ export default {
   transform: translateY(-2px);
 }
 
-@media (max-width: 768px) {
+/* Mobile Responsive Adjustments */
+.mobile-staff-header {
+  display: none;
+  background: white;
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.mobile-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  color: #1e293b;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1500;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (max-width: 1024px) {
   .sidebar {
-    width: 80px;
-    padding: 24px 12px;
+    position: fixed;
+    left: -100%;
+    z-index: 2000;
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1);
   }
-  .sidebar-text,
-  .sidebar-title,
-  .arrow,
-  .nav-icon-wrapper + span {
-    display: none;
+
+  .sidebar.mobile-open {
+    left: 0;
   }
+
+  .mobile-staff-header {
+    display: flex;
+  }
+
   .content {
     padding: 20px;
   }
+}
+
+@media (max-width: 768px) {
   .welcome-section {
+    padding: 30px 20px;
     flex-direction: column;
-    align-items: flex-start;
+    text-align: center;
     gap: 20px;
   }
+
+  .welcome-section h1 {
+    font-size: 24px;
+  }
+
   .metrics-grid-staff {
     grid-template-columns: 1fr;
+  }
+
+  .resignation-tab {
+    padding: 20px;
+  }
+
+  .status-box {
+    padding: 20px;
+  }
+
+  .leave-table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .staff-dashboard {
+    flex-direction: column;
+  }
+
+  /* Chat styles for mobile */
+  .chat-tab > div {
+    height: calc(100vh - 150px);
   }
 }
 </style>

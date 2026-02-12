@@ -672,14 +672,48 @@ export default {
 }
 
 @media (max-width: 600px) {
+  .modal-content {
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
   .cart-item {
     flex-direction: column;
+    padding: 12px;
+  }
+
+  .item-image img {
+    width: 100%;
+    height: 150px;
   }
 
   .item-actions {
     flex-direction: row;
-    justify-content: flex-end;
+    justify-content: space-between;
+    width: 100%;
     margin-top: 10px;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+  }
+
+  .total-section {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .place-order-btn {
+    width: 100%;
+  }
+
+  .payment-method {
+    padding: 12px;
   }
 }
 </style>

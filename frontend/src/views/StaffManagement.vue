@@ -1483,7 +1483,20 @@ export default {
   border-color: #d1d5db;
 }
 
+.table-container {
+  overflow-x: auto;
+  background: white;
+  margin: 0 32px 32px;
+  border: 1px solid #f0f1f3;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
 @media (max-width: 768px) {
+  .table-container {
+    margin: 0 20px 20px;
+    border-radius: 8px;
+  }
   .top-header {
     padding: 16px 20px;
   }
