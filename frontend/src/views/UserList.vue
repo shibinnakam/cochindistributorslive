@@ -4,8 +4,8 @@
 
     <div v-if="loading">Loading users...</div>
 
-    <div class="table-responsive">
-      <table v-else class="user-table">
+    <div v-else class="table-responsive">
+      <table class="user-table">
         <thead>
           <tr>
             <th>Name</th>

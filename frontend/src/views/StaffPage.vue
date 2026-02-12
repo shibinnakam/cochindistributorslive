@@ -1,3 +1,4 @@
+<template>
   <div class="staff-dashboard">
     <!-- Mobile Header -->
     <header class="mobile-staff-header">
