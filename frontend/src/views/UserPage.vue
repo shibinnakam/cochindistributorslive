@@ -1,4 +1,5 @@
 <template>
+  <div class="marketplace-layout">
     <!-- Header -->
     <header class="site-header">
       <div class="header-container">
@@ -129,150 +130,148 @@
             </div>
           </div>
 
-            <div v-if="loading" class="listing-loading">
-              <div class="loader-spinner"></div>
-            </div>
+          <div v-if="loading" class="listing-loading">
+            <div class="loader-spinner"></div>
+          </div>
 
+          <div
+            v-else-if="filteredProducts.length === 0"
+            class="listing-empty"
+          >
+            <p>No products match your search.</p>
+          </div>
+
+          <div v-else class="product-item-grid">
             <div
-              v-else-if="filteredProducts.length === 0"
-              class="listing-empty"
+              v-for="product in filteredProducts"
+              :key="product._id"
+              class="restaurant-card"
+              @click="toggle3D(product._id)"
             >
-              <p>No products match your search.</p>
-            </div>
+              <div class="card-image-wrapper">
+                <div class="top-badge">top</div>
+                <img
+                  :src="getImageUrl(product.image || product.imageFront)"
+                  :alt="product.name"
+                  class="main-img"
+                />
+                <div class="logo-overlay">
+                  <img src="@/assets/logo.jpeg" alt="p-logo" />
+                </div>
+              </div>
 
-            <div v-else class="product-item-grid">
+              <div class="card-details">
+                <h3 class="res-name">{{ product.name }}</h3>
+                <div class="rating-row">
+                  <div class="stars">
+                    <span v-for="s in 5" :key="s" :style="{ color: s <= Math.round(product.averageRating || 5) ? '#ff9a44' : '#ccc' }">★</span>
+                  </div>
+                  <span class="count">({{ product.ratingCount || 0 }})</span>
+                </div>
+                <p class="tags">{{ product.category ? product.category.name : 'General' }} • Wholesale • Distribution</p>
+                <p class="res-desc">
+                  {{ product.description }}
+                </p>
+                <div class="meta-info">
+                  <div class="meta-item">
+                    <span class="meta-icon">🛍️</span>
+                    <div class="meta-text">
+                      <span class="label">Min order:</span>
+                      <span class="value">{{ product.quantity || 10 }} units</span>
+                    </div>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-icon">💰</span>
+                    <div class="meta-text">
+                      <span class="label">Price:</span>
+                      <span class="value">₹{{ product.discountPrice }}</span>
+                    </div>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-icon">🚚</span>
+                    <div class="meta-text">
+                      <span class="label">Delivery:</span>
+                      <span class="value">₹20</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="card-hover-action">
+                  <button class="btn-more" @click.stop="toggle3D(product._id)">more →</button>
+                </div>
+              </div>
+
+              <!-- 3D View Modal -->
               <div
-                v-for="product in filteredProducts"
-                :key="product._id"
-                class="restaurant-card"
-                @click="toggle3D(product._id)"
+                v-if="active3DProductId === product._id"
+                class="view3d-modal"
               >
-                <div class="card-image-wrapper">
-                  <div class="top-badge">top</div>
-                  <img
-                    :src="getImageUrl(product.image || product.imageFront)"
-                    :alt="product.name"
-                    class="main-img"
-                  />
-                  <div class="logo-overlay">
-                    <img src="@/assets/logo.jpeg" alt="p-logo" />
+                <div class="modal-content-3d">
+                  <div class="visualizer-section">
+                    <ThreeDBox
+                      :image="getImageUrl(product.image)"
+                      :image-front="getImageUrl(product.imageFront)"
+                      :image-side="getImageUrl(product.imageSide)"
+                      :image-back="getImageUrl(product.imageBack)"
+                      :image-top="getImageUrl(product.imageTop)"
+                      :image-bottom="getImageUrl(product.imageBottom)"
+                      :model3D="getImageUrl(product.model3D)"
+                      :shape="product.shape"
+                    />
                   </div>
-                </div>
 
-                <div class="card-details">
-                  <h3 class="res-name">{{ product.name }}</h3>
-                  <div class="rating-row">
-                    <div class="stars">
-                      <span v-for="s in 5" :key="s" :style="{ color: s <= Math.round(product.averageRating || 5) ? '#ff9a44' : '#ccc' }">★</span>
+                  <div class="details-section">
+                    <h3>Product Reviews</h3>
+                    <div
+                      v-if="productReviews.length === 0"
+                      class="no-reviews"
+                    >
+                      No reviews yet.
                     </div>
-                    <span class="count">({{ product.ratingCount || 0 }})</span>
-                  </div>
-                  <p class="tags">{{ product.category ? product.category.name : 'General' }} • Wholesale • Distribution</p>
-                  <p class="res-desc">
-                    {{ product.description }}
-                  </p>
-                  <div class="meta-info">
-                    <div class="meta-item">
-                      <span class="meta-icon">🛍️</span>
-                      <div class="meta-text">
-                        <span class="label">Min order:</span>
-                        <span class="value">{{ product.quantity || 10 }} units</span>
-                      </div>
-                    </div>
-                    <div class="meta-item">
-                      <span class="meta-icon">💰</span>
-                      <div class="meta-text">
-                        <span class="label">Price:</span>
-                        <span class="value">₹{{ product.discountPrice }}</span>
-                      </div>
-                    </div>
-                    <div class="meta-item">
-                      <span class="meta-icon">🚚</span>
-                      <div class="meta-text">
-                        <span class="label">Delivery:</span>
-                        <span class="value">₹20</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="card-hover-action">
-                    <button class="btn-more" @click.stop="toggle3D(product._id)">more →</button>
-                  </div>
-                </div>
-
-                <!-- 3D View Modal -->
-                <div
-                  v-if="active3DProductId === product._id"
-                  class="view3d-modal"
-                >
-                  <div class="modal-content-3d">
-                    <div class="visualizer-section">
-                      <ThreeDBox
-                        :image="getImageUrl(product.image)"
-                        :image-front="getImageUrl(product.imageFront)"
-                        :image-side="getImageUrl(product.imageSide)"
-                        :image-back="getImageUrl(product.imageBack)"
-                        :image-top="getImageUrl(product.imageTop)"
-                        :image-bottom="getImageUrl(product.imageBottom)"
-                        :model3D="getImageUrl(product.model3D)"
-                        :shape="product.shape"
-                      />
-                    </div>
-
-                    <div class="details-section">
-                      <h3>Product Reviews</h3>
+                    <div v-else class="reviews-list-mini">
                       <div
-                        v-if="productReviews.length === 0"
-                        class="no-reviews"
+                        v-for="rev in productReviews"
+                        :key="rev._id"
+                        class="mini-review-card"
                       >
-                        No reviews yet.
-                      </div>
-                      <div v-else class="reviews-list-mini">
-                        <div
-                          v-for="rev in productReviews"
-                          :key="rev._id"
-                          class="mini-review-card"
-                        >
-                          <div class="rev-header">
-                            <span class="rev-user">{{ rev.user.name }}</span>
-                            <div class="rev-stars">
-                              <span
-                                v-for="s in 5"
-                                :key="s"
-                                :class="{ filled: s <= rev.rating }"
-                                class="star"
-                                >★</span
-                              >
-                            </div>
+                        <div class="rev-header">
+                          <span class="rev-user">{{ rev.user.name }}</span>
+                          <div class="rev-stars">
+                            <span
+                              v-for="s in 5"
+                              :key="s"
+                              :class="{ filled: s <= rev.rating }"
+                              class="star"
+                              >★</span
+                            >
                           </div>
-                          <p class="rev-comment">{{ rev.comment }}</p>
-                          <span class="rev-date">
-                            {{ formatDate(rev.createdAt) }}
-                          </span>
                         </div>
+                        <p class="rev-comment">{{ rev.comment }}</p>
+                        <span class="rev-date">
+                          {{ formatDate(rev.createdAt) }}
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <button
-                    class="close-modal"
-                    @click.stop="toggle3D(product._id)"
-                  >
-                    ✕
-                  </button>
                 </div>
+                <button
+                  class="close-modal"
+                  @click.stop="toggle3D(product._id)"
+                >
+                  ✕
+                </button>
               </div>
             </div>
+          </div>
 
-            <div class="pagination">
-              <div class="loader-dots">
-                <span></span><span></span><span></span>
-              </div>
+          <div class="pagination">
+            <div class="loader-dots">
+              <span></span><span></span><span></span>
             </div>
-          </section>
-        </div>
+          </div>
+        </section>
       </div>
     </main>
-</div>
 
     <!-- Modals -->
     <ProfilePage v-if="showProfile" @close="showProfile = false" />
