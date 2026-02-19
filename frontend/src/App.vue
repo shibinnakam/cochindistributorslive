@@ -42,11 +42,12 @@ export default {
   },
   computed: {
     isDashboard() {
-      // Hide navbar if route starts with /admin, /staff, or is /user
+      const path = this.$route.path.toLowerCase();
       return (
-        this.$route.path.startsWith("/admin") ||
-        this.$route.path.startsWith("/staff") ||
-        this.$route.path === "/user"
+        path.startsWith("/admin") ||
+        path.startsWith("/staff") ||
+        path === "/user" ||
+        path === "/user/"
       );
     },
   },
