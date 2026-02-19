@@ -8,35 +8,18 @@
           <span class="brand-title">Caterway</span>
         </div>
 
-        <div class="top-nav-center desktop-only">
-          <div class="phone-dropdown">
-            <span class="phone-link">
-              <span class="phone-icon">📞</span>
-              (450) 678 099 67
-              <span class="dropdown-arrow">▾</span>
-            </span>
-          </div>
-        </div>
-
         <div class="top-nav-actions">
-          <div class="nav-extra-info">
-            <div class="wallet-badge-minimal">
-              <span class="coin-icon">💰</span>
-              <span class="balance">₹{{ walletBalance.toLocaleString() }}</span>
-              <span class="arrow">▾</span>
-            </div>
+          <div class="wallet-badge" @click="openUserTab('wallet')">
+            <span class="icon">💰</span>
+            <span>₹{{ walletBalance.toLocaleString() }}</span>
           </div>
           <div class="user-action dropdown-trigger desktop-only">
-            <div class="btn-signin-nav">
-              <div class="user-avatar-small">
-                <span class="avatar-icon">👤</span>
-              </div>
-              <span class="signin-text">{{ userName || "SIGN IN" }}</span>
-            </div>
+            <button class="btn-user">
+              <span>👤 {{ userName || "Sign In" }}</span>
+            </button>
             <div class="nav-dropdown">
-              <a href="#" @click.prevent="openUserTab('profile')">My Profile</a>
-              <a href="#" @click.prevent="openUserTab('wallet')">My Wallet</a>
-              <a href="#" @click.prevent="openUserTab('orders')">My Orders</a>
+              <a href="#" @click.prevent="openUserTab('profile')">Profile</a>
+              <a href="#" @click.prevent="openUserTab('orders')">Orders</a>
               <a href="#" @click.prevent="logout">Logout</a>
             </div>
           </div>
@@ -78,49 +61,21 @@
       </nav>
     </aside>
 
-    <!-- Hero Section -->
-    <header class="hero-section">
-      <div class="hero-container">
-        <h1 class="hero-title">Restaurant directory</h1>
-      </div>
-    </header>
+    <!-- Hero Section removed for basic layout -->
 
     <!-- Main Content Area -->
     <main class="main-content-wrapper">
       <div class="content-container">
-        <!-- Multi-Input Search Bar -->
-        <div class="master-search-bar">
-          <div class="search-input-group city-input">
-            <span class="icon">📍</span>
+        <!-- Basic Search Bar -->
+        <div class="search-section">
+          <div class="search-bar">
             <input
               type="text"
-              placeholder="City"
+              placeholder="Search products..."
               v-model="searchQuery"
             />
+            <button class="btn-search">Search</button>
           </div>
-          <div class="search-input-group date-input">
-            <select>
-              <option>Date</option>
-            </select>
-            <span class="dropdown-arrow">▾</span>
-          </div>
-          <div class="search-input-group time-input">
-            <select>
-              <option>Time</option>
-            </select>
-            <span class="dropdown-arrow">▾</span>
-          </div>
-          <button class="master-search-btn">
-            🔍
-          </button>
-          
-          <input
-            type="file"
-            ref="imageInput"
-            @change="handleImageSearch"
-            accept="image/*"
-            style="display: none"
-          />
         </div>
 
         <div class="layout-body">
@@ -137,110 +92,21 @@
           ></div>
 
           <!-- Sidebar -->
-          <aside class="filter-sidebar" :class="{ 'mobile-open': isFilterOpen }">
-            <div class="sidebar-header">
-              <div class="filter-title">
-                <span class="icon">📊</span>
-                <span>FILTER</span>
+          <aside class="sidebar">
+            <div class="filter-group">
+              <h3>Categories</h3>
+              <div class="category-list">
+                <div
+                  v-for="cat in categories"
+                  :key="cat._id"
+                  class="category-item"
+                  :class="{ active: selectedCategory === cat._id }"
+                  @click="selectCategory(cat)"
+                >
+                  {{ cat.name }}
+                </div>
               </div>
-              <button class="btn-reset-text" @click="resetFilters">Reset filter</button>
-              <button class="btn-close-filter-mobile" @click="isFilterOpen = false">
-                ✕
-              </button>
-            </div>
-
-            <div class="filter-section">
-              <h4 @click="toggleSection('delivery')" class="collapsible">
-                Delivery method:
-                <span class="toggle-icon">{{ sectionOpen.delivery ? "−" : "+" }}</span>
-              </h4>
-              <div class="section-content" v-show="sectionOpen.delivery">
-                <label class="custom-radio">
-                  <input type="radio" name="delivery" value="delivery" checked />
-                  <span class="radio-mark"></span>
-                  Delivery
-                </label>
-                <label class="custom-radio">
-                  <input type="radio" name="delivery" value="pickup" />
-                  <span class="radio-mark"></span>
-                  Pickup
-                </label>
-              </div>
-            </div>
-
-            <div class="filter-section">
-              <h4 @click="toggleSection('event')" class="collapsible">
-                Event type:
-                <span class="toggle-icon">{{ sectionOpen.event ? "−" : "+" }}</span>
-              </h4>
-              <div class="section-content" v-show="sectionOpen.event">
-                <label class="custom-checkbox">
-                  <input type="checkbox" value="breakfast" />
-                  <span class="checkbox-mark"></span>
-                  Breakfast
-                </label>
-                <label class="custom-checkbox">
-                  <input type="checkbox" value="dinner" />
-                  <span class="checkbox-mark"></span>
-                  Dinner
-                </label>
-                <label class="custom-checkbox">
-                  <input type="checkbox" value="conference" checked />
-                  <span class="checkbox-mark"></span>
-                  The conference
-                </label>
-              </div>
-            </div>
-
-            <div class="filter-section">
-              <h4 @click="toggleSection('cuisine')" class="collapsible">
-                Type of cuisine:
-                <span class="toggle-icon">{{ sectionOpen.cuisine ? "−" : "+" }}</span>
-              </h4>
-              <div class="section-content" v-show="sectionOpen.cuisine">
-                <label class="custom-checkbox">
-                  <input type="checkbox" value="italian" />
-                  <span class="checkbox-mark"></span>
-                  Italian
-                </label>
-                <label class="custom-checkbox">
-                  <input type="checkbox" value="american" checked />
-                  <span class="checkbox-mark"></span>
-                  American
-                </label>
-              </div>
-            </div>
-
-            <div class="filter-section">
-              <h4 @click="toggleSection('dietary')" class="collapsible">
-                Dietary preferences:
-                <span class="toggle-icon">{{ sectionOpen.dietary ? "−" : "+" }}</span>
-              </h4>
-              <div class="section-content" v-show="sectionOpen.dietary">
-                <label class="custom-checkbox">
-                  <input type="checkbox" value="vegetarian" />
-                  <span class="checkbox-mark"></span>
-                  Vegetarian
-                </label>
-                <label class="custom-checkbox">
-                  <input type="checkbox" value="no-dairy" checked />
-                  <span class="checkbox-mark"></span>
-                  Without dairy products
-                </label>
-                <label class="custom-checkbox">
-                  <input type="checkbox" value="halal" />
-                  <span class="checkbox-mark"></span>
-                  Halal
-                </label>
-              </div>
-            </div>
-
-            <div class="filter-section">
-              <h4 class="collapsible">Additional criterion <span class="toggle-icon">+</span></h4>
-            </div>
-            
-            <div class="filter-section">
-              <h4 class="collapsible">Additional criterion <span class="toggle-icon">+</span></h4>
+              <button class="btn-reset" @click="resetFilters">Reset Filters</button>
             </div>
           </aside>
 
@@ -270,74 +136,24 @@
               <p>No products match your search.</p>
             </div>
 
-            <div v-else class="product-marketplace-grid">
+            <div v-else class="product-grid">
               <div
                 v-for="product in filteredProducts"
                 :key="product._id"
-                class="marketplace-product-card"
+                class="product-card"
+                @click="toggle3D(product._id)"
               >
-                <div class="card-thumb">
-                  <span class="top-tag">top</span>
+                <div class="product-image">
                   <img
                     :src="getImageUrl(product.image || product.imageFront)"
                     :alt="product.name"
                   />
-                  <div class="brand-spot">
-                    <img src="@/assets/logo.jpeg" alt="Brand" />
-                  </div>
                 </div>
-
-                <div class="card-body">
+                <div class="product-info">
                   <h3 class="product-name">{{ product.name }}</h3>
-                  <div class="product-rating">
-                    <div class="stars">
-                      <span
-                        v-for="star in 5"
-                        :key="star"
-                        :class="{ filled: star <= Math.round(product.averageRating || 0) }"
-                        class="star"
-                      >★</span>
-                    </div>
-                    <span class="count">({{ product.ratingCount || 0 }})</span>
-                  </div>
-                  
-                  <div class="product-labels">
-                    <span>{{ product.category ? product.category.name : "Wholesale" }} • Bulk • Direct</span>
-                  </div>
-
-                  <p class="product-teaser">
-                    {{ product.description || "Premium distribution quality product for businesses." }}
-                  </p>
-
-                  <div class="product-stats-row">
-                    <div class="stat-item">
-                      <span class="stat-icon orange">🧡</span>
-                      <div class="stat-text">
-                        <span class="label">Min order</span>
-                        <span class="value">₹{{ product.discountPrice }}</span>
-                      </div>
-                    </div>
-                    <div class="stat-item">
-                      <span class="stat-icon orange">🧡</span>
-                      <div class="stat-text">
-                        <span class="label">Min.notice</span>
-                        <span class="value">24 hr</span>
-                      </div>
-                    </div>
-                    <div class="stat-item">
-                      <span class="stat-icon orange">🧡</span>
-                      <div class="stat-text">
-                        <span class="label">Delivery</span>
-                        <span class="value">₹20</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="card-bottom-action">
-                    <button class="btn-more-orange" @click.stop="toggle3D(product._id)">
-                      more <span class="arrow">→</span>
-                    </button>
-                  </div>
+                  <p class="product-price">₹{{ product.discountPrice }}</p>
+                  <p class="product-desc">{{ product.description }}</p>
+                  <button class="btn-view">View Details</button>
                 </div>
 
                 <!-- 3D View Modal -->
@@ -499,12 +315,7 @@ export default {
       showScratchCard: false,
       scratchCardOrderId: null,
       walletBalance: 0,
-      sectionOpen: {
-        delivery: true,
-        event: true,
-        cuisine: true,
-        dietary: true,
-      },
+      sectionOpen: {},
       productReviews: [],
     };
   },
@@ -822,465 +633,238 @@ export default {
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 /* --- Base Layout --- */
+@import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap');
+
 .marketplace-layout {
-  font-family: 'Inter', sans-serif;
-  background-color: #f7f7f7;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9f9f9;
   min-height: 100vh;
   color: #333;
 }
 
-/* --- Navigation --- */
+/* --- Nav --- */
 .top-nav {
-  background: #ffffff;
-  padding: 15px 0;
-  border-bottom: 2px solid #f0f0f0;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  padding: 10px 0;
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 100;
 }
 
 .top-nav-container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 0 40px;
+  align-items: center;
+  padding: 0 20px;
 }
 
 .brand-section {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 10px;
   cursor: pointer;
 }
 
 .nav-logo {
-  height: 45px;
-  width: auto;
+  height: 35px;
 }
 
 .brand-title {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #000;
-}
-
-.phone-link {
-  color: #ff8a00;
-  font-weight: 600;
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.dropdown-arrow {
-  font-size: 0.8rem;
-  color: #999;
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .top-nav-actions {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 20px;
 }
 
-.wallet-badge-minimal {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 15px;
-  border: 2px solid #f0f0f0;
-  border-radius: 50px;
-  font-weight: 700;
-  color: #333;
-}
-
-.btn-signin-nav {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #ff8a00;
-  color: white;
-  padding: 10px 25px;
-  border-radius: 50px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.user-avatar-small {
-  background: white;
-  color: #ff8a00;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-}
-
-.cart-btn {
-  font-size: 1.5rem;
-  cursor: pointer;
-  position: relative;
-}
-
-/* --- Hero --- */
-.hero-section {
-  background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2670&auto=format&fit=crop') center/cover;
-  height: 350px;
-  display: flex;
-  align-items: center;
-}
-
-.hero-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  width: 100%;
-  padding: 0 40px;
-}
-
-.hero-title {
-  color: white;
-  font-size: 3rem;
-  font-weight: 800;
-}
-
-/* --- Master Search Bar --- */
-.master-search-bar {
-  background: white;
-  max-width: 1320px;
-  margin: -50px auto 50px;
-  padding: 15px;
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-  display: flex;
-  gap: 15px;
-}
-
-.search-input-group {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 15px 20px;
-  border: 1px solid #f0f0f0;
-  border-radius: 10px;
-}
-
-.search-input-group input, 
-.search-input-group select {
-  border: none;
-  width: 100%;
-  outline: none;
-  font-size: 1.1rem;
-  color: #333;
-  background: transparent;
-}
-
-.master-search-btn {
-  background: #ff8a00;
-  color: white;
-  border: none;
-  padding: 0 30px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 1.5rem;
-}
-
-/* --- Layout Body --- */
-.layout-body {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 60px;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 40px;
-}
-
-/* --- Sidebar --- */
-.filter-sidebar {
-  padding-bottom: 50px;
-}
-
-.sidebar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-}
-
-.filter-title {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  font-weight: 800;
-  font-size: 1.1rem;
-  color: #000;
-}
-
-.btn-reset-text {
-  background: none;
-  border: none;
-  color: #ff8a00;
+.wallet-badge {
+  background: #f0f0f0;
+  padding: 5px 15px;
+  border-radius: 20px;
   font-weight: 600;
   cursor: pointer;
 }
 
-.filter-section {
-  margin-bottom: 30px;
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 20px;
-}
-
-.filter-section h4 {
-  margin-bottom: 20px;
-  font-size: 1.1rem;
-  font-weight: 800;
-  display: flex;
-  justify-content: space-between;
+.btn-user {
+  background: #eee;
+  border: none;
+  padding: 5px 15px;
+  border-radius: 5px;
+  font-weight: 600;
   cursor: pointer;
 }
 
-.section-content {
+/* --- Search --- */
+.search-section {
+  background: #fff;
+  padding: 30px 0;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 20px;
+}
+
+.search-bar {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  gap: 10px;
+  padding: 0 20px;
+}
+
+.search-bar input {
+  flex: 1;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.btn-search {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 0 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* --- Layout --- */
+.layout-body {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 30px;
+  padding: 0 20px 50px;
+}
+
+/* --- Sidebar --- */
+.sidebar {
+  background: #fff;
+  padding: 20px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  align-self: start;
+}
+
+.filter-group h3 {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  padding-bottom: 5px;
+  border-bottom: 2px solid #eee;
+}
+
+.category-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 8px;
 }
 
-.custom-radio, .custom-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 15px;
+.category-item {
+  padding: 8px 12px;
   cursor: pointer;
-  font-weight: 500;
-  color: #666;
+  border-radius: 5px;
+  transition: background 0.2s;
 }
 
-.custom-radio input, .custom-checkbox input {
-  display: none;
+.category-item:hover {
+  background: #f0f0f0;
 }
 
-.radio-mark, .checkbox-mark {
-  width: 22px;
-  height: 22px;
-  border: 2px solid #ddd;
-  border-radius: 50%;
-  position: relative;
+.category-item.active {
+  background: #007bff;
+  color: #fff;
 }
 
-.checkbox-mark { border-radius: 5px; }
-
-.custom-radio input:checked + .radio-mark,
-.custom-checkbox input:checked + .checkbox-mark {
-  border-color: #ff8a00;
-  background: #ff8a00;
+.btn-reset {
+  margin-top: 20px;
+  width: 100%;
+  padding: 8px;
+  background: #6c757d;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
-.custom-radio input:checked + .radio-mark::after {
-  content: '';
-  width: 10px;
-  height: 10px;
-  background: white;
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.custom-checkbox input:checked + .checkbox-mark::after {
-  content: '✔';
-  color: white;
-  font-size: 14px;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-/* --- Listing Area --- */
-.listing-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 40px;
-}
-
-.query-results {
-  font-size: 1.1rem;
-  color: #666;
-}
-
-.query-results b { color: #000; }
-
-.sorting-controls select {
-  padding: 10px 20px;
-  border: 2px solid #f0f0f0;
-  border-radius: 10px;
-  font-weight: 700;
-  outline: none;
-}
-
-.product-marketplace-grid {
+/* --- Grid --- */
+.product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 30px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
 }
 
-.marketplace-product-card {
-  background: white;
-  border-radius: 30px;
+.product-card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.03);
-  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.card-thumb {
-  height: 300px;
-  position: relative;
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.05);
 }
 
-.card-thumb img {
+.product-image {
+  height: 200px;
+  background: #fdfdfd;
+}
+
+.product-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
-.top-tag {
-  position: absolute;
-  top: 25px;
-  left: 0;
-  background: #ff8a00;
-  color: white;
-  padding: 5px 15px;
-  border-radius: 0 5px 5px 0;
-  font-size: 0.9rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  z-index: 10;
-}
-
-.brand-spot {
-  position: absolute;
-  bottom: -40px;
-  left: 30px;
-  width: 100px;
-  height: 100px;
-  background: white;
-  border-radius: 50%;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  z-index: 5;
-}
-
-.card-body {
-  padding: 60px 30px 30px;
+.product-info {
+  padding: 15px;
 }
 
 .product-name {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: #000;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.product-price {
+  font-size: 1.2rem;
+  color: #28a745;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.product-desc {
+  font-size: 0.9rem;
+  color: #666;
+  height: 3em;
+  overflow: hidden;
   margin-bottom: 15px;
 }
 
-.product-rating {
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.stars { color: #ff8a00; font-size: 1.2rem; }
-.product-rating .count { color: #999; font-weight: 600; }
-
-.product-labels {
-  color: #999;
-  font-weight: 500;
-  margin-bottom: 20px;
-}
-
-.product-teaser {
-  color: #666;
-  line-height: 1.6;
-  margin-bottom: 30px;
-}
-
-.product-stats-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 30px;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.stat-icon.orange {
-  color: #ff8a00;
-  font-size: 1.2rem;
-}
-
-.stat-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-text .label { font-size: 0.8rem; color: #999; font-weight: 700; }
-.stat-text .value { font-size: 1rem; font-weight: 800; color: #000; }
-
-.btn-more-orange {
+.btn-view {
   width: 100%;
-  background: #ff8a00;
-  color: white;
+  padding: 8px;
+  background: #007bff;
+  color: #fff;
   border: none;
-  padding: 15px;
-  border-radius: 15px;
-  font-weight: 800;
-  font-size: 1.2rem;
+  border-radius: 5px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: opacity 0.3s;
-}
-
-.btn-more-orange:hover {
-  opacity: 0.9;
-}
-
-/* --- Pagination --- */
-.pagination-dots {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin: 50px 0;
-}
-
-.dot {
-  width: 15px;
-  height: 15px;
-  background: #ddd;
-  border-radius: 50%;
-}
-
-.dot.active {
-  background: #ff8a00;
+  font-weight: 600;
 }
 
 /* --- Mobile --- */
-@media (max-width: 1024px) {
-  .layout-body { grid-template-columns: 1fr; }
-  .filter-sidebar { display: none; }
-  .master-search-bar { flex-direction: column; }
+@media (max-width: 768px) {
+  .layout-body {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
