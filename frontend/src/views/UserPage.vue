@@ -21,6 +21,8 @@
         <div class="nav-section">
           <a href="#" class="nav-item"><span class="icon">📊</span> Dashboard</a>
           <a href="#" class="nav-item active"><span class="icon">🛒</span> Pos</a>
+          <a href="#" class="nav-item" @click.prevent="showWallet = true"><span class="icon">👛</span> My Wallet</a>
+          <a href="#" class="nav-item" @click.prevent="showOrders = true"><span class="icon">📋</span> My Orders</a>
           <a href="#" class="nav-item"><span class="icon">🪑</span> Table</a>
           <a href="#" class="nav-item"><span class="icon">📅</span> Reservations</a>
         </div>
@@ -58,6 +60,10 @@
           <input type="text" placeholder="Search (Ctrl+/)" v-model="searchQuery" />
         </div>
         <div class="nav-actions">
+          <div class="wallet-pill" @click="showWallet = true">
+            <span class="wallet-icon">👛</span>
+            <span class="wallet-amount">₹{{ walletBalance }}</span>
+          </div>
           <button class="theme-toggle">☀️</button>
           <div class="user-action-avatar">
             <img src="https://ui-avatars.com/api/?name=User&background=ddd&color=333" />
@@ -187,7 +193,19 @@
         </div>
       </div>
 
-      <div class="order-summary">
+      <div class="order-summary" v-if="cartItems.length > 0">
+        <!-- Payment Method Selection -->
+        <div class="pos-payment-selection">
+          <label class="pay-method" :class="{ selected: selectedPaymentMethod === 'razorpay' }">
+            <input type="radio" value="razorpay" v-model="selectedPaymentMethod" />
+            <span>Razorpay</span>
+          </label>
+          <label class="pay-method" :class="{ selected: selectedPaymentMethod === 'wallet', disabled: walletBalance < cartTotal - productDiscount }">
+            <input type="radio" value="wallet" v-model="selectedPaymentMethod" :disabled="walletBalance < cartTotal - productDiscount" />
+            <span>Wallet</span>
+          </label>
+        </div>
+
         <div class="summary-row">
           <span>Sub total :</span>
           <strong>₹{{ cartTotal }}</strong>
@@ -196,14 +214,6 @@
           <span>Product Discount :</span>
           <strong>₹{{ productDiscount }}</strong>
         </div>
-        <div class="summary-row">
-          <span>Extra Discount :</span>
-          <span class="editable">✏️ ₹0.00</span>
-        </div>
-        <div class="summary-row">
-          <span>Coupon discount :</span>
-          <span class="editable">✏️ ₹0.00</span>
-        </div>
         <div class="total-row">
           <span>Total :</span>
           <strong>₹{{ cartTotal - productDiscount }}</strong>
@@ -211,11 +221,16 @@
       </div>
 
       <div class="panel-actions">
-        <button class="btn-navy-full">KOT & Print</button>
-        <button class="btn-white-half">Draft</button>
+        <button 
+          class="btn-orange-wide payment-btn" 
+          @click="handlePayment" 
+          :disabled="!selectedPaymentMethod || cartItems.length === 0"
+        >
+          {{ processingPayment ? 'Processing...' : 'Place Order & Pay' }}
+        </button>
         <div class="dual-actions">
-          <button class="btn-orange-wide">Bill & Payment</button>
-          <button class="btn-green-wide">Bill & Print</button>
+          <button class="btn-navy-full">KOT & Print</button>
+          <button class="btn-white-half">Draft</button>
         </div>
       </div>
     </aside>
@@ -287,6 +302,9 @@ export default {
       walletBalance: 0,
       show3DModal: false,
       selectedProduct3D: null,
+      selectedPaymentMethod: null,
+      processingPayment: false,
+      userProfile: null,
     };
   },
   computed: {
@@ -322,6 +340,8 @@ export default {
     this.fetchCategories();
     this.fetchCart();
     this.fetchWalletBalance();
+    this.fetchUserProfile();
+    this.loadRazorpay();
 
     const userStr = localStorage.getItem("user");
     if (userStr) {
@@ -445,8 +465,12 @@ export default {
       this.showScratchCard = false;
       this.scratchCardOrderId = null;
     },
-    updateWalletBalance() {
-      this.fetchWalletBalance();
+    updateWalletBalance(newBalance) {
+      if (typeof newBalance === 'number') {
+        this.walletBalance = newBalance;
+      } else {
+        this.fetchWalletBalance();
+      }
       this.closeScratchCard();
     },
     toggle3D(product) {
@@ -459,6 +483,106 @@ export default {
         this.show3DModal = false;
       }
     },
+    loadRazorpay() {
+      if (window.Razorpay) return;
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      document.body.appendChild(script);
+    },
+    async fetchUserProfile() {
+      try {
+        const res = await axios.get("/api/auth/profile");
+        this.userProfile = res.data.user;
+      } catch (err) {
+        console.error("Error fetching user profile:", err);
+      }
+    },
+    checkProfileCompletion() {
+      if (!this.userProfile) return false;
+      const requiredFields = ["name", "phone", "pincode", "storeName", "storeAddress"];
+      return requiredFields.every(field => this.userProfile[field] && this.userProfile[field].trim() !== "");
+    },
+    async handlePayment() {
+      if (!this.checkProfileCompletion()) {
+        alert("Please complete your profile with shop details first.");
+        this.showProfile = true;
+        return;
+      }
+      if (this.selectedPaymentMethod === "wallet") {
+        await this.payWithWallet();
+      } else if (this.selectedPaymentMethod === "razorpay") {
+        await this.payWithRazorpay();
+      }
+    },
+    async payWithWallet() {
+      this.processingPayment = true;
+      try {
+        const res = await axios.post("/api/orders/place-order-wallet", {
+          items: this.cartItems.map(item => ({
+            product: item.product._id,
+            quantity: item.quantity,
+            price: item.product.discountPrice,
+          })),
+          totalAmount: this.cartTotal - this.productDiscount,
+        });
+        this.walletBalance = res.data.newBalance;
+        this.orderSuccess(res.data.order._id);
+      } catch (err) {
+        alert(err.response?.data?.msg || "Wallet payment failed");
+      } finally {
+        this.processingPayment = false;
+      }
+    },
+    async payWithRazorpay() {
+      this.processingPayment = true;
+      try {
+        const res = await axios.post("/api/orders/create-razorpay-order", {
+          amount: this.cartTotal - this.productDiscount,
+        });
+        const { id: razorpay_order_id, amount, currency } = res.data;
+
+        const options = {
+          key: "rzp_test_S03eZU04VsM19U", // Should be from env or config
+          amount,
+          currency,
+          name: "Caterway POS",
+          description: "Order Payment",
+          order_id: razorpay_order_id,
+          handler: async (response) => {
+            try {
+              const verifyRes = await axios.post("/api/orders/verify-payment", {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                items: this.cartItems.map(item => ({
+                  product: item.product._id,
+                  quantity: item.quantity,
+                  price: item.product.discountPrice,
+                })),
+                totalAmount: this.cartTotal - this.productDiscount,
+              });
+              this.orderSuccess(verifyRes.data.order._id);
+            } catch (err) {
+              alert("Payment verification failed");
+            }
+          },
+          theme: { color: "#ff9a44" }
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } catch (err) {
+        alert("Razorpay order creation failed");
+      } finally {
+        this.processingPayment = false;
+      }
+    },
+    orderSuccess(orderId) {
+      this.cartItems = [];
+      this.scratchCardOrderId = orderId;
+      this.showScratchCard = true;
+      this.selectedPaymentMethod = null;
+    }
   },
 };
 </script>
@@ -655,6 +779,27 @@ export default {
   display: flex;
   align-items: center;
   gap: 20px;
+}
+
+.wallet-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff0e1;
+  padding: 8px 16px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #ff9a44;
+}
+
+.wallet-pill:hover {
+  background: #ff9a44;
+  color: white;
+}
+
+.wallet-amount {
+  font-weight: 700;
 }
 
 .theme-toggle {
@@ -933,6 +1078,56 @@ export default {
   border-top: 1px solid #eee;
   display: flex;
   justify-content: flex-end;
+}
+
+/* Payment Selection */
+.pos-payment-selection {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.pay-method {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f8f9fa;
+  border: 1px solid #eee;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.pay-method input {
+  display: none;
+}
+
+.pay-method.selected {
+  background: #ff9a44;
+  color: white;
+  border-color: #ff9a44;
+}
+
+.pay-method.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f1f1f1;
+}
+
+.payment-btn {
+  margin-bottom: 12px;
+  padding: 18px !important;
+  font-size: 16px;
+}
+
+.payment-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
 }
 
 /* Order Panel */
