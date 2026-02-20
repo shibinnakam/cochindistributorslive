@@ -128,7 +128,7 @@ export default {
     this.fetchAttendance();
     
     // Listen for real-time attendance updates
-    socket.on("attendanceUpdate", (data) => {
+    socket.on("attendanceUpdate", () => {
       // Only refresh if we are looking at today's date
       const today = new Date().toISOString().split('T')[0];
       if (this.selectedDate === today) {
