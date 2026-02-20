@@ -119,7 +119,7 @@ app.use("/api/orders", orderRoutes(io)); // Pass io to orderRoutes
 app.use("/api/wallet", walletRoutes(io)); // Pass io to walletRoutes
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/location", locationRoutes);
-app.use("/api/attendance", attendanceRoutes);
+app.use("/api/attendance", attendanceRoutes(io));
 
 // Serve Static Files and Handle SPA Routing in Production
 if (process.env.NODE_ENV === 'production') {

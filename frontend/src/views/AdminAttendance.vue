@@ -84,6 +84,7 @@
 
 <script>
 import axios from "@/utils/axios";
+import socket from "@/socket";
 
 export default {
   name: "AdminAttendance",
@@ -125,11 +126,18 @@ export default {
   },
   mounted() {
     this.fetchAttendance();
-    // Auto refresh every 30 seconds
-    this.refreshInterval = setInterval(this.fetchAttendance, 30000);
+    
+    // Listen for real-time attendance updates
+    socket.on("attendanceUpdate", (data) => {
+      // Only refresh if we are looking at today's date
+      const today = new Date().toISOString().split('T')[0];
+      if (this.selectedDate === today) {
+        this.fetchAttendance();
+      }
+    });
   },
   beforeUnmount() {
-    if (this.refreshInterval) clearInterval(this.refreshInterval);
+    socket.off("attendanceUpdate");
   }
 };
 </script>
