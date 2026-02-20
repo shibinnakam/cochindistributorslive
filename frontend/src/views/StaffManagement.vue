@@ -176,7 +176,10 @@
                 <div class="employee-avatar">
                   {{ s.name ? s.name.charAt(0).toUpperCase() : "?" }}
                 </div>
-                <span class="employee-name">{{ s.name || "—" }}</span>
+                <div class="employee-name-block">
+                  <span class="employee-name">{{ s.name || "—" }}</span>
+                  <span v-if="s.rfidUid" class="rfid-badge">🪪 {{ s.rfidUid }}</span>
+                </div>
               </div>
             </td>
             <td class="position-cell">{{ s.position || "—" }}</td>
@@ -252,6 +255,13 @@
                   </button>
                   <button
                     v-if="s.status === 'active'"
+                    @click="openRfidModal(s)"
+                    class="menu-item rfid"
+                  >
+                    🪪 Assign RFID
+                  </button>
+                  <button
+                    v-if="s.status === 'active'"
                     @click="setStatus(s._id, 'deactivated')"
                     class="menu-item deactivate"
                   >
@@ -321,6 +331,39 @@
       </div>
     </div>
 
+    <!-- RFID Assignment Modal -->
+    <div v-if="showRfidModal" class="modal-overlay" @click="closeRfidModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>Assign RFID Card</h2>
+          <button class="modal-close" @click="closeRfidModal">✕</button>
+        </div>
+        <div class="rfid-modal-body">
+          <p class="rfid-staff-name">Staff: <strong>{{ rfidForm.staffName }}</strong></p>
+          <p v-if="rfidForm.currentUid" class="rfid-current">
+            Current UID: <span class="rfid-badge-lg">{{ rfidForm.currentUid }}</span>
+          </p>
+          <p v-else class="rfid-current">No RFID card assigned yet.</p>
+          <form @submit.prevent="submitRfid" class="invite-form-modal">
+            <div class="form-group">
+              <label>RFID Card UID</label>
+              <input
+                v-model="rfidForm.uid"
+                type="text"
+                placeholder="e.g. A1B2C3"
+                maxlength="10"
+                @input="rfidForm.uid = rfidForm.uid.toUpperCase().replace(/[^A-Z0-9]/g, '')"
+                required
+              />
+              <p v-if="rfidError" class="field-error">{{ rfidError }}</p>
+              <p class="rfid-hint">3–10 characters, uppercase letters (A–Z) and numbers (0–9) only.</p>
+            </div>
+            <button type="submit" class="btn-submit">Save RFID UID</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteModal" class="modal-overlay" @click="cancelDelete">
       <div class="modal-delete" @click.stop>
@@ -357,6 +400,9 @@ export default {
       toastError: false,
       showDeleteModal: false,
       showInviteForm: false,
+      showRfidModal: false,
+      rfidForm: { id: null, staffName: "", uid: "", currentUid: "" },
+      rfidError: "",
       deleteId: null,
       activeMenu: null,
       showEditModal: false,
@@ -558,6 +604,40 @@ export default {
 
     toggleMenu(staffId) {
       this.activeMenu = this.activeMenu === staffId ? null : staffId;
+    },
+
+    // --- RFID ---
+    openRfidModal(staff) {
+      this.rfidForm = {
+        id: staff._id,
+        staffName: staff.name || staff.email,
+        uid: staff.rfidUid || "",
+        currentUid: staff.rfidUid || "",
+      };
+      this.rfidError = "";
+      this.showRfidModal = true;
+      this.activeMenu = null;
+    },
+    closeRfidModal() {
+      this.showRfidModal = false;
+      this.rfidError = "";
+      this.rfidForm = { id: null, staffName: "", uid: "", currentUid: "" };
+    },
+    async submitRfid() {
+      const uid = this.rfidForm.uid.trim();
+      if (!/^[A-Z0-9]{3,10}$/.test(uid)) {
+        this.rfidError = "UID must be 3–10 uppercase letters (A–Z) and numbers (0–9) only.";
+        return;
+      }
+      this.rfidError = "";
+      try {
+        const res = await axios.put(`/api/staff/rfid/${this.rfidForm.id}`, { rfidUid: uid });
+        this.showToast(res.data.message || "RFID UID assigned successfully");
+        this.closeRfidModal();
+        this.fetchStaff();
+      } catch (err) {
+        this.rfidError = err.response?.data?.message || "Error assigning RFID UID";
+      }
     },
 
     showToast(message, isError = false) {
@@ -1560,5 +1640,80 @@ export default {
   .dropdown-menu {
     min-width: 140px;
   }
+}
+
+/* ── RFID Styles ── */
+.employee-name-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rfid-badge {
+  display: inline-block;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  letter-spacing: 0.5px;
+  font-family: monospace;
+}
+
+.rfid-badge-lg {
+  display: inline-block;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 10px;
+  letter-spacing: 1px;
+  font-family: monospace;
+}
+
+.rfid-modal-body {
+  padding: 0 4px;
+}
+
+.rfid-staff-name {
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.rfid-current {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rfid-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 6px;
+}
+
+.field-error {
+  font-size: 12px;
+  color: #ef4444;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.menu-item.rfid {
+  color: #1d4ed8;
+}
+
+.menu-item.rfid:hover {
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 </style>

@@ -300,6 +300,41 @@ router.get("/", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// Assign / update RFID UID for a staff member
+router.put("/rfid/:id", async (req, res) => {
+  try {
+    const { rfidUid } = req.body;
+
+    // Validate: uppercase letters and numbers only, 3-10 chars
+    if (!rfidUid || !/^[A-Z0-9]{3,10}$/.test(rfidUid)) {
+      return res.status(400).json({
+        success: false,
+        message: "RFID UID must be 3–10 uppercase letters/numbers only (A-Z, 0-9)",
+      });
+    }
+
+    // Check duplicate across all other staff
+    const duplicate = await Staff.findOne({ rfidUid, _id: { $ne: req.params.id } });
+    if (duplicate) {
+      return res.status(400).json({
+        success: false,
+        message: "This RFID UID is already assigned to another staff member",
+      });
+    }
+
+    const staff = await Staff.findById(req.params.id);
+    if (!staff) return res.status(404).json({ success: false, message: "Staff not found" });
+
+    staff.rfidUid = rfidUid;
+    await staff.save();
+
+    res.json({ success: true, message: "RFID UID assigned successfully", staff });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 // DELETE /api/staff/:id
 router.delete("/:id", async (req, res) => {
   try {
@@ -364,19 +399,19 @@ router.put("/resign/approve/:id", async (req, res) => {
         // Assuming page margin 50pt (default). 
         // Centering or positioning similar to frontend: x=34mm (96pt), y=13mm (37pt)
         try {
-           doc.image(logoPath, 130, 40, { width: 85, height: 71 });
+          doc.image(logoPath, 130, 40, { width: 85, height: 71 });
         } catch (e) {
-           console.log("Logo not found or invalid", e);
+          console.log("Logo not found or invalid", e);
         }
 
         doc.moveDown(4);
-        
+
         // Header
         doc.fontSize(16).font("Helvetica-Bold").text("COCHIN DISTRIBUTORS", { align: "center" });
         doc.fontSize(11).font("Helvetica").text("Merchant Association Building,", { align: "center" });
         doc.text("Santhi Nagar, Kattappana", { align: "center" });
         doc.text("Ph: 9447419293, 9446074962", { align: "center" });
-        
+
         doc.moveDown();
         doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
         doc.moveDown(2);
@@ -394,11 +429,11 @@ router.put("/resign/approve/:id", async (req, res) => {
         doc.fontSize(12).font("Helvetica");
 
         const drawRow = (label, value) => {
-           doc.rect(startX, currentY, colWidth, rowHeight).stroke();
-           doc.rect(startX + colWidth, currentY, colWidth, rowHeight).stroke();
-           doc.text(label, startX + 10, currentY + 10);
-           doc.text(value, startX + colWidth + 10, currentY + 10);
-           currentY += rowHeight;
+          doc.rect(startX, currentY, colWidth, rowHeight).stroke();
+          doc.rect(startX + colWidth, currentY, colWidth, rowHeight).stroke();
+          doc.text(label, startX + 10, currentY + 10);
+          doc.text(value, startX + colWidth + 10, currentY + 10);
+          currentY += rowHeight;
         };
 
         drawRow("Employee Name", staff.name);
@@ -414,7 +449,7 @@ router.put("/resign/approve/:id", async (req, res) => {
         doc.font("Helvetica").fontSize(12);
         const text = `This is to certify that Mr./Ms. ${staff.name} has worked with Cochin Distributors from ${staff.dateOfJoining ? staff.dateOfJoining.toLocaleDateString() : ""} to ${lastWorkingDay.toLocaleDateString()}.`;
         doc.text(text, { align: "justify" });
-        
+
         doc.moveDown();
         const genderText = staff.gender === "female" ? "her" : "him";
         doc.text(`We wish ${genderText} all the best for future endeavors.`, { align: "justify" });

@@ -25,6 +25,7 @@ const staffSchema = new mongoose.Schema(
     resignationDate: { type: Date },
     lastWorkingDay: { type: Date },
     resignationReason: { type: String },
+    rfidUid: { type: String, default: null, sparse: true },
     refreshTokens: [String],
   },
   { timestamps: true } // automatically adds createdAt and updatedAt
