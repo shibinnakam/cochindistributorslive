@@ -36,7 +36,7 @@ module.exports = (io) => {
 
   // Add to Cart
   router.post('/add', authMiddleware, async (req, res) => {
-    const { productId, quantity } = req.body;
+    const { productId, quantity, overwrite } = req.body;
     const qty = quantity || 1;
 
     try {
@@ -50,11 +50,11 @@ module.exports = (io) => {
       const cartItemIndex = user.cart.findIndex(item => item.product.toString() === productId);
 
       let currentQuantity = 0;
-      if (cartItemIndex > -1) {
+      if (cartItemIndex > -1 && !overwrite) {
         currentQuantity = user.cart[cartItemIndex].quantity;
       }
 
-      const newQuantity = currentQuantity + qty;
+      const newQuantity = overwrite ? qty : (currentQuantity + qty);
       const minQty = 10;
       const maxQty = 150;
 
@@ -63,9 +63,6 @@ module.exports = (io) => {
       }
 
       if (newQuantity < minQty) {
-        // If adding for the first time or reducing, ensure it doesn't go below 10
-        // Exception: If the user is removing the item completely (quantity < 1), we handle it differently (usually via remove route)
-        // But here we enforce 10 as the baseline for "active" items.
         return res.status(400).json({ msg: `Minimum quantity per product is ${minQty}` });
       }
 
@@ -79,7 +76,7 @@ module.exports = (io) => {
         user.cart[cartItemIndex].quantity = newQuantity;
       } else {
         // Add new item
-        user.cart.push({ product: productId, quantity: qty });
+        user.cart.push({ product: productId, quantity: newQuantity });
       }
 
       await user.save();

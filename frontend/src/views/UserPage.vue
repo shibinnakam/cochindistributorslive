@@ -432,12 +432,14 @@ export default {
       }
     },
     async updateQty(productId, qty) {
-      if (qty < 1) return this.removeFromCart(productId);
+      if (qty < 10) return; // Enforce min 10
       try {
         await axios.post("/api/cart/add", { productId, quantity: qty, overwrite: true });
         this.fetchCart();
       } catch (err) {
         console.error(err);
+        const msg = err.response?.data?.msg || "Failed to update quantity";
+        alert(msg);
       }
     },
     async removeFromCart(productId) {
