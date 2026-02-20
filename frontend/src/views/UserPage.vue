@@ -154,7 +154,7 @@
     </main>
 
     <!-- Right Order Panel -->
-    <aside class="pos-order-panel">
+    <aside class="pos-order-panel" v-if="cartItems.length > 0">
       <div class="panel-header">
         <div class="search-existing">
           <span class="icon">🔍</span>
