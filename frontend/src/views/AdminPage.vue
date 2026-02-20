@@ -114,6 +114,15 @@
             <span class="icon">📍</span>
             Live Tracking
           </a>
+          <a
+            href="#"
+            class="nav-item"
+            :class="{ active: selectedMenu === 'attendance' }"
+            @click.prevent="selectMenu('attendance')"
+          >
+            <span class="icon">🕒</span>
+            Attendance
+          </a>
         </div>
 
         <div class="nav-section">
@@ -343,6 +352,7 @@
         <AdminLeaves v-if="selectedMenu === 'approve-leaves'" />
         <ChatWindow v-if="selectedMenu === 'chat'" />
         <LiveTracking v-if="selectedMenu === 'tracking'" />
+        <AdminAttendance v-if="selectedMenu === 'attendance'" />
 
         <!-- Reviews View -->
         <div v-if="selectedMenu === 'reviews'" class="reviews-section">
@@ -591,6 +601,7 @@ import AdminOrders from "@/views/AdminOrders.vue";
 import AdminLeaves from "@/views/AdminLeaves.vue";
 import ChatWindow from "@/views/ChatWindow.vue";
 import LiveTracking from "@/views/LiveTracking.vue";
+import AdminAttendance from "@/views/AdminAttendance.vue";
 
 const API_BASE_URL = "/api";
 
@@ -606,6 +617,7 @@ export default {
     AdminLeaves,
     ChatWindow,
     LiveTracking,
+    AdminAttendance,
   },
   data() {
     return {
@@ -720,6 +732,7 @@ export default {
         chat: "Messages & Communications",
         changePassword: "Change Password",
         tracking: "Live Vehicle Tracking",
+        attendance: "Staff Attendance Monitoring",
       };
       return titles[menu] || "Dashboard";
     },

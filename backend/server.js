@@ -21,6 +21,7 @@ const chatRoutes = require("./routes/ChatRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const walletRoutes = require("./routes/walletRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const attendanceRoutes = require("./routes/attendanceRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -118,6 +119,7 @@ app.use("/api/orders", orderRoutes(io)); // Pass io to orderRoutes
 app.use("/api/wallet", walletRoutes(io)); // Pass io to walletRoutes
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/location", locationRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 // Serve Static Files and Handle SPA Routing in Production
 if (process.env.NODE_ENV === 'production') {
