@@ -156,7 +156,7 @@ export default {
   .user-list {
     padding: 10px;
   }
-  
+
   h2 {
     font-size: 1.5rem;
     margin-bottom: 15px;

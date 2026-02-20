@@ -3,7 +3,7 @@
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-green-bg"></div>
-      
+
       <div class="container hero-container">
         <div class="hero-content">
           <div class="hero-badge fade-in">
@@ -31,12 +31,19 @@
 
           <!-- Featured Items Circular List -->
           <div class="featured-circles">
-            <div v-for="(cat, index) in featuredCategories" :key="index" class="category-circle-item">
+            <div
+              v-for="(cat, index) in featuredCategories"
+              :key="index"
+              class="category-circle-item"
+            >
               <div class="circle-img-wrapper">
                 <img :src="cat.image" :alt="cat.name" />
               </div>
               <h4 class="category-circle-name">{{ cat.name }}</h4>
-              <p class="category-circle-desc">This is an excellent {{ cat.name.toLowerCase() }} that is very healthy</p>
+              <p class="category-circle-desc">
+                This is an excellent {{ cat.name.toLowerCase() }} that is very
+                healthy
+              </p>
               <div class="category-footer">
                 <span class="category-price">${{ cat.price }}</span>
                 <button class="buy-now-mini">Buy Now</button>
@@ -47,11 +54,26 @@
 
         <div class="hero-visual">
           <div class="main-food-bowl floating">
-            <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Healthy Food Bowl" />
+            <img
+              src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+              alt="Healthy Food Bowl"
+            />
             <!-- Small floating food particles/icons -->
-            <div class="particle p1"><img src="https://images.unsplash.com/photo-1598128558393-70ff21433be0?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" /></div>
-            <div class="particle p2"><img src="https://images.unsplash.com/photo-1626700051175-6818013e1d4f?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" /></div>
-            <div class="particle p3"><img src="https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" /></div>
+            <div class="particle p1">
+              <img
+                src="https://images.unsplash.com/photo-1598128558393-70ff21433be0?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"
+              />
+            </div>
+            <div class="particle p2">
+              <img
+                src="https://images.unsplash.com/photo-1626700051175-6818013e1d4f?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"
+              />
+            </div>
+            <div class="particle p3">
+              <img
+                src="https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -61,23 +83,34 @@
     <section class="section why-us">
       <div class="container text-center">
         <h2 class="section-title">WHY CHOOSE US?</h2>
-        <p class="section-desc">You will choose us because you get the best quality food from us and we deliver fast.</p>
+        <p class="section-desc">
+          You will choose us because you get the best quality food from us and
+          we deliver fast.
+        </p>
 
         <div class="features-grid">
           <div class="feature-item">
             <div class="feature-icon"><i class="icon-food"></i>🥗</div>
             <h3>Serve Healthy Food</h3>
-            <p>We serve all healthy food here. You can choose any food you like.</p>
+            <p>
+              We serve all healthy food here. You can choose any food you like.
+            </p>
           </div>
           <div class="feature-item active">
             <div class="feature-icon"><i class="icon-quality"></i>💎</div>
             <h3>Best Quality</h3>
-            <p>Our food quality is excellent. You will get exactly what you want here.</p>
+            <p>
+              Our food quality is excellent. You will get exactly what you want
+              here.
+            </p>
           </div>
           <div class="feature-item">
             <div class="feature-icon"><i class="icon-delivery"></i>🚚</div>
             <h3>Fast Delivery</h3>
-            <p>You can say the main goal of our delivery man is to deliver orders quickly.</p>
+            <p>
+              You can say the main goal of our delivery man is to deliver orders
+              quickly.
+            </p>
           </div>
         </div>
       </div>
@@ -87,17 +120,27 @@
     <section class="section regular-food">
       <div class="container text-center">
         <h2 class="section-title">OUR REGULAR FOOD</h2>
-        <p class="section-desc">This is our daily food list. Here you will find all kinds of food, choose your favorite food and order.</p>
+        <p class="section-desc">
+          This is our daily food list. Here you will find all kinds of food,
+          choose your favorite food and order.
+        </p>
 
         <div class="food-grid">
-          <div v-for="(food, index) in regularFood" :key="index" class="food-card">
+          <div
+            v-for="(food, index) in regularFood"
+            :key="index"
+            class="food-card"
+          >
             <div class="food-img">
               <img :src="food.image" :alt="food.name" />
             </div>
             <div class="food-info">
               <h3>{{ food.name }}</h3>
               <div class="rating">⭐⭐⭐⭐⭐ <span>(100)</span></div>
-              <p>This is a great {{ food.name.toLowerCase() }} that is very healthy. You can eat it with any meal.</p>
+              <p>
+                This is a great {{ food.name.toLowerCase() }} that is very
+                healthy. You can eat it with any meal.
+              </p>
               <div class="food-footer">
                 <span class="food-price">${{ food.price }}</span>
                 <button class="buy-now-btn">Buy Now</button>
@@ -112,7 +155,10 @@
     <section class="section chefs">
       <div class="container text-center">
         <h2 class="section-title">OUR SPECIAL CHEF'S</h2>
-        <p class="section-desc">Featured below are some of our special chefs who work to prepare your meals.</p>
+        <p class="section-desc">
+          Featured below are some of our special chefs who work to prepare your
+          meals.
+        </p>
 
         <div class="chefs-grid">
           <div v-for="(chef, index) in chefs" :key="index" class="chef-card">
@@ -136,24 +182,89 @@ export default {
   data() {
     return {
       featuredCategories: [
-        { name: "Chicken Burger", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", price: "3.50" },
-        { name: "Chicken Pizza", image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", price: "3.80" },
-        { name: "Chicken Rice", image: "https://images.unsplash.com/photo-1626777552726-4a6b547b4e5c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", price: "4.50" },
-        { name: "Special Dessert", image: "https://images.unsplash.com/photo-1551024506-0bccd828d307?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", price: "2.50" },
+        {
+          name: "Chicken Burger",
+          image:
+            "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+          price: "3.50",
+        },
+        {
+          name: "Chicken Pizza",
+          image:
+            "https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+          price: "3.80",
+        },
+        {
+          name: "Chicken Rice",
+          image:
+            "https://images.unsplash.com/photo-1626777552726-4a6b547b4e5c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+          price: "4.50",
+        },
+        {
+          name: "Special Dessert",
+          image:
+            "https://images.unsplash.com/photo-1551024506-0bccd828d307?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+          price: "2.50",
+        },
       ],
       regularFood: [
-        { name: "Salads", image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", price: "4.00" },
-        { name: "Chicken Masala", image: "https://images.unsplash.com/photo-1588166524941-3bf61a7c41eb?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", price: "4.00" },
-        { name: "Mutton Kheema", image: "https://images.unsplash.com/photo-1545240203-04c5991112d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", price: "4.80" },
-        { name: "Beef Pasta", image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", price: "4.00" },
-        { name: "Chicken Fry", image: "https://images.unsplash.com/photo-1562967914-608f82629710?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", price: "4.00" },
-        { name: "Special Dessert", image: "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", price: "2.50" },
+        {
+          name: "Salads",
+          image:
+            "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+          price: "4.00",
+        },
+        {
+          name: "Chicken Masala",
+          image:
+            "https://images.unsplash.com/photo-1588166524941-3bf61a7c41eb?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+          price: "4.00",
+        },
+        {
+          name: "Mutton Kheema",
+          image:
+            "https://images.unsplash.com/photo-1545240203-04c5991112d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+          price: "4.80",
+        },
+        {
+          name: "Beef Pasta",
+          image:
+            "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+          price: "4.00",
+        },
+        {
+          name: "Chicken Fry",
+          image:
+            "https://images.unsplash.com/photo-1562967914-608f82629710?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+          price: "4.00",
+        },
+        {
+          name: "Special Dessert",
+          image:
+            "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+          price: "2.50",
+        },
       ],
       chefs: [
-        { name: "Chef Jhon Doe", role: "Head Chef", image: "https://images.unsplash.com/photo-1583394238182-6f71f3ef08c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" },
-        { name: "Chef Jane Smith", role: "Sous Chef", image: "https://images.unsplash.com/photo-1577214190831-2775f566420f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" },
-        { name: "Chef Robert Brown", role: "Pastry Chef", image: "https://images.unsplash.com/photo-1622023459113-9b195477c9c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" },
-      ]
+        {
+          name: "Chef Jhon Doe",
+          role: "Head Chef",
+          image:
+            "https://images.unsplash.com/photo-1583394238182-6f71f3ef08c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+        },
+        {
+          name: "Chef Jane Smith",
+          role: "Sous Chef",
+          image:
+            "https://images.unsplash.com/photo-1577214190831-2775f566420f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+        },
+        {
+          name: "Chef Robert Brown",
+          role: "Pastry Chef",
+          image:
+            "https://images.unsplash.com/photo-1622023459113-9b195477c9c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+        },
+      ],
     };
   },
   methods: {
@@ -163,16 +274,16 @@ export default {
     scrollToAbout() {
       const el = document.querySelector(".why-us");
       if (el) el.scrollIntoView({ behavior: "smooth" });
-    }
-  }
+    },
+  },
 };
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap");
 
 .home-page {
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   color: #333;
   background-color: #fff;
   overflow-x: hidden;
@@ -188,7 +299,9 @@ export default {
   padding: 80px 0;
 }
 
-.text-center { text-align: center; }
+.text-center {
+  text-align: center;
+}
 
 .section-title {
   font-size: 2.2rem;
@@ -329,7 +442,7 @@ export default {
   padding: 1.5rem 1rem;
   border-radius: 20px;
   text-align: center;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   width: 160px;
   transition: transform 0.3s;
 }
@@ -395,7 +508,7 @@ export default {
   border-radius: 50%;
   background: white;
   padding: 20px;
-  border: 15px solid rgba(255,255,255,0.3);
+  border: 15px solid rgba(255, 255, 255, 0.3);
   position: relative;
 }
 
@@ -413,14 +526,27 @@ export default {
   border-radius: 50%;
   overflow: hidden;
   border: 3px solid #fff;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-.particle img { width: 100%; height: 100%; object-fit: cover; }
+.particle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-.p1 { top: 0; right: 20px; }
-.p2 { bottom: 20px; right: -30px; }
-.p3 { bottom: -10px; left: 50px; }
+.p1 {
+  top: 0;
+  right: 20px;
+}
+.p2 {
+  bottom: 20px;
+  right: -30px;
+}
+.p3 {
+  bottom: -10px;
+  left: 50px;
+}
 
 /* --- Why Choose Us --- */
 .features-grid {
@@ -469,7 +595,7 @@ export default {
 .food-card {
   background: white;
   border-radius: 30px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   padding: 1.5rem;
   text-align: left;
@@ -484,7 +610,11 @@ export default {
   border: 6px solid #eef6e6;
 }
 
-.food-img img { width: 100%; height: 100%; object-fit: cover; }
+.food-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .food-info h3 {
   font-size: 1.3rem;
@@ -498,7 +628,10 @@ export default {
   margin-bottom: 1rem;
 }
 
-.rating span { color: #888; margin-left: 5px; }
+.rating span {
+  color: #888;
+  margin-left: 5px;
+}
 
 .food-info p {
   font-size: 0.85rem;
@@ -547,7 +680,11 @@ export default {
   margin-bottom: 1.5rem;
 }
 
-.chef-img img { width: 100%; height: 100%; object-fit: cover; }
+.chef-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .chef-info h3 {
   font-weight: 800;
@@ -565,48 +702,107 @@ export default {
 }
 
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 }
 
-.fade-in { animation: fadeIn 1s ease-out; }
-.slide-up { animation: slideUp 0.8s ease-out; }
-.slide-up-delay { animation: slideUp 0.8s ease-out 0.2s both; }
-.fade-in-delay { animation: fadeIn 1s ease-out 0.4s both; }
+.fade-in {
+  animation: fadeIn 1s ease-out;
+}
+.slide-up {
+  animation: slideUp 0.8s ease-out;
+}
+.slide-up-delay {
+  animation: slideUp 0.8s ease-out 0.2s both;
+}
+.fade-in-delay {
+  animation: fadeIn 1s ease-out 0.4s both;
+}
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Responsive */
 @media (max-width: 1200px) {
-  .hero-title { font-size: 3rem; }
-  .main-food-bowl { width: 400px; height: 400px; }
+  .hero-title {
+    font-size: 3rem;
+  }
+  .main-food-bowl {
+    width: 400px;
+    height: 400px;
+  }
 }
 
 @media (max-width: 992px) {
-  .hero-container { flex-direction: column-reverse; align-items: center; text-align: center; }
-  .hero-visual { justify-content: center; }
-  .hero-content { margin-top: 3rem; }
-  .hero-cta-group { justify-content: center; }
-  .featured-circles { justify-content: center; flex-wrap: wrap; }
-  .features-grid, .food-grid, .chefs-grid { grid-template-columns: repeat(2, 1fr); }
-  .hero-green-bg { width: 100%; border-radius: 0; top: 0; height: 50%; }
+  .hero-container {
+    flex-direction: column-reverse;
+    align-items: center;
+    text-align: center;
+  }
+  .hero-visual {
+    justify-content: center;
+  }
+  .hero-content {
+    margin-top: 3rem;
+  }
+  .hero-cta-group {
+    justify-content: center;
+  }
+  .featured-circles {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .features-grid,
+  .food-grid,
+  .chefs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .hero-green-bg {
+    width: 100%;
+    border-radius: 0;
+    top: 0;
+    height: 50%;
+  }
 }
 
 @media (max-width: 768px) {
-  .hero-title { font-size: 2.5rem; }
-  .features-grid, .food-grid, .chefs-grid { grid-template-columns: 1fr; }
-  .main-food-bowl { width: 300px; height: 300px; }
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  .features-grid,
+  .food-grid,
+  .chefs-grid {
+    grid-template-columns: 1fr;
+  }
+  .main-food-bowl {
+    width: 300px;
+    height: 300px;
+  }
 }
-</style>
 
 .about-visual {
   position: relative;
@@ -871,7 +1067,8 @@ export default {
     padding: 0 1rem;
   }
 
-  .btn-primary, .btn-secondary {
+  .btn-primary,
+  .btn-secondary {
     width: 100%;
     justify-content: center;
   }

@@ -126,14 +126,21 @@
       </nav>
     </aside>
 
-    <div class="sidebar-overlay" :class="{ 'active': isSidebarOpen }" @click="isSidebarOpen = false"></div>
+    <div
+      class="sidebar-overlay"
+      :class="{ active: isSidebarOpen }"
+      @click="isSidebarOpen = false"
+    ></div>
 
     <!-- Main Content Area -->
     <main class="main-content">
       <!-- Top Header -->
       <header class="top-header">
         <div class="header-left">
-          <button class="sidebar-toggle" @click="isSidebarOpen = !isSidebarOpen">
+          <button
+            class="sidebar-toggle"
+            @click="isSidebarOpen = !isSidebarOpen"
+          >
             ☰
           </button>
           <h1 class="page-title">

@@ -150,9 +150,12 @@ export default {
       if (!this.deleteId) return;
       try {
         const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
-        const res = await fetch(`${apiUrl}/api/leaves/delete/${this.deleteId}`, {
-          method: "DELETE",
-        });
+        const res = await fetch(
+          `${apiUrl}/api/leaves/delete/${this.deleteId}`,
+          {
+            method: "DELETE",
+          }
+        );
         if (res.ok) {
           this.leaves = this.leaves.filter((l) => l._id !== this.deleteId);
           this.closeDeleteModal();

@@ -61,9 +61,7 @@
     <div class="chat-main" :class="{ 'mobile-hidden': !selectedContact }">
       <div v-if="selectedContact" class="chat-window">
         <div class="chat-header-window">
-          <button class="back-btn" @click="selectedContact = null">
-            ←
-          </button>
+          <button class="back-btn" @click="selectedContact = null">←</button>
           <img
             :src="
               selectedContact.profilePhoto

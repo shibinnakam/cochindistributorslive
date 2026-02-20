@@ -293,7 +293,7 @@ button:hover {
     grid-template-columns: 1fr;
     column-gap: 0;
   }
-  
+
   .staff-register {
     margin: 10px;
     padding: 20px;

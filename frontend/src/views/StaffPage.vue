@@ -710,11 +710,15 @@ export default {
     async submitResignation() {
       try {
         const token = localStorage.getItem("token");
-        await axios.post(`${this.apiBase}/api/staff/resign`, {
-          reason: this.resignationReason,
-        }, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await axios.post(
+          `${this.apiBase}/api/staff/resign`,
+          {
+            reason: this.resignationReason,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         this.staff.resignationStatus = "pending";
         this.staff.resignationDate = new Date();
         this.message = "Resignation submitted successfully";

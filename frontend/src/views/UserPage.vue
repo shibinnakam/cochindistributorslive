@@ -13,12 +13,14 @@
             <span class="dropdown-arrow">▾</span>
           </div>
         </div>
-        
+
         <div class="header-right">
           <div class="user-meta">
             <div class="balance-pill">
               <span class="coin-icon">💰</span>
-              <span class="balance-amount">₹{{ walletBalance.toLocaleString() }}</span>
+              <span class="balance-amount"
+                >₹{{ walletBalance.toLocaleString() }}</span
+              >
               <span class="dropdown-arrow">▾</span>
             </div>
             <div class="user-auth" @click="openUserAction('profile')">
@@ -68,18 +70,27 @@
 
           <div class="filter-header-row">
             <span class="filter-title"><span>📊</span> FILTER</span>
-            <button class="reset-link" @click="resetFilters">Reset filter</button>
+            <button class="reset-link" @click="resetFilters">
+              Reset filter
+            </button>
           </div>
 
           <div class="filter-accordions">
             <div class="accordion-item">
               <div class="accordion-header" @click="toggleSection('delivery')">
                 <span>Delivery method:</span>
-                <span class="toggle-icon">{{ sectionOpen['delivery'] ? '−' : '+' }}</span>
+                <span class="toggle-icon">{{
+                  sectionOpen["delivery"] ? "−" : "+"
+                }}</span>
               </div>
               <div class="accordion-content" v-show="sectionOpen['delivery']">
                 <label class="check-container">
-                  <input type="radio" name="delivery" value="delivery" checked />
+                  <input
+                    type="radio"
+                    name="delivery"
+                    value="delivery"
+                    checked
+                  />
                   <span class="checkmark"></span> Delivery
                 </label>
                 <label class="check-container">
@@ -92,10 +103,21 @@
             <div class="accordion-item">
               <div class="accordion-header" @click="toggleSection('event')">
                 <span>Event type:</span>
-                <span class="toggle-icon">{{ sectionOpen['event'] ? '−' : '+' }}</span>
+                <span class="toggle-icon">{{
+                  sectionOpen["event"] ? "−" : "+"
+                }}</span>
               </div>
               <div class="accordion-content" v-show="sectionOpen['event']">
-                <label class="check-container" v-for="type in ['Breakfast', 'Dinner', 'The conference', 'Buffet table']" :key="type">
+                <label
+                  class="check-container"
+                  v-for="type in [
+                    'Breakfast',
+                    'Dinner',
+                    'The conference',
+                    'Buffet table',
+                  ]"
+                  :key="type"
+                >
                   <input type="checkbox" />
                   <span class="checkmark"></span> {{ type }}
                 </label>
@@ -105,11 +127,21 @@
             <div class="accordion-item">
               <div class="accordion-header" @click="toggleSection('cuisine')">
                 <span>Type of cuisine:</span>
-                <span class="toggle-icon">{{ sectionOpen['cuisine'] ? '−' : '+' }}</span>
+                <span class="toggle-icon">{{
+                  sectionOpen["cuisine"] ? "−" : "+"
+                }}</span>
               </div>
               <div class="accordion-content" v-show="sectionOpen['cuisine']">
-                <label class="check-container" v-for="cat in categories" :key="cat._id">
-                  <input type="checkbox" :checked="selectedCategory === cat._id" @change="selectCategory(cat)" />
+                <label
+                  class="check-container"
+                  v-for="cat in categories"
+                  :key="cat._id"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="selectedCategory === cat._id"
+                    @change="selectCategory(cat)"
+                  />
                   <span class="checkmark"></span> {{ cat.name }}
                 </label>
               </div>
@@ -121,7 +153,8 @@
         <section class="listing-section">
           <div class="listing-header">
             <p class="results-info">
-              The query <b>"{{ searchQuery || 'Directory' }}"</b> total found: <b>{{ filteredProducts.length }}</b> products
+              The query <b>"{{ searchQuery || "Directory" }}"</b> total found:
+              <b>{{ filteredProducts.length }}</b> products
             </p>
             <div class="listing-sort">
               <select>
@@ -134,10 +167,7 @@
             <div class="loader-spinner"></div>
           </div>
 
-          <div
-            v-else-if="filteredProducts.length === 0"
-            class="listing-empty"
-          >
+          <div v-else-if="filteredProducts.length === 0" class="listing-empty">
             <p>No products match your search.</p>
           </div>
 
@@ -164,11 +194,24 @@
                 <h3 class="res-name">{{ product.name }}</h3>
                 <div class="rating-row">
                   <div class="stars">
-                    <span v-for="s in 5" :key="s" :style="{ color: s <= Math.round(product.averageRating || 5) ? '#ff9a44' : '#ccc' }">★</span>
+                    <span
+                      v-for="s in 5"
+                      :key="s"
+                      :style="{
+                        color:
+                          s <= Math.round(product.averageRating || 5)
+                            ? '#ff9a44'
+                            : '#ccc',
+                      }"
+                      >★</span
+                    >
                   </div>
                   <span class="count">({{ product.ratingCount || 0 }})</span>
                 </div>
-                <p class="tags">{{ product.category ? product.category.name : 'General' }} • Wholesale • Distribution</p>
+                <p class="tags">
+                  {{ product.category ? product.category.name : "General" }} •
+                  Wholesale • Distribution
+                </p>
                 <p class="res-desc">
                   {{ product.description }}
                 </p>
@@ -177,7 +220,9 @@
                     <span class="meta-icon">🛍️</span>
                     <div class="meta-text">
                       <span class="label">Min order:</span>
-                      <span class="value">{{ product.quantity || 10 }} units</span>
+                      <span class="value"
+                        >{{ product.quantity || 10 }} units</span
+                      >
                     </div>
                   </div>
                   <div class="meta-item">
@@ -195,9 +240,11 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <div class="card-hover-action">
-                  <button class="btn-more" @click.stop="toggle3D(product._id)">more →</button>
+                  <button class="btn-more" @click.stop="toggle3D(product._id)">
+                    more →
+                  </button>
                 </div>
               </div>
 
@@ -222,10 +269,7 @@
 
                   <div class="details-section">
                     <h3>Product Reviews</h3>
-                    <div
-                      v-if="productReviews.length === 0"
-                      class="no-reviews"
-                    >
+                    <div v-if="productReviews.length === 0" class="no-reviews">
                       No reviews yet.
                     </div>
                     <div v-else class="reviews-list-mini">
@@ -254,10 +298,7 @@
                     </div>
                   </div>
                 </div>
-                <button
-                  class="close-modal"
-                  @click.stop="toggle3D(product._id)"
-                >
+                <button class="close-modal" @click.stop="toggle3D(product._id)">
                   ✕
                 </button>
               </div>
@@ -673,13 +714,17 @@ export default {
     toggleUserDropdown() {
       this.isUserDropdownOpen = !this.isUserDropdownOpen;
       if (this.isUserDropdownOpen) {
-        document.addEventListener('click', this.closeDropdownOnClickOutside);
+        document.addEventListener("click", this.closeDropdownOnClickOutside);
       }
     },
     closeDropdownOnClickOutside(event) {
-      if (!this.$el.querySelector('.user-dropdown-container').contains(event.target)) {
+      if (
+        !this.$el
+          .querySelector(".user-dropdown-container")
+          .contains(event.target)
+      ) {
         this.isUserDropdownOpen = false;
-        document.removeEventListener('click', this.closeDropdownOnClickOutside);
+        document.removeEventListener("click", this.closeDropdownOnClickOutside);
       }
     },
     openUserAction(tab) {
@@ -691,13 +736,13 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 /* --- New Premium Styles --- */
 /* Force Desktop Layout */
 .marketplace-layout {
   background-color: #f5f7f9;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   color: #333;
   min-width: 1300px;
   overflow-x: auto;
@@ -722,7 +767,8 @@ export default {
   padding: 0 20px;
 }
 
-.header-left, .header-right {
+.header-left,
+.header-right {
   display: flex;
   align-items: center;
   gap: 30px;
@@ -801,7 +847,8 @@ export default {
 /* Hero Banner */
 .hero-banner {
   height: 400px;
-  background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=2000');
+  background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)),
+    url("https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=2000");
   background-size: cover;
   background-position: center;
   position: relative;
@@ -838,7 +885,7 @@ export default {
   background: #fff;
   padding: 10px;
   border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
   gap: 10px;
@@ -852,9 +899,12 @@ export default {
   border-right: 1px solid #eee;
 }
 
-.search-field:last-child { border-right: none; }
+.search-field:last-child {
+  border-right: none;
+}
 
-.search-field input, .search-field select {
+.search-field input,
+.search-field select {
   border: none;
   outline: none;
   width: 100%;
@@ -973,8 +1023,13 @@ export default {
   margin-bottom: 30px;
 }
 
-.results-info { font-size: 14px; color: #666; }
-.results-info b { color: #333; }
+.results-info {
+  font-size: 14px;
+  color: #666;
+}
+.results-info b {
+  color: #333;
+}
 
 .listing-sort select {
   padding: 8px 15px;
@@ -995,13 +1050,15 @@ export default {
   background: #fff;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   cursor: pointer;
   position: relative;
 }
 
-.restaurant-card:hover { transform: translateY(-5px); }
+.restaurant-card:hover {
+  transform: translateY(-5px);
+}
 
 .card-image-wrapper {
   height: 200px;
@@ -1037,10 +1094,14 @@ export default {
   background: #fff;
   border-radius: 50%;
   padding: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.logo-overlay img { width: 100%; height: 100%; object-fit: contain; }
+.logo-overlay img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
 
 .card-details {
   padding: 40px 20px 20px;
@@ -1059,8 +1120,15 @@ export default {
   margin-bottom: 15px;
 }
 
-.stars { color: #ff9a44; font-size: 14px; }
-.count { color: #999; font-size: 12px; font-weight: 600; }
+.stars {
+  color: #ff9a44;
+  font-size: 14px;
+}
+.count {
+  color: #999;
+  font-size: 12px;
+  font-weight: 600;
+}
 
 .tags {
   font-size: 12px;
@@ -1093,11 +1161,24 @@ export default {
   gap: 8px;
 }
 
-.meta-icon { font-size: 14px; }
+.meta-icon {
+  font-size: 14px;
+}
 
-.meta-text { display: flex; flex-direction: column; }
-.meta-text .label { font-size: 10px; color: #999; font-weight: 700; }
-.meta-text .value { font-size: 11px; color: #333; font-weight: 800; }
+.meta-text {
+  display: flex;
+  flex-direction: column;
+}
+.meta-text .label {
+  font-size: 10px;
+  color: #999;
+  font-weight: 700;
+}
+.meta-text .value {
+  font-size: 11px;
+  color: #333;
+  font-weight: 800;
+}
 
 /* Card Hover */
 .card-hover-action {
@@ -1147,6 +1228,7 @@ export default {
   opacity: 0.3;
 }
 
-.loader-dots span:first-child { opacity: 1; }
-
+.loader-dots span:first-child {
+  opacity: 1;
+}
 </style>

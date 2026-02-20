@@ -632,12 +632,12 @@ export default {
     grid-template-columns: 1fr;
     gap: 15px;
   }
-  
+
   .form-card {
     padding: 15px;
     border-radius: 0;
   }
-  
+
   .image-upload-grid-2col {
     grid-template-columns: 1fr;
   }
