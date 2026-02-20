@@ -103,6 +103,8 @@ mongoose
   })
   .catch((err) => console.error('MongoDB Error:', err.message));
 
+const locationRoutes = require("./routes/locationRoutes");
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes(io)); // Pass io to productRoutes
@@ -115,6 +117,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/orders", orderRoutes(io)); // Pass io to orderRoutes
 app.use("/api/wallet", walletRoutes(io)); // Pass io to walletRoutes
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/location", locationRoutes);
 
 // Serve Static Files and Handle SPA Routing in Production
 if (process.env.NODE_ENV === 'production') {

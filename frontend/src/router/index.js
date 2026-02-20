@@ -78,6 +78,12 @@ const routes = [
     name: "AdminLeaves",
     component: () => import("@/views/AdminLeaves.vue"),
   },
+  // Admin live tracking page
+  {
+    path: "/admin/tracking",
+    name: "LiveTracking",
+    component: () => import("@/views/LiveTracking.vue"),
+  },
 
   // User route
   {
