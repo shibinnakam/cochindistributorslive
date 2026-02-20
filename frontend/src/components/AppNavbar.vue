@@ -1,9 +1,8 @@
 <template>
-  <header :class="{ 'nav-open': isMenuOpen }">
+  <header :class="{ 'nav-open': isMenuOpen, 'scrolled': isScrolled }">
     <nav class="navbar">
       <router-link to="/" class="logo-area">
-        <img src="@/assets/logo.jpeg" alt="Logo" class="site-logo" />
-        <span class="site-name">Cochin Distributors</span>
+        <span class="logo-text">FOODIED</span>
       </router-link>
 
       <!-- Hamburger Menu Button -->
@@ -13,17 +12,24 @@
 
       <ul class="nav-links" :class="{ 'active': isMenuOpen }">
         <li><router-link to="/" exact @click="closeMenu">Home</router-link></li>
-        <li><router-link to="/about" @click="closeMenu">About</router-link></li>
-        <li><a href="#products" @click="closeMenu">Products</a></li>
-        <li>
-          <router-link to="/contact" @click="closeMenu">Contact</router-link>
-        </li>
-        <li class="login-item">
-          <router-link to="/login" class="login-link" @click="closeMenu">
-            Login
-          </router-link>
-        </li>
+        <li><router-link to="/user" @click="closeMenu">Menu</router-link></li>
+        <li><router-link to="/about" @click="closeMenu">About Us</router-link></li>
+        <li><router-link to="/contact" @click="closeMenu">Contact</router-link></li>
       </ul>
+
+      <div class="nav-actions">
+        <button class="action-btn" aria-label="Search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+        <button class="action-btn" aria-label="Cart">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+        </button>
+        <router-link to="/register" class="signup-btn">Sign Up</router-link>
+      </div>
     </nav>
     <div class="nav-overlay" @click="closeMenu"></div>
   </header>
@@ -35,9 +41,19 @@ export default {
   data() {
     return {
       isMenuOpen: false,
+      isScrolled: false,
     };
   },
+  mounted() {
+    window.addEventListener("scroll", this.handleScroll);
+  },
+  unmounted() {
+    window.removeEventListener("scroll", this.handleScroll);
+  },
   methods: {
+    handleScroll() {
+      this.isScrolled = window.scrollY > 20;
+    },
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen;
       if (this.isMenuOpen) {
@@ -60,10 +76,15 @@ header {
   width: 100%;
   top: 0;
   z-index: 1000;
-  padding: 0.8rem 2rem;
-  background-color: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem 2rem;
+  background-color: transparent;
   transition: all 0.3s ease;
+}
+
+header.scrolled {
+  background-color: white;
+  padding: 0.8rem 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .navbar {
@@ -75,58 +96,76 @@ header {
 }
 
 .logo-area {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   text-decoration: none;
 }
 
-.site-logo {
-  height: 40px;
-  width: 40px;
-  border-radius: 4px;
-}
-
-.site-name {
+.logo-text {
   font-weight: 800;
-  font-size: 1.25rem;
-  color: #1e3a8a;
-  white-space: nowrap;
+  font-size: 1.5rem;
+  color: #000;
+  letter-spacing: -0.5px;
 }
 
 .nav-links {
   list-style: none;
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 2.5rem;
   margin: 0;
   padding: 0;
 }
 
 .nav-links a {
   text-decoration: none;
-  font-weight: 600;
-  color: #475569;
+  font-weight: 500;
+  color: #333;
   transition: all 0.2s ease;
   font-size: 0.95rem;
 }
 
 .nav-links a:hover,
 .nav-links .router-link-exact-active {
-  color: #1e3a8a;
+  color: #7ab342; /* Foodied Green */
 }
 
-.login-link {
-  padding: 0.6rem 1.5rem;
-  background-color: #1e3a8a;
-  color: white !important;
-  border-radius: 8px;
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: background 0.3s;
+}
+
+.action-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.signup-btn {
+  padding: 0.8rem 1.8rem;
+  background-color: #000;
+  color: #fff !important;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
   transition: all 0.3s ease;
 }
 
-.login-link:hover {
-  background-color: #172554;
-  transform: translateY(-1px);
+.signup-btn:hover {
+  background-color: #333;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 /* Mobile Toggle */
@@ -143,7 +182,7 @@ header {
   display: block;
   width: 24px;
   height: 2px;
-  background: #1e3a8a;
+  background: #000;
   position: relative;
   transition: all 0.3s ease;
 }
@@ -154,48 +193,31 @@ header {
   position: absolute;
   width: 24px;
   height: 2px;
-  background: #1e3a8a;
+  background: #000;
   transition: all 0.3s ease;
 }
 
-.hamburger::before {
-  top: -8px;
-}
-.hamburger::after {
-  bottom: -8px;
-}
+.hamburger::before { top: -8px; }
+.hamburger::after { bottom: -8px; }
 
-/* Active State for Hamburger */
-.nav-open .hamburger {
-  background: transparent;
-}
-.nav-open .hamburger::before {
-  top: 0;
-  transform: rotate(45deg);
-}
-.nav-open .hamburger::after {
-  bottom: 0;
-  transform: rotate(-45deg);
+.nav-open .hamburger { background: transparent; }
+.nav-open .hamburger::before { top: 0; transform: rotate(45deg); }
+.nav-open .hamburger::after { bottom: 0; transform: rotate(-45deg); }
+
+@media (max-width: 992px) {
+  .nav-links { gap: 1.5rem; }
 }
 
 @media (max-width: 768px) {
-  header {
-    padding: 0.8rem 1.25rem;
-  }
-
-  .site-name {
-    font-size: 1.1rem;
-  }
-
-  .menu-toggle {
-    display: block;
-  }
+  header { padding: 1rem 1.25rem; }
+  .menu-toggle { display: block; }
+  .nav-actions { display: none; }
 
   .nav-links {
     position: fixed;
     top: 0;
     right: -100%;
-    width: 280px;
+    width: 100%;
     height: 100vh;
     background: white;
     flex-direction: column;
@@ -203,43 +225,9 @@ header {
     padding: 2rem;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1050;
-    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
   }
 
-  .nav-links.active {
-    right: 0;
-  }
-
-  .nav-links li {
-    width: 100%;
-    text-align: center;
-  }
-
-  .nav-links a {
-    display: block;
-    font-size: 1.25rem;
-    padding: 1rem;
-  }
-
-  .login-item {
-    margin-top: 1rem;
-    width: 100%;
-  }
-
-  .nav-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    z-index: 1000;
-  }
-
-  .nav-open .nav-overlay {
-    opacity: 1;
-    visibility: visible;
-  }
+  .nav-links.active { right: 0; }
+  .nav-links a { font-size: 1.5rem; padding: 1.5rem; }
 }
 </style>
