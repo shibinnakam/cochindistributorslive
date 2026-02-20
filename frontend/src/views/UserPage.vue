@@ -135,6 +135,7 @@
             </div>
             <div class="product-details" @click="addToCart(product)">
               <h3 class="name">{{ product.name }}</h3>
+              <p class="description">{{ product.description }}</p>
               <p class="price">₹{{ product.discountPrice }}</p>
             </div>
             <div class="card-extra-actions">
@@ -981,13 +982,28 @@ export default {
 .product-img img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background-color: #fdfdfd;
 }
 
 .product-details .name {
   font-size: 14px;
   font-weight: 700;
-  margin: 0 0 5px;
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-details .description {
+  font-size: 11px;
+  color: #888;
+  margin: 0 0 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 30px;
 }
 
 .product-details .price {
