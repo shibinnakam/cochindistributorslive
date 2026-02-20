@@ -133,17 +133,21 @@
             <div class="product-img" @click="addToCart(product)">
               <img :src="getImageUrl(product.image || product.imageFront)" :alt="product.name" />
             </div>
-            <div class="product-details" @click="addToCart(product)">
-              <h3 class="name">{{ product.name }}</h3>
-              <p class="description">{{ product.description }}</p>
-              <p class="price">₹{{ product.discountPrice }}</p>
+            <div class="product-details">
+              <h3 class="name" @click="addToCart(product)">{{ product.name }}</h3>
+              <p class="description" @click="addToCart(product)">{{ product.description }}</p>
+              <div class="price-row">
+                <p class="price">₹{{ product.discountPrice }}</p>
+                <button class="btn-add-cart" @click.stop="addToCart(product)">
+                  Add to Cart
+                </button>
+              </div>
             </div>
             <div class="card-extra-actions">
               <button class="btn-3d-mini" @click.stop="toggle3D(product)">
                 <span class="icon">📦</span> 3D
               </button>
             </div>
-            <button class="btn-add-mini" @click.stop="addToCart(product)">+</button>
           </div>
         </div>
       </div>
@@ -410,13 +414,21 @@ export default {
           this.$router.push("/login");
           return;
         }
+        
+        // Determine quantity to add. 
+        // Backend requirement: Min 10 for initial add.
+        const inCart = this.cartItems.find(item => item.product._id === product._id);
+        const qtyToAdd = inCart ? 1 : 10;
+
         await axios.post("/api/cart/add", {
           productId: product._id,
-          quantity: 1,
+          quantity: qtyToAdd,
         });
         this.fetchCart();
       } catch (err) {
         console.error("Error adding to cart:", err);
+        const msg = err.response?.data?.msg || "Failed to add to cart";
+        alert(msg);
       }
     },
     async updateQty(productId, qty) {
@@ -1010,6 +1022,31 @@ export default {
   font-size: 15px;
   font-weight: 800;
   color: #ff9a44;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.btn-add-cart {
+  background: #ff9a44;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-add-cart:hover {
+  background: #e68a30;
+  transform: scale(1.05);
 }
 
 .btn-add-mini {
