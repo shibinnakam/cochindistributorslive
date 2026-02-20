@@ -123,16 +123,20 @@
             v-for="product in filteredProducts" 
             :key="product._id" 
             class="pos-product-card"
-            @click="addToCart(product)"
           >
-            <div class="product-img">
+            <div class="product-img" @click="addToCart(product)">
               <img :src="getImageUrl(product.image || product.imageFront)" :alt="product.name" />
             </div>
-            <div class="product-details">
+            <div class="product-details" @click="addToCart(product)">
               <h3 class="name">{{ product.name }}</h3>
               <p class="price">₹{{ product.discountPrice }}</p>
             </div>
-            <button class="btn-add-mini">+</button>
+            <div class="card-extra-actions">
+              <button class="btn-3d-mini" @click.stop="toggle3D(product)">
+                <span class="icon">📦</span> 3D
+              </button>
+            </div>
+            <button class="btn-add-mini" @click.stop="addToCart(product)">+</button>
           </div>
         </div>
       </div>
@@ -220,13 +224,32 @@
     <ProfilePage v-if="showProfile" @close="showProfile = false" />
     <WalletPage v-if="showWallet" @close="showWallet = false" />
     <OrdersPage v-if="showOrders" @close="showOrders = false" />
-    <ScratchCard
-      v-if="showScratchCard"
-      :orderId="scratchCardOrderId"
-      @close="closeScratchCard"
-      @wallet-updated="updateWalletBalance"
-    />
-  </div>
+      <ScratchCard
+        v-if="showScratchCard"
+        :orderId="scratchCardOrderId"
+        @close="closeScratchCard"
+        @wallet-updated="updateWalletBalance"
+      />
+
+      <!-- 3D Visualizer Modal -->
+      <div v-if="show3DModal" class="view3d-overlay" @click.self="show3DModal = false">
+        <div class="view3d-container">
+          <button class="close-3d" @click="show3DModal = false">✕</button>
+          <div class="view3d-header">
+            <h3>{{ selectedProduct3D?.name }} - 3D View</h3>
+          </div>
+          <div class="view3d-body">
+            <ThreeDBox 
+              v-if="selectedProduct3D" 
+              :product="selectedProduct3D" 
+            />
+          </div>
+          <div class="view3d-footer">
+            <button class="btn-orange-new" @click="handleAddToCartFrom3D">Add to Order</button>
+          </div>
+        </div>
+      </div>
+    </div>
 </template>
 
 <script>
@@ -236,6 +259,7 @@ import ScratchCard from "@/components/ScratchCard.vue";
 import ProfilePage from "@/views/ProfilePage.vue";
 import WalletPage from "@/views/WalletPage.vue";
 import OrdersPage from "@/views/OrdersPage.vue";
+import ThreeDBox from "@/components/ThreeDBox.vue";
 
 export default {
   name: "UserPage",
@@ -244,6 +268,7 @@ export default {
     ProfilePage,
     WalletPage,
     OrdersPage,
+    ThreeDBox,
   },
   data() {
     return {
@@ -260,6 +285,8 @@ export default {
       showScratchCard: false,
       scratchCardOrderId: null,
       walletBalance: 0,
+      show3DModal: false,
+      selectedProduct3D: null,
     };
   },
   computed: {
@@ -421,6 +448,16 @@ export default {
     updateWalletBalance() {
       this.fetchWalletBalance();
       this.closeScratchCard();
+    },
+    toggle3D(product) {
+      this.selectedProduct3D = product;
+      this.show3DModal = true;
+    },
+    handleAddToCartFrom3D() {
+      if (this.selectedProduct3D) {
+        this.addToCart(this.selectedProduct3D);
+        this.show3DModal = false;
+      }
     },
   },
 };
@@ -801,6 +838,101 @@ export default {
   justify-content: center;
   font-size: 18px;
   cursor: pointer;
+  z-index: 2;
+}
+
+.card-extra-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 5px;
+  z-index: 2;
+}
+
+.btn-3d-mini {
+  background: rgba(26, 29, 46, 0.8);
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  backdrop-filter: blur(4px);
+}
+
+.btn-3d-mini:hover {
+  background: #1a1d2e;
+}
+
+/* 3D Modal Styling */
+.view3d-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(5px);
+}
+
+.view3d-container {
+  background: white;
+  width: 90%;
+  max-width: 800px;
+  height: 80vh;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.close-3d {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #f1f1f1;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10;
+  font-weight: bold;
+}
+
+.view3d-header {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.view3d-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.view3d-body {
+  flex: 1;
+  background: #f9fafb;
+  position: relative;
+}
+
+.view3d-footer {
+  padding: 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* Order Panel */
