@@ -1,316 +1,267 @@
 <template>
   <div class="marketplace-layout">
-    <!-- Header -->
-    <header class="site-header">
-      <div class="header-container">
-        <div class="header-left">
-          <div class="brand-section" @click="$router.push('/')">
-            <h1 class="brand-title">Caterway</h1>
-          </div>
-          <div class="contact-info">
-            <span class="phone-icon">📞</span>
-            <span class="phone-number">(450) 678 099 67</span>
-            <span class="dropdown-arrow">▾</span>
-          </div>
+    <!-- Slim Navbar -->
+    <nav class="top-nav">
+      <div class="top-nav-container">
+        <div class="brand-section" @click="$router.push('/')">
+          <img src="@/assets/logo.jpeg" alt="Logo" class="nav-logo" />
+          <span class="brand-title">Caterway</span>
         </div>
 
-        <div class="header-right">
-          <div class="user-meta">
-            <div class="balance-pill">
-              <span class="coin-icon">💰</span>
-              <span class="balance-amount"
-                >₹{{ walletBalance.toLocaleString() }}</span
-              >
+        <div class="top-nav-actions">
+          <!-- Wallet Balance -->
+          <div class="wallet-display" @click="openUserTab('wallet')">
+            <span class="coin-icon">💰</span>
+            <span class="balance-text"
+              >₹{{ walletBalance.toLocaleString() }}</span
+            >
+          </div>
+
+          <!-- User Dropdown -->
+          <div class="user-dropdown-container">
+            <div class="user-trigger" @click.stop="toggleUserDropdown">
+              <span class="avatar-icon">👤</span>
+              <span class="user-name-text">{{ userName || "Account" }}</span>
               <span class="dropdown-arrow">▾</span>
             </div>
-            <div class="user-auth" @click="openUserAction('profile')">
-              <div class="user-avatar-small">👤</div>
-              <span class="auth-text">{{ userName || "SIGN IN" }}</span>
-            </div>
-            <button class="hamburger-btn">☰</button>
-          </div>
-        </div>
-      </div>
-    </header>
 
-    <!-- Hero Banner -->
-    <section class="hero-banner">
-      <div class="hero-content">
-        <h2 class="hero-title">Restaurant directory</h2>
-      </div>
-      <div class="search-overlay">
-        <div class="search-container-box">
-          <div class="search-field location">
-            <span class="icon">📍</span>
-            <input type="text" placeholder="City" v-model="searchQuery" />
+            <div class="custom-dropdown-menu" v-if="isUserDropdownOpen">
+              <div class="dropdown-header">
+                <strong>{{ userName }}</strong>
+                <span>Balance: ₹{{ walletBalance.toLocaleString() }}</span>
+              </div>
+              <div class="dropdown-divider"></div>
+              <a href="#" @click.prevent="openUserAction('profile')"
+                >👤 My Profile</a
+              >
+              <a href="#" @click.prevent="openUserAction('wallet')"
+                >💰 My Wallet</a
+              >
+              <a href="#" @click.prevent="openUserAction('orders')"
+                >📦 My Orders</a
+              >
+              <div class="dropdown-divider"></div>
+              <a href="#" @click.prevent="logout" class="logout-btn"
+                >🚪 Logout</a
+              >
+            </div>
           </div>
-          <div class="search-field date">
-            <select>
-              <option>Date</option>
-            </select>
+
+          <!-- Cart Icon -->
+          <div class="cart-pill" @click="showCart = true">
+            <span class="cart-icon">🛒</span>
+            <span class="cart-badge" v-if="cartCount > 0">{{ cartCount }}</span>
           </div>
-          <div class="search-field time">
-            <select>
-              <option>Time</option>
-            </select>
-          </div>
+
+          <!-- Hamburger for Mobile -->
+          <button class="menu-burger" @click="isMobileMenuOpen = true">
+            ☰
+          </button>
         </div>
       </div>
-    </section>
+    </nav>
+
+    <!-- Mobile Drawer -->
+    <div
+      class="mobile-drawer-overlay"
+      :class="{ active: isMobileMenuOpen }"
+      @click="isMobileMenuOpen = false"
+    ></div>
+    <aside class="mobile-drawer" :class="{ active: isMobileMenuOpen }">
+      <div class="drawer-header">
+        <div class="brand-section">
+          <img src="@/assets/logo.jpeg" alt="Logo" class="nav-logo" />
+          <span class="brand-title">Caterway</span>
+        </div>
+        <button class="close-drawer" @click="isMobileMenuOpen = false">
+          ✕
+        </button>
+      </div>
+      <div class="drawer-user-info">
+        <div class="drawer-avatar">👤</div>
+        <div class="drawer-details">
+          <span class="drawer-name">{{ userName || "User" }}</span>
+          <span class="drawer-balance"
+            >Balance: ₹{{ walletBalance.toLocaleString() }}</span
+          >
+        </div>
+      </div>
+      <nav class="drawer-nav">
+        <a href="#" @click.prevent="openUserTab('profile')">👤 My Profile</a>
+        <a href="#" @click.prevent="openUserTab('wallet')">💰 My Wallet</a>
+        <a href="#" @click.prevent="openUserTab('orders')">📦 My Orders</a>
+        <a href="#" @click.prevent="logout" class="logout-link">🚪 Logout</a>
+      </nav>
+    </aside>
+
+    <!-- Hero Section removed for basic layout -->
 
     <!-- Main Content Area -->
-    <main class="main-content">
-      <div class="layout-container">
-        <!-- Sidebar Filters -->
-        <aside class="sidebar-filters">
-          <div class="filter-search-box">
-            <input type="text" placeholder="Search" v-model="searchQuery" />
-            <span class="search-icon-small">🔍</span>
+    <main class="main-content-wrapper">
+      <div class="content-container">
+        <!-- Basic Search Bar -->
+        <div class="search-section">
+          <div class="search-bar">
+            <input
+              type="text"
+              placeholder="Search products..."
+              v-model="searchQuery"
+            />
+            <button class="btn-search">Search</button>
           </div>
+        </div>
 
-          <div class="filter-header-row">
-            <span class="filter-title"><span>📊</span> FILTER</span>
-            <button class="reset-link" @click="resetFilters">
-              Reset filter
-            </button>
-          </div>
+        <div class="layout-body">
+          <!-- Mobile Filter Toggle -->
+          <button class="mobile-filter-btn" @click="isFilterOpen = true">
+            🔍 Filters & Sorting
+          </button>
 
-          <div class="filter-accordions">
-            <div class="accordion-item">
-              <div class="accordion-header" @click="toggleSection('delivery')">
-                <span>Delivery method:</span>
-                <span class="toggle-icon">{{
-                  sectionOpen["delivery"] ? "−" : "+"
-                }}</span>
-              </div>
-              <div class="accordion-content" v-show="sectionOpen['delivery']">
-                <label class="check-container">
-                  <input
-                    type="radio"
-                    name="delivery"
-                    value="delivery"
-                    checked
-                  />
-                  <span class="checkmark"></span> Delivery
-                </label>
-                <label class="check-container">
-                  <input type="radio" name="delivery" value="pickup" />
-                  <span class="checkmark"></span> Pickup
-                </label>
-              </div>
-            </div>
+          <!-- Sidebar Overlay -->
+          <div
+            class="filter-overlay"
+            :class="{ active: isFilterOpen }"
+            @click="isFilterOpen = false"
+          ></div>
 
-            <div class="accordion-item">
-              <div class="accordion-header" @click="toggleSection('event')">
-                <span>Event type:</span>
-                <span class="toggle-icon">{{
-                  sectionOpen["event"] ? "−" : "+"
-                }}</span>
-              </div>
-              <div class="accordion-content" v-show="sectionOpen['event']">
-                <label
-                  class="check-container"
-                  v-for="type in [
-                    'Breakfast',
-                    'Dinner',
-                    'The conference',
-                    'Buffet table',
-                  ]"
-                  :key="type"
-                >
-                  <input type="checkbox" />
-                  <span class="checkmark"></span> {{ type }}
-                </label>
-              </div>
-            </div>
-
-            <div class="accordion-item">
-              <div class="accordion-header" @click="toggleSection('cuisine')">
-                <span>Type of cuisine:</span>
-                <span class="toggle-icon">{{
-                  sectionOpen["cuisine"] ? "−" : "+"
-                }}</span>
-              </div>
-              <div class="accordion-content" v-show="sectionOpen['cuisine']">
-                <label
-                  class="check-container"
+          <!-- Sidebar -->
+          <aside class="sidebar">
+            <div class="filter-group">
+              <h3>Categories</h3>
+              <div class="category-list">
+                <div
                   v-for="cat in categories"
                   :key="cat._id"
+                  class="category-item"
+                  :class="{ active: selectedCategory === cat._id }"
+                  @click="selectCategory(cat)"
                 >
-                  <input
-                    type="checkbox"
-                    :checked="selectedCategory === cat._id"
-                    @change="selectCategory(cat)"
-                  />
-                  <span class="checkmark"></span> {{ cat.name }}
-                </label>
+                  {{ cat.name }}
+                </div>
+              </div>
+              <button class="btn-reset" @click="resetFilters">
+                Reset Filters
+              </button>
+            </div>
+          </aside>
+
+          <!-- Listing Area -->
+          <section class="listing-area">
+            <div class="listing-toolbar">
+              <p class="query-results">
+                The query <b>"{{ searchQuery || "Directory" }}"</b> total found:
+                <b>{{ filteredProducts.length }}</b> products
+              </p>
+              <div class="sorting-controls">
+                <select>
+                  <option>Sorting</option>
+                  <option>Price: Low to High</option>
+                  <option>Price: High to Low</option>
+                </select>
               </div>
             </div>
-          </div>
-        </aside>
 
-        <!-- Product Listing -->
-        <section class="listing-section">
-          <div class="listing-header">
-            <p class="results-info">
-              The query <b>"{{ searchQuery || "Directory" }}"</b> total found:
-              <b>{{ filteredProducts.length }}</b> products
-            </p>
-            <div class="listing-sort">
-              <select>
-                <option>Sorting</option>
-              </select>
+            <div v-if="loading" class="listing-loading">
+              <div class="loader-spinner"></div>
             </div>
-          </div>
 
-          <div v-if="loading" class="listing-loading">
-            <div class="loader-spinner"></div>
-          </div>
-
-          <div v-else-if="filteredProducts.length === 0" class="listing-empty">
-            <p>No products match your search.</p>
-          </div>
-
-          <div v-else class="product-item-grid">
             <div
-              v-for="product in filteredProducts"
-              :key="product._id"
-              class="restaurant-card"
-              @click="toggle3D(product._id)"
+              v-else-if="filteredProducts.length === 0"
+              class="listing-empty"
             >
-              <div class="card-image-wrapper">
-                <div class="top-badge">top</div>
-                <img
-                  :src="getImageUrl(product.image || product.imageFront)"
-                  :alt="product.name"
-                  class="main-img"
-                />
-                <div class="logo-overlay">
-                  <img src="@/assets/logo.jpeg" alt="p-logo" />
-                </div>
-              </div>
+              <p>No products match your search.</p>
+            </div>
 
-              <div class="card-details">
-                <h3 class="res-name">{{ product.name }}</h3>
-                <div class="rating-row">
-                  <div class="stars">
-                    <span
-                      v-for="s in 5"
-                      :key="s"
-                      :style="{
-                        color:
-                          s <= Math.round(product.averageRating || 5)
-                            ? '#ff9a44'
-                            : '#ccc',
-                      }"
-                      >★</span
-                    >
-                  </div>
-                  <span class="count">({{ product.ratingCount || 0 }})</span>
-                </div>
-                <p class="tags">
-                  {{ product.category ? product.category.name : "General" }} •
-                  Wholesale • Distribution
-                </p>
-                <p class="res-desc">
-                  {{ product.description }}
-                </p>
-                <div class="meta-info">
-                  <div class="meta-item">
-                    <span class="meta-icon">🛍️</span>
-                    <div class="meta-text">
-                      <span class="label">Min order:</span>
-                      <span class="value"
-                        >{{ product.quantity || 10 }} units</span
-                      >
-                    </div>
-                  </div>
-                  <div class="meta-item">
-                    <span class="meta-icon">💰</span>
-                    <div class="meta-text">
-                      <span class="label">Price:</span>
-                      <span class="value">₹{{ product.discountPrice }}</span>
-                    </div>
-                  </div>
-                  <div class="meta-item">
-                    <span class="meta-icon">🚚</span>
-                    <div class="meta-text">
-                      <span class="label">Delivery:</span>
-                      <span class="value">₹20</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="card-hover-action">
-                  <button class="btn-more" @click.stop="toggle3D(product._id)">
-                    more →
-                  </button>
-                </div>
-              </div>
-
-              <!-- 3D View Modal -->
+            <div v-else class="product-grid">
               <div
-                v-if="active3DProductId === product._id"
-                class="view3d-modal"
+                v-for="product in filteredProducts"
+                :key="product._id"
+                class="product-card"
+                @click="toggle3D(product._id)"
               >
-                <div class="modal-content-3d">
-                  <div class="visualizer-section">
-                    <ThreeDBox
-                      :image="getImageUrl(product.image)"
-                      :image-front="getImageUrl(product.imageFront)"
-                      :image-side="getImageUrl(product.imageSide)"
-                      :image-back="getImageUrl(product.imageBack)"
-                      :image-top="getImageUrl(product.imageTop)"
-                      :image-bottom="getImageUrl(product.imageBottom)"
-                      :model3D="getImageUrl(product.model3D)"
-                      :shape="product.shape"
-                    />
-                  </div>
+                <div class="product-image">
+                  <img
+                    :src="getImageUrl(product.image || product.imageFront)"
+                    :alt="product.name"
+                  />
+                </div>
+                <div class="product-info">
+                  <h3 class="product-name">{{ product.name }}</h3>
+                  <p class="product-price">₹{{ product.discountPrice }}</p>
+                  <p class="product-desc">{{ product.description }}</p>
+                  <button class="btn-view">View Details</button>
+                </div>
 
-                  <div class="details-section">
-                    <h3>Product Reviews</h3>
-                    <div v-if="productReviews.length === 0" class="no-reviews">
-                      No reviews yet.
+                <!-- 3D View Modal -->
+                <div
+                  v-if="active3DProductId === product._id"
+                  class="view3d-modal"
+                >
+                  <div class="modal-content-3d">
+                    <div class="visualizer-section">
+                      <ThreeDBox
+                        :image="getImageUrl(product.image)"
+                        :image-front="getImageUrl(product.imageFront)"
+                        :image-side="getImageUrl(product.imageSide)"
+                        :image-back="getImageUrl(product.imageBack)"
+                        :image-top="getImageUrl(product.imageTop)"
+                        :image-bottom="getImageUrl(product.imageBottom)"
+                        :model3D="getImageUrl(product.model3D)"
+                        :shape="product.shape"
+                      />
                     </div>
-                    <div v-else class="reviews-list-mini">
+
+                    <div class="details-section">
+                      <h3>Product Reviews</h3>
                       <div
-                        v-for="rev in productReviews"
-                        :key="rev._id"
-                        class="mini-review-card"
+                        v-if="productReviews.length === 0"
+                        class="no-reviews"
                       >
-                        <div class="rev-header">
-                          <span class="rev-user">{{ rev.user.name }}</span>
-                          <div class="rev-stars">
-                            <span
-                              v-for="s in 5"
-                              :key="s"
-                              :class="{ filled: s <= rev.rating }"
-                              class="star"
-                              >★</span
-                            >
+                        No reviews yet.
+                      </div>
+                      <div v-else class="reviews-list-mini">
+                        <div
+                          v-for="rev in productReviews"
+                          :key="rev._id"
+                          class="mini-review-card"
+                        >
+                          <div class="rev-header">
+                            <span class="rev-user">{{ rev.user.name }}</span>
+                            <div class="rev-stars">
+                              <span
+                                v-for="s in 5"
+                                :key="s"
+                                :class="{ filled: s <= rev.rating }"
+                                class="star"
+                                >★</span
+                              >
+                            </div>
                           </div>
+                          <p class="rev-comment">{{ rev.comment }}</p>
+                          <span class="rev-date">
+                            {{ formatDate(rev.createdAt) }}
+                          </span>
                         </div>
-                        <p class="rev-comment">{{ rev.comment }}</p>
-                        <span class="rev-date">
-                          {{ formatDate(rev.createdAt) }}
-                        </span>
                       </div>
                     </div>
                   </div>
+                  <button
+                    class="close-modal"
+                    @click.stop="toggle3D(product._id)"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <button class="close-modal" @click.stop="toggle3D(product._id)">
-                  ✕
-                </button>
               </div>
             </div>
-          </div>
 
-          <div class="pagination">
-            <div class="loader-dots">
-              <span></span><span></span><span></span>
+            <div class="pagination-dots">
+              <span class="dot active"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
     </main>
 
@@ -738,497 +689,649 @@ export default {
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
-/* --- New Premium Styles --- */
-/* Force Desktop Layout */
+/* --- Base Layout --- */
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
 .marketplace-layout {
-  background-color: #f5f7f9;
-  font-family: "Inter", sans-serif;
-  color: #333;
-  min-width: 1300px;
-  overflow-x: auto;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  color: #1e293b;
 }
 
-/* Header */
-.site-header {
-  background: #fff;
-  border-bottom: 1px solid #eee;
-  padding: 10px 0;
+/* --- Navigation --- */
+.top-nav {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px 0;
   position: sticky;
   top: 0;
   z-index: 1000;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-.header-container {
-  max-width: 1300px;
+.top-nav-container {
+  max-width: 1280px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 24px;
 }
 
-.header-left,
-.header-right {
+.brand-section {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.nav-logo {
+  height: 40px;
+  border-radius: 8px;
 }
 
 .brand-title {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 800;
-  color: #333;
-  margin: 0;
+  color: #1e3a8a;
+  letter-spacing: -0.025em;
 }
 
-.contact-info {
+.top-nav-actions {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 14px;
-  color: #666;
-  font-weight: 500;
-  cursor: pointer;
+  gap: 16px;
 }
 
-.user-meta {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.balance-pill {
-  background: #fff;
-  border: 1px solid #eee;
-  padding: 6px 12px;
-  border-radius: 20px;
+/* Wallet Display */
+.wallet-display {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  background: #f1f5f9;
+  padding: 8px 16px;
+  border-radius: 99px;
   font-weight: 700;
+  font-size: 0.95rem;
+  color: #334155;
   cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #e2e8f0;
 }
 
-.user-auth {
+.wallet-display:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+/* User Dropdown */
+.user-dropdown-container {
+  position: relative;
+}
+
+.user-trigger {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
-.user-avatar-small {
-  width: 32px;
-  height: 32px;
-  background: #ff9a44;
-  color: #fff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
+.user-trigger:hover {
+  border-color: #1e3a8a;
+  background: #f8fafc;
 }
 
-.auth-text {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #333;
+.avatar-icon {
+  font-size: 1.2rem;
+}
+.user-name-text {
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.95rem;
+}
+.dropdown-arrow {
+  font-size: 0.8rem;
+  color: #94a3b8;
 }
 
-.hamburger-btn {
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: #333;
-  cursor: pointer;
+.custom-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 240px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  padding: 8px;
 }
 
-/* Hero Banner */
-.hero-banner {
-  height: 400px;
-  background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)),
-    url("https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=2000");
-  background-size: cover;
-  background-position: center;
-  position: relative;
+.dropdown-header {
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  padding-top: 60px;
 }
 
-.hero-content {
-  max-width: 1300px;
-  margin: 0 auto;
-  width: 100%;
-  padding: 0 20px;
+.dropdown-header strong {
+  font-size: 1rem;
+  color: #1e293b;
+}
+.dropdown-header span {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-top: 2px;
 }
 
-.hero-title {
-  color: #fff;
-  font-size: 32px;
-  font-weight: 800;
-  margin: 0;
+.dropdown-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 6px 0;
 }
 
-.search-overlay {
-  position: absolute;
-  bottom: -40px;
-  left: 0;
-  right: 0;
-}
-
-.search-container-box {
-  max-width: 900px;
-  margin: 0 auto;
-  background: #fff;
-  padding: 10px;
+.custom-dropdown-menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  text-decoration: none;
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.95rem;
   border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 10px;
+  transition: all 0.2s;
 }
 
-.search-field {
+.custom-dropdown-menu a:hover {
+  background: #f1f5f9;
+  color: #1e3a8a;
+}
+
+.logout-btn {
+  color: #ef4444 !important;
+}
+.logout-btn:hover {
+  background: #fee2e2 !important;
+}
+
+/* Cart Pill */
+.cart-pill {
+  position: relative;
+  background: #1e3a8a;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 99px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 15px;
-  border-right: 1px solid #eee;
+  font-weight: 700;
+  transition: all 0.2s;
 }
 
-.search-field:last-child {
-  border-right: none;
+.cart-pill:hover {
+  transform: scale(1.02);
+  background: #1e40af;
 }
 
-.search-field input,
-.search-field select {
+.cart-badge {
+  background: #ff4d4d;
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.menu-burger {
+  background: none;
   border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #1e293b;
+  display: none;
+}
+
+/* --- Search --- */
+.search-section {
+  padding: 40px 0;
+}
+
+.search-bar {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  background: white;
+  padding: 6px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.search-bar input {
+  flex: 1;
+  border: none;
+  padding: 12px 18px;
+  font-size: 1rem;
   outline: none;
-  width: 100%;
-  font-size: 14px;
-  color: #333;
   font-weight: 500;
 }
 
-/* Main Layout */
-.main-content {
-  padding-top: 100px;
-  padding-bottom: 60px;
+.btn-search {
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 0 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.layout-container {
-  max-width: 1300px;
+.btn-search:hover {
+  background: #1e40af;
+}
+
+/* --- Main Layout --- */
+.layout-body {
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px 80px;
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 40px;
 }
 
-/* Sidebar */
-.sidebar-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+/* --- Sidebar --- */
+.sidebar {
+  background: white;
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  align-self: start;
 }
 
-.filter-search-box {
-  position: relative;
-  background: #fff;
-  padding: 5px;
-  border-radius: 4px;
-}
-
-.filter-search-box input {
-  width: 100%;
-  padding: 10px 15px;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  outline: none;
-}
-
-.search-icon-small {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #ff9a44;
-}
-
-.filter-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid #eee;
-  padding-top: 20px;
-}
-
-.filter-title {
+.filter-group h3 {
+  font-size: 1.1rem;
   font-weight: 800;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  margin-bottom: 20px;
+  color: #1e293b;
 }
 
-.reset-link {
-  background: none;
-  border: none;
-  color: #ff9a44;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.accordion-item {
-  border-top: 1px solid #eee;
-  padding: 15px 0;
-}
-
-.accordion-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 14px;
-  color: #333;
-}
-
-.accordion-content {
-  padding-top: 15px;
+.category-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.check-container {
-  display: flex;
-  align-items: center;
   gap: 10px;
-  font-size: 13px;
-  color: #666;
-  font-weight: 500;
-  cursor: pointer;
 }
 
-/* Listing Header */
-.listing-header {
+.category-item {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.category-item:hover {
+  background: #f1f5f9;
+  color: #1e3a8a;
+}
+.category-item.active {
+  background: #eff6ff;
+  color: #1e3a8a;
+  border: 1px solid #bfdbfe;
+}
+
+.btn-reset {
+  margin-top: 24px;
+  width: 100%;
+  padding: 12px;
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-reset:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+/* --- Mobile Filter --- */
+.mobile-filter-btn {
+  display: none;
+  width: 100%;
+  padding: 14px;
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- Listing --- */
+.listing-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
 }
 
-.results-info {
-  font-size: 14px;
-  color: #666;
+.query-results {
+  color: #64748b;
+  font-size: 1rem;
 }
-.results-info b {
-  color: #333;
-}
-
-.listing-sort select {
-  padding: 8px 15px;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  font-size: 13px;
-  font-weight: 600;
+.query-results b {
+  color: #1e293b;
+  font-weight: 700;
 }
 
-/* Product Cards */
-.product-item-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 30px;
-}
-
-.restaurant-card {
-  background: #fff;
+.sorting-controls select {
+  padding: 10px 16px;
   border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  font-weight: 600;
+  color: #334155;
+  outline: none;
+  background: white;
+}
+
+/* --- Product Grid --- */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.product-card {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
 }
 
-.restaurant-card:hover {
-  transform: translateY(-5px);
+.product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  border-color: #bfdbfe;
 }
 
-.card-image-wrapper {
-  height: 200px;
-  position: relative;
+.product-image {
+  height: 220px;
+  background: #f8fafc;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.main-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.top-badge {
-  position: absolute;
-  top: 15px;
-  left: 0;
-  background: #ff9a44;
-  color: #fff;
-  padding: 4px 12px;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  border-radius: 0 4px 4px 0;
-  z-index: 2;
-}
-
-.logo-overlay {
-  position: absolute;
-  bottom: -25px;
-  left: 15px;
-  width: 60px;
-  height: 60px;
-  background: #fff;
-  border-radius: 50%;
-  padding: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.logo-overlay img {
-  width: 100%;
-  height: 100%;
+.product-image img {
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
 }
 
-.card-details {
-  padding: 40px 20px 20px;
-}
-
-.res-name {
-  font-size: 18px;
-  font-weight: 800;
-  margin: 0 0 8px;
-}
-
-.rating-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 15px;
-}
-
-.stars {
-  color: #ff9a44;
-  font-size: 14px;
-}
-.count {
-  color: #999;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.tags {
-  font-size: 12px;
-  color: #ff9a44;
-  font-weight: 600;
-  margin-bottom: 12px;
-}
-
-.res-desc {
-  font-size: 13px;
-  color: #666;
-  line-height: 1.6;
-  margin-bottom: 20px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.meta-info {
-  display: flex;
-  justify-content: space-between;
-  border-top: 1px solid #f1f1f1;
-  padding-top: 15px;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.meta-icon {
-  font-size: 14px;
-}
-
-.meta-text {
+.product-info {
+  padding: 20px;
+  flex: 1;
   display: flex;
   flex-direction: column;
 }
-.meta-text .label {
-  font-size: 10px;
-  color: #999;
+
+.product-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+.product-price {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  margin-bottom: 12px;
+}
+
+.product-desc {
+  font-size: 0.9rem;
+  color: #64748b;
+  line-height: 1.5;
+  height: 2.8rem;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.btn-view {
+  width: 100%;
+  padding: 12px;
+  background: #f8fafc;
+  color: #1e3a8a;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   font-weight: 700;
-}
-.meta-text .value {
-  font-size: 11px;
-  color: #333;
-  font-weight: 800;
-}
-
-/* Card Hover */
-.card-hover-action {
-  position: absolute;
-  bottom: 0px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  opacity: 0;
-  transition: all 0.3s ease;
-}
-
-.restaurant-card:hover .card-hover-action {
-  bottom: 15px;
-  opacity: 1;
-}
-
-.btn-more {
-  background: #ff9a44;
-  color: #fff;
-  border: none;
-  padding: 8px 30px;
-  border-radius: 20px 4px 20px 20px;
-  font-weight: 800;
-  font-size: 12px;
   cursor: pointer;
-  box-shadow: 0 5px 15px rgba(255, 154, 68, 0.4);
+  transition: all 0.2s;
 }
 
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 50px;
+.product-card:hover .btn-view {
+  background: #1e3a8a;
+  color: white;
+  border-color: #1e3a8a;
 }
 
-.loader-dots {
-  display: flex;
-  gap: 10px;
+/* --- Footer --- */
+.site-footer {
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  padding: 60px 0 20px;
 }
 
-.loader-dots span {
-  width: 8px;
-  height: 8px;
-  background: #ff9a44;
-  border-radius: 50%;
-  opacity: 0.3;
+.footer-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 40px;
 }
 
-.loader-dots span:first-child {
+.branding-col h3 {
+  margin: 12px 0 8px;
+  color: #1e3a8a;
+  font-weight: 800;
+}
+.branding-col p {
+  color: #64748b;
+}
+
+.footer-col h4 {
+  font-weight: 800;
+  margin-bottom: 20px;
+  color: #1e293b;
+}
+.footer-col a {
+  display: block;
+  text-decoration: none;
+  color: #64748b;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+.footer-col a:hover {
+  color: #1e3a8a;
+}
+
+.footer-btm {
+  text-align: center;
+  padding-top: 40px;
+  margin-top: 40px;
+  border-top: 1px solid #f1f5f9;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+/* --- Mobile Breakpoints --- */
+@media (max-width: 1024px) {
+  .layout-body {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    display: none;
+  }
+  .mobile-filter-btn {
+    display: flex;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-nav-actions .user-name-text {
+    display: none;
+  }
+  .menu-burger {
+    display: block;
+  }
+  .top-nav-actions .wallet-display {
+    padding: 6px 12px;
+  }
+  .footer-inner {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Mobile Drawer --- */
+.mobile-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s;
+}
+
+.mobile-drawer-overlay.active {
   opacity: 1;
+  visibility: visible;
+}
+
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 300px;
+  height: 100vh;
+  background: white;
+  z-index: 2001;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-drawer.active {
+  right: 0;
+}
+
+.drawer-header {
+  padding: 20px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.drawer-header .brand-section .brand-title {
+  font-size: 1.25rem;
+}
+
+.close-drawer {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.drawer-user-info {
+  padding: 24px 20px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.drawer-avatar {
+  width: 48px;
+  height: 48px;
+  background: #1e3a8a;
+  color: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.drawer-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-name {
+  font-weight: 800;
+  color: #1e293b;
+  font-size: 1rem;
+}
+
+.drawer-balance {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.drawer-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 4px;
+}
+
+.drawer-nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  text-decoration: none;
+  font-weight: 600;
+  color: #475569;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.drawer-nav a:hover {
+  background: #f1f5f9;
+  color: #1e3a8a;
+}
+
+.logout-link {
+  color: #ef4444 !important;
+  margin-top: auto;
 }
 </style>
