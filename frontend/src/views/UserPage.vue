@@ -254,9 +254,28 @@
             <h3>{{ selectedProduct3D?.name }} - 3D View</h3>
           </div>
           <div class="view3d-body">
+            <!-- Real 3D Model -->
+            <model-viewer
+              v-if="selectedProduct3D && selectedProduct3D.model3D"
+              :src="getModelUrl(selectedProduct3D.model3D)"
+              :alt="selectedProduct3D.name"
+              auto-rotate
+              camera-controls
+              ar
+              shadow-intensity="1"
+              style="width: 100%; height: 300px"
+            ></model-viewer>
+
+            <!-- Simulated 3D Box -->
             <ThreeDBox 
-              v-if="selectedProduct3D" 
-              :product="selectedProduct3D" 
+              v-else-if="selectedProduct3D"
+              :image="getImageUrl(selectedProduct3D.image)"
+              :image-front="getImageUrl(selectedProduct3D.imageFront)"
+              :image-side="getImageUrl(selectedProduct3D.imageSide)"
+              :image-back="getImageUrl(selectedProduct3D.imageBack)"
+              :image-top="getImageUrl(selectedProduct3D.imageTop)"
+              :image-bottom="getImageUrl(selectedProduct3D.imageBottom)"
+              :shape="selectedProduct3D.shape"
             />
           </div>
           <div class="view3d-footer">
@@ -437,8 +456,17 @@ export default {
     },
     getImageUrl(path) {
       if (!path) return null;
+      // In ProductList.vue, it uses: return path.startsWith("/") ? path : `/${path}`;
+      // Here UserPage used a slightly different logic. Let's make it consistent.
       const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
-      return path.startsWith("/") ? `${apiUrl}${path}` : path;
+      if (path.startsWith("http")) return path;
+      return path.startsWith("/") ? `${apiUrl}${path}` : `${apiUrl}/${path}`;
+    },
+    getModelUrl(path) {
+      if (!path) return null;
+      const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
+      if (path.startsWith("http")) return path;
+      return path.startsWith("/") ? `${apiUrl}${path}` : `${apiUrl}/${path}`;
     },
     async logout() {
       try {
