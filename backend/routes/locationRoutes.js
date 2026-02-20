@@ -38,4 +38,19 @@ router.get("/latest", async (req, res) => {
     }
 });
 
+// GET /api/location/history - Get all locations for route history
+// Optional query params: ?hours=24 (default: 24 hours)
+router.get("/history", async (req, res) => {
+    try {
+        const hours = parseInt(req.query.hours) || 24;
+        const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+
+        const locations = await Location.find({ time: { $gte: since } }).sort({ time: 1 });
+        res.json({ success: true, data: locations });
+    } catch (error) {
+        console.error("Error fetching location history:", error);
+        res.status(500).json({ success: false, msg: "Server error" });
+    }
+});
+
 module.exports = router;

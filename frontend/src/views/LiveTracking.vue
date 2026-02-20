@@ -40,10 +40,24 @@
             <span class="label">Current Status:</span>
             <span class="value">On Route</span>
           </div>
+          <div class="badge">
+            <span class="icon">🛣️</span>
+            <span class="label">Route Points:</span>
+            <span class="value">{{ routeHistory.length }}</span>
+          </div>
         </div>
-        <button class="btn-refresh" @click="fetchLatestLocation" :disabled="loading">
-          {{ loading ? 'Updating...' : 'Refresh Map' }}
-        </button>
+        <div class="footer-actions">
+          <select class="select-hours" v-model="selectedHours" @change="fetchRouteHistory">
+            <option value="1">Last 1 Hour</option>
+            <option value="6">Last 6 Hours</option>
+            <option value="12">Last 12 Hours</option>
+            <option value="24">Last 24 Hours</option>
+            <option value="48">Last 48 Hours</option>
+          </select>
+          <button class="btn-refresh" @click="refreshAll" :disabled="loading">
+            {{ loading ? 'Updating...' : '🔄 Refresh' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -58,15 +72,20 @@ export default {
     return {
       map: null,
       marker: null,
+      routePolyline: null,
+      startMarker: null,
       latestLocation: null,
+      routeHistory: [],
       loading: false,
       isLive: false,
       updateInterval: null,
+      selectedHours: "24",
     };
   },
   mounted() {
     this.initMap();
     this.startTracking();
+    this.fetchRouteHistory();
   },
   beforeUnmount() {
     if (this.updateInterval) {
@@ -82,12 +101,6 @@ export default {
         this.map = new window.google.maps.Map(this.$refs.mapElement, {
           zoom: 15,
           center: defaultPos,
-          styles: [
-            {
-              "featureType": "poi",
-              "stylers": [{ "visibility": "off" }]
-            }
-          ]
         });
 
         this.marker = new window.google.maps.Marker({
@@ -131,7 +144,63 @@ export default {
     },
     startTracking() {
       this.fetchLatestLocation();
-      this.updateInterval = setInterval(this.fetchLatestLocation, 5000);
+      this.updateInterval = setInterval(() => {
+        this.fetchLatestLocation();
+        this.fetchRouteHistory();
+      }, 5000);
+    },
+    async fetchRouteHistory() {
+      try {
+        const response = await axios.get(`/api/location/history?hours=${this.selectedHours}`);
+        if (response.data.success) {
+          this.routeHistory = response.data.data;
+          this.drawRoute();
+        }
+      } catch (error) {
+        console.error("Error fetching route history:", error);
+      }
+    },
+    drawRoute() {
+      if (!this.map || this.routeHistory.length < 2) return;
+
+      // Remove old polyline and start marker
+      if (this.routePolyline) this.routePolyline.setMap(null);
+      if (this.startMarker) this.startMarker.setMap(null);
+
+      const path = this.routeHistory.map(loc => ({
+        lat: loc.latitude,
+        lng: loc.longitude,
+      }));
+
+      // Draw the route line
+      this.routePolyline = new window.google.maps.Polyline({
+        path: path,
+        geodesic: true,
+        strokeColor: "#3498db",
+        strokeOpacity: 0.8,
+        strokeWeight: 4,
+      });
+      this.routePolyline.setMap(this.map);
+
+      // Mark the start point with a green dot
+      const startPos = path[0];
+      this.startMarker = new window.google.maps.Marker({
+        position: startPos,
+        map: this.map,
+        title: "Trip Start",
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: "#27ae60",
+          fillOpacity: 1,
+          strokeColor: "white",
+          strokeWeight: 2,
+        },
+      });
+    },
+    refreshAll() {
+      this.fetchLatestLocation();
+      this.fetchRouteHistory();
     },
     formatTime(dateString) {
       const date = new Date(dateString);
@@ -263,6 +332,29 @@ export default {
   justify-content: space-between;
   align-items: center;
   background: #f8f9fa;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.select-hours {
+  padding: 9px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #2c3e50;
+  background: white;
+  cursor: pointer;
+  outline: none;
+}
+
+.select-hours:focus {
+  border-color: #3498db;
 }
 
 .info-badges {
@@ -299,7 +391,7 @@ export default {
   padding: 10px 20px;
   background: #3498db;
   color: white;
-  border:封装 none;
+  border: none;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
