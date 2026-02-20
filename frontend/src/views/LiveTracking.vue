@@ -82,7 +82,6 @@ export default {
         this.map = new window.google.maps.Map(this.$refs.mapElement, {
           zoom: 15,
           center: defaultPos,
-          mapId: 'TRACKING_MAP_ID', // Optional: styling via Google Cloud Console
           styles: [
             {
               "featureType": "poi",
