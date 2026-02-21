@@ -124,5 +124,75 @@ module.exports = (io) => {
         }
     });
 
+    // GET /api/attendance/analysis?month=YYYY-MM
+    router.get("/analysis", async (req, res) => {
+        try {
+            const { month } = req.query; // e.g. "2026-02"
+            if (!month) {
+                return res.status(400).json({ success: false, message: "Month (YYYY-MM) is required" });
+            }
+
+            const staffList = await Staff.find({}).select("name position rfidUid");
+
+            // Get all attendance for the specified month
+            // Date format in DB is "YYYY-MM-DD"
+            const regex = new RegExp(`^${month}`);
+            const records = await Attendance.find({ date: regex });
+
+            // Generate list of days in that month
+            const year = parseInt(month.split("-")[0]);
+            const mon = parseInt(month.split("-")[1]);
+            const lastDay = new Date(year, mon, 0).getDate();
+            const daysList = [];
+            for (let d = 1; d <= lastDay; d++) {
+                daysList.push(`${month}-${d.toString().padStart(2, "0")}`);
+            }
+
+            const data = {};
+            const summaries = {};
+
+            // Initialize data structure
+            staffList.forEach(s => {
+                data[s._id] = {};
+                daysList.forEach(day => {
+                    data[s._id][day] = { hours: 0, present: false };
+                });
+                summaries[s._id] = { totalMonthlyHours: 0 };
+            });
+
+            // Populate data
+            records.forEach(r => {
+                if (data[r.staffId] && data[r.staffId][r.date]) {
+                    let h = 0;
+                    if (r.workingHours) {
+                        // Parse "7h 30m"
+                        const match = r.workingHours.match(/(\d+)h\s*(\d+)m/);
+                        if (match) {
+                            h = parseInt(match[1]) + parseInt(match[2]) / 60;
+                        }
+                    }
+                    data[r.staffId][r.date] = { hours: parseFloat(h.toFixed(2)), present: true };
+                    summaries[r.staffId].totalMonthlyHours += h;
+                }
+            });
+
+            // Final formatting for summaries
+            Object.keys(summaries).forEach(sid => {
+                summaries[sid].totalMonthlyHours = parseFloat(summaries[sid].totalMonthlyHours.toFixed(2));
+            });
+
+            res.json({
+                success: true,
+                staff: staffList,
+                days: daysList,
+                data,
+                summaries
+            });
+        } catch (err) {
+            console.error("Attendance analysis error:", err);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
     return router;
 };
