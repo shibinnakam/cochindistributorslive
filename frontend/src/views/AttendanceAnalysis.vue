@@ -157,9 +157,34 @@ export default {
         }
       ];
 
-      // Prepare data for the scatter plot
-      // X = staff name (index), Y = day of month
-      this.staffList.forEach((staff, sIdx) => {
+    renderChart() {
+      const ctx = this.$refs.attendanceChart.getContext('2d');
+      if (this.chart) {
+        this.chart.destroy();
+      }
+
+      const staffNames = this.staffList.map(s => s.name);
+      
+      const datasets = [
+        {
+          label: 'Present',
+          data: [],
+          backgroundColor: '#22c55e', // Better Green
+          pointRadius: 10,
+          pointHoverRadius: 12,
+          order: 1
+        },
+        {
+          label: 'Absent',
+          data: [],
+          backgroundColor: '#ef4444', // Better Red
+          pointRadius: 10,
+          pointHoverRadius: 12,
+          order: 2
+        }
+      ];
+
+      this.staffList.forEach((staff) => {
         this.daysList.forEach((dayStr) => {
           const dayNum = parseInt(dayStr.split('-')[2]);
           const record = this.attendanceData[staff._id]?.[dayStr];
@@ -167,16 +192,15 @@ export default {
           
           if (record && record.present) {
             datasets[0].data.push({
-              x: sIdx,
+              x: staff.name,
               y: dayNum,
               hours: record.hours,
               isHoliday: isSunday
             });
           } else {
-            // Only add red dot if date <= today AND NOT Sunday
             if (dayStr <= this.todayStr && !isSunday) {
                datasets[1].data.push({
-                x: sIdx,
+                x: staff.name,
                 y: dayNum,
                 hours: 0
               });
@@ -192,22 +216,23 @@ export default {
         },
         plugins: [{
           id: 'sundayLabels',
-          afterDraw: (chart) => {
+          beforeDraw: (chart) => {
             const { ctx, chartArea: { left, right }, scales: { y } } = chart;
             ctx.save();
-            ctx.font = 'bold 12px sans-serif';
-            ctx.fillStyle = '#1e3a8a'; // Dark blue
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
             this.daysList.forEach((dayStr) => {
               if (new Date(dayStr).getDay() === 0) {
                 const dayNum = parseInt(dayStr.split('-')[2]);
                 const yPos = y.getPixelForValue(dayNum);
-                // Draw multiple times across the width for better visibility
-                const text = 'SUNDAY (HOLIDAY)';
-                const centerX = (left + right) / 2;
-                ctx.fillText(text, centerX, yPos);
+                
+                // Highlight the row area
+                ctx.fillStyle = 'rgba(30, 58, 138, 0.08)';
+                ctx.fillRect(left, yPos - 12, right - left, 24);
+                
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillStyle = '#1e40af';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('SUNDAY (HOLIDAY)', (left + right) / 2, yPos);
               }
             });
             ctx.restore();
@@ -216,50 +241,74 @@ export default {
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          layout: {
+            padding: {
+              bottom: 20
+            }
+          },
           scales: {
             x: {
+              type: 'category',
+              labels: staffNames,
+              offset: true,
+              title: {
+                display: true,
+                text: 'Staff Names',
+                font: { weight: 'bold' }
+              },
+              ticks: {
+                autoSkip: false,
+                maxRotation: 45,
+                minRotation: 45,
+                color: '#1e293b'
+              },
+              grid: {
+                display: true,
+                drawOnChartArea: true,
+                color: '#e2e8f0'
+              }
+            },
+            y: {
               type: 'linear',
-              position: 'bottom',
+              offset: true,
+              title: {
+                display: true,
+                text: 'Day of Month',
+                font: { weight: 'bold' }
+              },
               ticks: {
                 stepSize: 1,
                 autoSkip: false,
-                callback: (value) => {
-                  // value is the internal numeric value
-                  if (Math.floor(value) === value) {
-                    return this.staffList[value]?.name || '';
-                  }
-                  return '';
-                }
+                color: '#1e293b'
               },
-              title: {
-                display: true,
-                text: 'Staff Employees'
-              },
-              min: -0.5,
-              max: this.staffList.length - 0.5
-            },
-            y: {
-              title: {
-                display: true,
-                text: 'Day of Month'
-              },
-              ticks: {
-                stepSize: 1,
-                autoSkip: false
-              },
-              min: 1,
-              max: this.daysInMonth
+              min: 0.5,
+              max: this.daysInMonth + 0.5,
+              grid: {
+                color: '#e2e8f0'
+              }
             }
           },
           plugins: {
+            legend: {
+              position: 'top',
+              align: 'end',
+              labels: {
+                usePointStyle: true,
+                pointStyle: 'circle',
+                padding: 15
+              }
+            },
             tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.9)',
+              padding: 12,
+              displayColors: true,
               callbacks: {
                 label: (context) => {
-                  const staffName = this.staffList[context.raw.x]?.name;
+                  const staffName = context.raw.x;
                   const day = context.raw.y;
                   const hours = context.raw.hours;
                   const isHoliday = context.raw.isHoliday;
-                  return `${staffName} - Day ${day}${isHoliday ? ' (Holiday)' : ''}: ${hours.toFixed(2)}h`;
+                  return `${staffName} | Day ${day}${isHoliday ? ' (Holiday)' : ''}: ${hours.toFixed(2)}h`;
                 }
               }
             }
