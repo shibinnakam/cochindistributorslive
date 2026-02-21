@@ -114,6 +114,12 @@
             <span class="icon">📍</span>
             Live Tracking
           </a>
+          <a
+            href="#"
+            class="nav-item"
+            :class="{ active: selectedMenu === 'attendance' }"
+            @click.prevent="selectMenu('attendance')"
+          >
             <span class="icon">🕒</span>
             Attendance
           </a>
