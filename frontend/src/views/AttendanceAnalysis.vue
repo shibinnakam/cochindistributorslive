@@ -148,16 +148,16 @@ export default {
           label: 'Present',
           data: [],
           backgroundColor: '#22c55e', // Green
-          pointRadius: 10,
-          pointHoverRadius: 12,
+          pointRadius: 8,
+          pointHoverRadius: 10,
           order: 1
         },
         {
           label: 'Absent',
           data: [],
           backgroundColor: '#ef4444', // Red
-          pointRadius: 10,
-          pointHoverRadius: 12,
+          pointRadius: 8,
+          pointHoverRadius: 10,
           order: 2
         }
       ];
@@ -202,18 +202,41 @@ export default {
                 const dayNum = parseInt(dayStr.split('-')[2]);
                 const yPos = y.getPixelForValue(String(dayNum));
                 
-                // Highlight the row area (using category scale pixel height)
-                const rowHeight = y.getPixelForValue('1') - y.getPixelForValue('2');
-                const h = Math.abs(rowHeight) || 24;
+                // Calculate row height carefully
+                const rowHeight = Math.abs(y.getPixelForValue('1') - y.getPixelForValue('2')) || 30;
+                const h = rowHeight * 0.8; // Use 80% of row height for the box
                 
-                ctx.fillStyle = 'rgba(30, 58, 138, 0.08)';
-                ctx.fillRect(left, yPos - h/2, right - left, h);
+                // Draw a nice rounded rectangle/pill background for the holiday
+                ctx.fillStyle = 'rgba(239, 246, 255, 0.9)'; // Very light blue
+                ctx.strokeStyle = '#3b82f6'; // Blue border
+                ctx.lineWidth = 1;
                 
-                ctx.font = 'bold 11px sans-serif';
-                ctx.fillStyle = '#1e40af';
+                const rectX = left + 10;
+                const rectW = (right - left) - 20;
+                const rectY = yPos - h/2;
+                
+                // Rounded rect manual path
+                const radius = 4;
+                ctx.beginPath();
+                ctx.moveTo(rectX + radius, rectY);
+                ctx.lineTo(rectX + rectW - radius, rectY);
+                ctx.quadraticCurveTo(rectX + rectW, rectY, rectX + rectW, rectY + radius);
+                ctx.lineTo(rectX + rectW, rectY + h - radius);
+                ctx.quadraticCurveTo(rectX + rectW, rectY + h, rectX + rectW - radius, rectY + h);
+                ctx.lineTo(rectX + radius, rectY + h);
+                ctx.quadraticCurveTo(rectX, rectY + h, rectX, rectY + h - radius);
+                ctx.lineTo(rectX, rectY + radius);
+                ctx.quadraticCurveTo(rectX, rectY, rectX + radius, rectY);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                
+                // Text
+                ctx.font = 'bold 12px "Inter", sans-serif';
+                ctx.fillStyle = '#1d4ed8'; // Darker blue
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('SUNDAY (HOLIDAY)', (left + right) / 2, yPos);
+                ctx.fillText('sunday holiday', (left + right) / 2, yPos);
               }
             });
             ctx.restore();
@@ -366,7 +389,7 @@ export default {
 }
 
 .chart-container {
-  height: 400px;
+  height: 700px;
   position: relative;
 }
 
