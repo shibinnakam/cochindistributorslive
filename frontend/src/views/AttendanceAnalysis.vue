@@ -58,10 +58,10 @@
               </td>
               <td>{{ staff.position }}</td>
               <td>
-                <span class="hours-badge">{{ summaries[staff._id]?.totalMonthlyHours.toFixed(1) || 0 }}h</span>
+                <span class="hours-badge">{{ formatMs(summaries[staff._id]?.totalMs) }}</span>
               </td>
               <td>
-                {{ (summaries[staff._id]?.totalMonthlyHours / daysInMonth).toFixed(1) }}h
+                {{ formatMs(summaries[staff._id]?.totalMs / workingDaysInMonth) }}
               </td>
             </tr>
           </tbody>
@@ -79,7 +79,9 @@ export default {
   name: 'AttendanceAnalysis',
   data() {
     const now = new Date();
-    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    // UTC+5:30 for consistency with backend todayIST
+    const istNow = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+    const month = `${istNow.getFullYear()}-${String(istNow.getMonth() + 1).padStart(2, '0')}`;
     return {
       selectedMonth: month,
       loading: false,
@@ -87,7 +89,8 @@ export default {
       daysList: [],
       attendanceData: {},
       summaries: {},
-      chart: null
+      chart: null,
+      todayStr: istNow.toISOString().split('T')[0]
     };
   },
   computed: {
@@ -95,12 +98,25 @@ export default {
       if (!this.selectedMonth) return 30;
       const [year, month] = this.selectedMonth.split('-').map(Number);
       return new Date(year, month, 0).getDate();
+    },
+    workingDaysInMonth() {
+      if (!this.daysList || this.daysList.length === 0) return this.daysInMonth;
+      // Count non-Sunday days in the daysList
+      return this.daysList.filter(day => new Date(day).getDay() !== 0).length;
     }
   },
   mounted() {
     this.fetchAnalysis();
   },
   methods: {
+    formatMs(ms) {
+      if (!ms || ms < 0) return "0h 0m 0s";
+      const totalSeconds = Math.floor(ms / 1000);
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+      return `${h}h ${m}m ${s}s`;
+    },
     async fetchAnalysis() {
       this.loading = true;
       try {
@@ -142,24 +158,29 @@ export default {
       ];
 
       // Prepare data for the scatter plot
-      // X = staff index, Y = day of month
+      // X = staff name (index), Y = day of month
       this.staffList.forEach((staff, sIdx) => {
         this.daysList.forEach((dayStr) => {
           const dayNum = parseInt(dayStr.split('-')[2]);
           const record = this.attendanceData[staff._id]?.[dayStr];
+          const isSunday = new Date(dayStr).getDay() === 0;
           
           if (record && record.present) {
             datasets[0].data.push({
               x: sIdx,
               y: dayNum,
-              hours: record.hours
+              hours: record.hours,
+              isHoliday: isSunday
             });
           } else {
-            datasets[1].data.push({
-              x: sIdx,
-              y: dayNum,
-              hours: 0
-            });
+            // Only add red dot if date <= today AND NOT Sunday
+            if (dayStr <= this.todayStr && !isSunday) {
+               datasets[1].data.push({
+                x: sIdx,
+                y: dayNum,
+                hours: 0
+              });
+            }
           }
         });
       });
@@ -178,8 +199,13 @@ export default {
               position: 'bottom',
               ticks: {
                 stepSize: 1,
+                autoSkip: false,
                 callback: (value) => {
-                  return this.staffList[value]?.name || '';
+                  // value is the internal numeric value
+                  if (Math.floor(value) === value) {
+                    return this.staffList[value]?.name || '';
+                  }
+                  return '';
                 }
               },
               title: {
@@ -195,10 +221,11 @@ export default {
                 text: 'Day of Month'
               },
               ticks: {
-                stepSize: 1
+                stepSize: 1,
+                autoSkip: false
               },
-              min: 0.5,
-              max: this.daysInMonth + 0.5
+              min: 1,
+              max: this.daysInMonth
             }
           },
           plugins: {
@@ -208,7 +235,8 @@ export default {
                   const staffName = this.staffList[context.raw.x]?.name;
                   const day = context.raw.y;
                   const hours = context.raw.hours;
-                  return `${staffName} - Day ${day}: ${hours}h`;
+                  const isHoliday = context.raw.isHoliday;
+                  return `${staffName} - Day ${day}${isHoliday ? ' (Holiday)' : ''}: ${hours.toFixed(2)}h`;
                 }
               }
             }

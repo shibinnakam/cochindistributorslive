@@ -157,28 +157,35 @@ module.exports = (io) => {
                 daysList.forEach(day => {
                     data[s._id][day] = { hours: 0, present: false };
                 });
-                summaries[s._id] = { totalMonthlyHours: 0 };
+                summaries[s._id] = { totalMonthlyHours: 0, totalMs: 0 };
             });
 
             // Populate data
             records.forEach(r => {
                 if (data[r.staffId] && data[r.staffId][r.date]) {
                     let h = 0;
-                    if (r.workingHours) {
-                        // Parse "7h 30m"
+                    let ms = 0;
+                    if (r.inTime && r.outTime) {
+                        ms = new Date(r.outTime) - new Date(r.inTime);
+                        if (ms < 0) ms = 0;
+                        h = ms / (1000 * 60 * 60);
+                    } else if (r.workingHours) {
+                        // Fallback for older records or if only workingHours exists
                         const match = r.workingHours.match(/(\d+)h\s*(\d+)m/);
                         if (match) {
                             h = parseInt(match[1]) + parseInt(match[2]) / 60;
+                            ms = h * 60 * 60 * 1000;
                         }
                     }
-                    data[r.staffId][r.date] = { hours: parseFloat(h.toFixed(2)), present: true };
+                    data[r.staffId][r.date] = { hours: parseFloat(h.toFixed(4)), present: true };
+                    summaries[r.staffId].totalMs += ms;
                     summaries[r.staffId].totalMonthlyHours += h;
                 }
             });
 
             // Final formatting for summaries
             Object.keys(summaries).forEach(sid => {
-                summaries[sid].totalMonthlyHours = parseFloat(summaries[sid].totalMonthlyHours.toFixed(2));
+                summaries[sid].totalMonthlyHours = parseFloat(summaries[sid].totalMonthlyHours.toFixed(4));
             });
 
             res.json({
