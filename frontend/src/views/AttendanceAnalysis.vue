@@ -190,6 +190,29 @@ export default {
         data: {
           datasets: datasets
         },
+        plugins: [{
+          id: 'sundayLabels',
+          afterDraw: (chart) => {
+            const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+            ctx.save();
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillStyle = '#1e3a8a'; // Dark blue
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            this.daysList.forEach((dayStr) => {
+              if (new Date(dayStr).getDay() === 0) {
+                const dayNum = parseInt(dayStr.split('-')[2]);
+                const yPos = y.getPixelForValue(dayNum);
+                // Draw multiple times across the width for better visibility
+                const text = 'SUNDAY (HOLIDAY)';
+                const centerX = (left + right) / 2;
+                ctx.fillText(text, centerX, yPos);
+              }
+            });
+            ctx.restore();
+          }
+        }],
         options: {
           responsive: true,
           maintainAspectRatio: false,
