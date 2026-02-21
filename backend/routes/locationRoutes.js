@@ -39,14 +39,30 @@ router.get("/latest", async (req, res) => {
 });
 
 // GET /api/location/history - Get all locations for route history
-// Optional query params: ?hours=24 (default: 24 hours)
+// Optional query params: ?hours=24 (default: 24 hours) or ?date=YYYY-MM-DD
 router.get("/history", async (req, res) => {
     try {
-        const hours = parseInt(req.query.hours) || 24;
-        const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+        let query = {};
+        const { hours, date } = req.query;
 
-        const locations = await Location.find({ time: { $gte: since } }).sort({ time: 1 });
-        res.json({ success: true, data: locations });
+        if (date) {
+            // Filter by specific date (start of day to end of day)
+            const startDate = new Date(date);
+            startDate.setHours(0, 0, 0, 0);
+
+            const endDate = new Date(date);
+            endDate.setHours(23, 59, 59, 999);
+
+            query.time = { $gte: startDate, $lte: endDate };
+        } else {
+            // Fallback to hours logic
+            const hrs = parseInt(hours) || 24;
+            const since = new Date(Date.now() - hrs * 60 * 60 * 1000);
+            query.time = { $gte: since };
+        }
+
+        const locations = await Location.find(query).sort({ time: 1 });
+        res.json({ success: true, count: locations.length, data: locations });
     } catch (error) {
         console.error("Error fetching location history:", error);
         res.status(500).json({ success: false, msg: "Server error" });

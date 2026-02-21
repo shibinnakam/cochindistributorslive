@@ -47,13 +47,37 @@
           </div>
         </div>
         <div class="footer-actions">
-          <select class="select-hours" v-model="selectedHours" @change="fetchRouteHistory">
-            <option value="1">Last 1 Hour</option>
-            <option value="6">Last 6 Hours</option>
-            <option value="12">Last 12 Hours</option>
-            <option value="24">Last 24 Hours</option>
-            <option value="48">Last 48 Hours</option>
-          </select>
+          <div class="filter-group">
+            <label>View Mode:</label>
+            <select class="select-hours" v-model="filterMode" @change="handleModeChange">
+              <option value="recent">Recent Activity</option>
+              <option value="date">Specific Date</option>
+            </select>
+          </div>
+
+          <div class="filter-group" v-if="filterMode === 'recent'">
+            <label>Timeframe:</label>
+            <select class="select-hours" v-model="selectedHours" @change="fetchRouteHistory">
+              <option value="1">Last 1 Hour</option>
+              <option value="6">Last 6 Hours</option>
+              <option value="12">Last 12 Hours</option>
+              <option value="24">Last 24 Hours</option>
+            </select>
+          </div>
+
+          <div class="filter-group" v-else>
+            <label>Date:</label>
+            <input type="date" class="date-input" v-model="selectedDate" @change="fetchRouteHistory" />
+          </div>
+
+          <div class="toggle-group">
+            <label class="switch">
+              <input type="checkbox" v-model="showRoute">
+              <span class="slider round"></span>
+            </label>
+            <span class="toggle-label">Show Route</span>
+          </div>
+
           <button class="btn-refresh" @click="refreshAll" :disabled="loading">
             {{ loading ? 'Updating...' : '🔄 Refresh' }}
           </button>
@@ -80,7 +104,21 @@ export default {
       isLive: false,
       updateInterval: null,
       selectedHours: "24",
+      selectedDate: new Date().toISOString().split('T')[0],
+      filterMode: "recent", // 'recent' or 'date'
+      showRoute: true,
+      endMarker: null,
     };
+  },
+  watch: {
+    showRoute(newVal) {
+      if (this.routePolyline) {
+        this.routePolyline.setMap(newVal ? this.map : null);
+      }
+      if (this.startMarker) {
+        this.startMarker.setMap(newVal ? this.map : null);
+      }
+    }
   },
   mounted() {
     this.initMap();
@@ -151,7 +189,14 @@ export default {
     },
     async fetchRouteHistory() {
       try {
-        const response = await axios.get(`/api/location/history?hours=${this.selectedHours}`);
+        let url = "/api/location/history";
+        if (this.filterMode === 'date') {
+          url += `?date=${this.selectedDate}`;
+        } else {
+          url += `?hours=${this.selectedHours}`;
+        }
+
+        const response = await axios.get(url);
         if (response.data.success) {
           this.routeHistory = response.data.data;
           this.drawRoute();
@@ -160,17 +205,54 @@ export default {
         console.error("Error fetching route history:", error);
       }
     },
-    drawRoute() {
-      if (!this.map || this.routeHistory.length < 2) return;
+    handleModeChange() {
+      this.fetchRouteHistory();
+    },
+    // Simple Haversine distance to filter noise
+    calculateDistance(p1, p2) {
+      const R = 6371e3; // metres
+      const φ1 = p1.lat * Math.PI/180;
+      const φ2 = p2.lat * Math.PI/180;
+      const Δφ = (p2.lat-p1.lat) * Math.PI/180;
+      const Δλ = (p2.lng-p1.lng) * Math.PI/180;
 
-      // Remove old polyline and start marker
+      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ/2) * Math.sin(Δλ/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+      return R * c; // in metres
+    },
+    drawRoute() {
+      if (!this.map) return;
+
+      // ALWAYS Remove old polyline and markers first
       if (this.routePolyline) this.routePolyline.setMap(null);
       if (this.startMarker) this.startMarker.setMap(null);
+      if (this.endMarker) this.endMarker.setMap(null);
 
-      const path = this.routeHistory.map(loc => ({
-        lat: loc.latitude,
-        lng: loc.longitude,
-      }));
+      if (this.routeHistory.length < 2) return;
+
+      // Filter noise: only keep points that are at least 5 meters apart
+      let path = [];
+      if (this.routeHistory.length > 0) {
+        path.push({
+          lat: this.routeHistory[0].latitude,
+          lng: this.routeHistory[0].longitude,
+        });
+
+        for (let i = 1; i < this.routeHistory.length; i++) {
+          const lastPoint = path[path.length - 1];
+          const currentPoint = {
+            lat: this.routeHistory[i].latitude,
+            lng: this.routeHistory[i].longitude,
+          };
+          
+          if (this.calculateDistance(lastPoint, currentPoint) > 5) {
+            path.push(currentPoint);
+          }
+        }
+      }
 
       // Draw the route line
       this.routePolyline = new window.google.maps.Polyline({
@@ -180,18 +262,37 @@ export default {
         strokeOpacity: 0.8,
         strokeWeight: 4,
       });
-      this.routePolyline.setMap(this.map);
+
+      if (this.showRoute) {
+        this.routePolyline.setMap(this.map);
+      }
 
       // Mark the start point with a green dot
       const startPos = path[0];
       this.startMarker = new window.google.maps.Marker({
         position: startPos,
-        map: this.map,
+        map: this.showRoute ? this.map : null,
         title: "Trip Start",
         icon: {
           path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 8,
+          scale: 6,
           fillColor: "#27ae60",
+          fillOpacity: 1,
+          strokeColor: "white",
+          strokeWeight: 2,
+        },
+      });
+
+      // Mark the end point with a red dot (latest in history)
+      const endPos = path[path.length - 1];
+      this.endMarker = new window.google.maps.Marker({
+        position: endPos,
+        map: this.showRoute ? this.map : null,
+        title: "Trip End",
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 6,
+          fillColor: "#e74c3c",
           fillOpacity: 1,
           strokeColor: "white",
           strokeWeight: 2,
@@ -339,11 +440,23 @@ export default {
 .footer-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 20px;
 }
 
-.select-hours {
-  padding: 9px 14px;
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-group label {
+  font-size: 0.85rem;
+  color: #7f8c8d;
+  font-weight: 500;
+}
+
+.select-hours, .date-input {
+  padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 0.85rem;
@@ -353,38 +466,72 @@ export default {
   outline: none;
 }
 
-.select-hours:focus {
-  border-color: #3498db;
-}
-
-.info-badges {
-  display: flex;
-  gap: 20px;
-}
-
-.badge {
+/* Toggle Switch Styles */
+.toggle-group {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: white;
-  padding: 8px 15px;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  gap: 10px;
 }
 
-.badge .icon {
-  font-size: 1.1rem;
-}
-
-.badge .label {
-  font-size: 0.85rem;
-  color: #7f8c8d;
-}
-
-.badge .value {
+.toggle-label {
   font-size: 0.85rem;
   color: #2c3e50;
-  font-weight: 600;
+  font-weight: 500;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #3498db;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #3498db;
+}
+
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
 }
 
 .btn-refresh {
