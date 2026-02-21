@@ -140,29 +140,6 @@ export default {
         this.chart.destroy();
       }
 
-      const datasets = [
-        {
-          label: 'Present',
-          data: [],
-          backgroundColor: '#4ade80', // Green
-          pointRadius: 6,
-          pointHoverRadius: 8
-        },
-        {
-          label: 'Absent',
-          data: [],
-          backgroundColor: '#f87171', // Red
-          pointRadius: 6,
-          pointHoverRadius: 8
-        }
-      ];
-
-    renderChart() {
-      const ctx = this.$refs.attendanceChart.getContext('2d');
-      if (this.chart) {
-        this.chart.destroy();
-      }
-
       const staffNames = this.staffList.map(s => s.name);
       
       const datasets = [
