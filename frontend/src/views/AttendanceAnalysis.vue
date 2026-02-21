@@ -141,12 +141,13 @@ export default {
       }
 
       const staffNames = this.staffList.map(s => s.name);
+      const dayLabels = Array.from({ length: this.daysInMonth }, (_, i) => String(i + 1));
       
       const datasets = [
         {
           label: 'Present',
           data: [],
-          backgroundColor: '#22c55e', // Better Green
+          backgroundColor: '#22c55e', // Green
           pointRadius: 10,
           pointHoverRadius: 12,
           order: 1
@@ -154,7 +155,7 @@ export default {
         {
           label: 'Absent',
           data: [],
-          backgroundColor: '#ef4444', // Better Red
+          backgroundColor: '#ef4444', // Red
           pointRadius: 10,
           pointHoverRadius: 12,
           order: 2
@@ -170,7 +171,7 @@ export default {
           if (record && record.present) {
             datasets[0].data.push({
               x: staff.name,
-              y: dayNum,
+              y: String(dayNum),
               hours: record.hours,
               isHoliday: isSunday
             });
@@ -178,7 +179,7 @@ export default {
             if (dayStr <= this.todayStr && !isSunday) {
                datasets[1].data.push({
                 x: staff.name,
-                y: dayNum,
+                y: String(dayNum),
                 hours: 0
               });
             }
@@ -199,11 +200,14 @@ export default {
             this.daysList.forEach((dayStr) => {
               if (new Date(dayStr).getDay() === 0) {
                 const dayNum = parseInt(dayStr.split('-')[2]);
-                const yPos = y.getPixelForValue(dayNum);
+                const yPos = y.getPixelForValue(String(dayNum));
                 
-                // Highlight the row area
+                // Highlight the row area (using category scale pixel height)
+                const rowHeight = y.getPixelForValue('1') - y.getPixelForValue('2');
+                const h = Math.abs(rowHeight) || 24;
+                
                 ctx.fillStyle = 'rgba(30, 58, 138, 0.08)';
-                ctx.fillRect(left, yPos - 12, right - left, 24);
+                ctx.fillRect(left, yPos - h/2, right - left, h);
                 
                 ctx.font = 'bold 11px sans-serif';
                 ctx.fillStyle = '#1e40af';
@@ -230,7 +234,7 @@ export default {
               offset: true,
               title: {
                 display: true,
-                text: 'Staff Names',
+                text: 'Staff Members',
                 font: { weight: 'bold' }
               },
               ticks: {
@@ -241,12 +245,12 @@ export default {
               },
               grid: {
                 display: true,
-                drawOnChartArea: true,
                 color: '#e2e8f0'
               }
             },
             y: {
-              type: 'linear',
+              type: 'category',
+              labels: dayLabels,
               offset: true,
               title: {
                 display: true,
@@ -254,12 +258,9 @@ export default {
                 font: { weight: 'bold' }
               },
               ticks: {
-                stepSize: 1,
                 autoSkip: false,
                 color: '#1e293b'
               },
-              min: 0.5,
-              max: this.daysInMonth + 0.5,
               grid: {
                 color: '#e2e8f0'
               }
