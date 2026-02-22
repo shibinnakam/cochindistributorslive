@@ -31,6 +31,16 @@ module.exports = (io) => {
                 return res.status(400).json({ success: false, message: "rfidUid is required" });
             }
 
+            // Check if today is Sunday (Holiday)
+            const now = new Date();
+            const ist = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+            if (ist.getDay() === 0) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Attendance cannot be recorded on Sundays (Holiday)."
+                });
+            }
+
             // Find staff with this RFID
             const staff = await Staff.findOne({ rfidUid: rfidUid.toUpperCase() });
             if (!staff) {
