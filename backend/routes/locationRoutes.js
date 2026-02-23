@@ -47,11 +47,9 @@ router.get("/history", async (req, res) => {
 
         if (date) {
             // Filter by specific date (start of day to end of day)
-            const startDate = new Date(date);
-            startDate.setHours(0, 0, 0, 0);
-
-            const endDate = new Date(date);
-            endDate.setHours(23, 59, 59, 999);
+            const [year, month, day] = date.split('-').map(Number);
+            const startDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+            const endDate = new Date(year, month - 1, day, 23, 59, 59, 999);
 
             query.time = { $gte: startDate, $lte: endDate };
         } else {

@@ -4,8 +4,9 @@
       <div class="tracking-header">
         <div class="header-info">
           <h3>Live Vehicle Tracking</h3>
-          <p v-if="latestLocation">Last Updated: {{ formatTime(latestLocation.time) }}</p>
-          <p v-else>Waiting for location data...</p>
+          <p v-if="filterMode === 'recent' && latestLocation">Last Updated: {{ formatTime(latestLocation.time) }}</p>
+          <p v-else-if="filterMode === 'date' && routeHistory.length > 0">Viewing History: {{ selectedDate }}</p>
+          <p v-else>Waiting for data...</p>
         </div>
         <div class="status-indicator" :class="{ active: isLive }">
           <span class="pulse"></span>
@@ -38,7 +39,7 @@
           <div class="badge">
             <span class="icon">📍</span>
             <span class="label">Current Status:</span>
-            <span class="value">On Route</span>
+            <span class="value">{{ filterMode === 'recent' ? 'On Route' : 'Historical View' }}</span>
           </div>
           <div class="badge">
             <span class="icon">🛣️</span>
@@ -104,7 +105,7 @@ export default {
       isLive: false,
       updateInterval: null,
       selectedHours: "24",
-      selectedDate: new Date().toISOString().split('T')[0],
+      selectedDate: new Date().toLocaleDateString('en-CA'),
       filterMode: "recent", // 'recent' or 'date'
       showRoute: true,
       endMarker: null,
@@ -155,6 +156,10 @@ export default {
       }
     },
     async fetchLatestLocation() {
+      if (this.filterMode === 'date') {
+        this.isLive = false;
+        return;
+      }
       this.loading = true;
       try {
         const response = await axios.get("/api/location/latest");
@@ -176,14 +181,25 @@ export default {
           lat: this.latestLocation.latitude,
           lng: this.latestLocation.longitude,
         };
-        this.marker.setPosition(newPos);
-        this.map.panTo(newPos);
+        
+        // Only show live marker if in 'recent' mode
+        if (this.filterMode === 'recent') {
+          this.marker.setMap(this.map);
+          this.marker.setPosition(newPos);
+          this.map.panTo(newPos);
+        } else {
+          this.marker.setMap(null);
+        }
       }
     },
     startTracking() {
       this.fetchLatestLocation();
+      if (this.updateInterval) clearInterval(this.updateInterval);
+      
       this.updateInterval = setInterval(() => {
-        this.fetchLatestLocation();
+        if (this.filterMode === 'recent') {
+          this.fetchLatestLocation();
+        }
         this.fetchRouteHistory();
       }, 5000);
     },
@@ -206,6 +222,12 @@ export default {
       }
     },
     handleModeChange() {
+      if (this.filterMode === 'recent') {
+        this.fetchLatestLocation();
+      } else {
+        if (this.marker) this.marker.setMap(null);
+        this.isLive = false;
+      }
       this.fetchRouteHistory();
     },
     // Simple Haversine distance to filter noise
