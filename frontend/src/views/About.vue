@@ -111,18 +111,19 @@ export default {
 
 /* --- Header --- */
 .about-header {
-  height: 300px;
+  height: 40vh;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   background: url('https://images.unsplash.com/photo-1517433670267-08bbd4be890f?auto=format&fit=crop&q=80&w=1200') center/cover no-repeat;
+  margin-top: 80px;
 }
 
 .header-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(62, 39, 35, 0.4);
 }
 
 .page-title {
@@ -130,8 +131,9 @@ export default {
   z-index: 1;
   font-family: 'Dancing Script', cursive;
   font-size: 4.5rem;
-  color: #3e2723;
+  color: white;
   font-weight: 700;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 /* --- Our Story --- */

@@ -191,7 +191,7 @@ export default {
 
 /* --- Hero Section --- */
 .contact-hero {
-  height: 450px;
+  height: 40vh;
   position: relative;
   display: flex;
   align-items: center;
@@ -203,7 +203,7 @@ export default {
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(255,250,245,0.7) 0%, rgba(255,250,245,0.4) 100%);
+  background: rgba(62, 39, 35, 0.4);
 }
 
 .page-title {
@@ -211,19 +211,21 @@ export default {
   z-index: 1;
   font-family: 'Dancing Script', cursive;
   font-size: clamp(3.5rem, 8vw, 5.5rem);
-  color: #3e2723;
+  color: white;
   font-weight: 700;
   margin-bottom: 0.5rem;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 .page-subtitle {
   position: relative;
   z-index: 1;
   font-size: 1.25rem;
-  color: #6d4c41;
+  color: #fffaf5;
   font-weight: 500;
   max-width: 600px;
   margin: 0 auto;
+  opacity: 0.9;
 }
 
 .scroll-indicator {
@@ -237,7 +239,7 @@ export default {
 .mouse {
   width: 25px;
   height: 40px;
-  border: 2px solid #3e2723;
+  border: 2px solid white;
   border-radius: 20px;
   display: flex;
   justify-content: center;
@@ -248,7 +250,7 @@ export default {
   content: '';
   width: 3px;
   height: 10px;
-  background: #3e2723;
+  background: white;
   border-radius: 2px;
   animation: scrollDown 2s infinite ease-out;
 }
