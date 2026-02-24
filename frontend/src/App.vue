@@ -6,6 +6,9 @@
     <!-- Page Content -->
     <router-view />
 
+    <!-- Public Footer -->
+    <AppFooter v-if="!isDashboard" />
+
     <!-- Login Modal -->
     <LoginModal v-if="showLogin" @close="showLogin = false" />
   </div>
@@ -14,11 +17,12 @@
 <script>
 import axios from "axios";
 import Navbar from "@/components/AppNavbar.vue";
+import AppFooter from "@/components/AppFooter.vue";
 import LoginModal from "@/views/Login.vue"; // reuse your existing login.vue
 
 export default {
   name: "App",
-  components: { Navbar, LoginModal },
+  components: { Navbar, AppFooter, LoginModal },
   data() {
     return {
       showLogin: false,
