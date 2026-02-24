@@ -2,8 +2,12 @@
   <header :class="{ 'nav-open': isMenuOpen }">
     <nav class="navbar">
       <router-link to="/" class="logo-area">
-        <img src="@/assets/logo.jpeg" alt="Logo" class="site-logo" />
-        <span class="site-name">Cochin Distributors</span>
+        <div class="logo-circle">
+          <img src="@/assets/logo.jpeg" alt="Logo" class="site-logo" />
+        </div>
+        <span class="site-name"
+          >Bready <span class="accent-text">Bake</span></span
+        >
       </router-link>
 
       <!-- Hamburger Menu Button -->
@@ -82,51 +86,70 @@ header {
 }
 
 .site-logo {
-  height: 40px;
-  width: 40px;
-  border-radius: 4px;
+  height: 35px;
+  width: 35px;
+}
+
+.logo-circle {
+  background: white;
+  padding: 5px;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .site-name {
-  font-weight: 800;
-  font-size: 1.25rem;
-  color: #1e3a8a;
+  font-family: "Dancing Script", cursive;
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: #5d4037;
   white-space: nowrap;
+}
+
+.accent-text {
+  color: #efa962;
 }
 
 .nav-links {
   list-style: none;
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 2.5rem;
   margin: 0;
   padding: 0;
 }
 
 .nav-links a {
   text-decoration: none;
-  font-weight: 600;
-  color: #475569;
-  transition: all 0.2s ease;
-  font-size: 0.95rem;
+  font-weight: 500;
+  color: #795548;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .nav-links a:hover,
 .nav-links .router-link-exact-active {
-  color: #1e3a8a;
+  color: #efa962;
 }
 
 .login-link {
-  padding: 0.6rem 1.5rem;
-  background-color: #1e3a8a;
+  padding: 0.7rem 1.8rem;
+  background-color: #efa962;
   color: white !important;
-  border-radius: 8px;
+  border-radius: 30px;
   transition: all 0.3s ease;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
 }
 
 .login-link:hover {
-  background-color: #172554;
-  transform: translateY(-1px);
+  background-color: #e69642;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(239, 169, 98, 0.4);
 }
 
 /* Mobile Toggle */

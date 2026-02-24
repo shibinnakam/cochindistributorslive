@@ -4,19 +4,23 @@
       <div class="tracking-header">
         <div class="header-info">
           <h3>Live Vehicle Tracking</h3>
-          <p v-if="filterMode === 'recent' && latestLocation">Last Updated: {{ formatTime(latestLocation.time) }}</p>
-          <p v-else-if="filterMode === 'date' && routeHistory.length > 0">Viewing History: {{ selectedDate }}</p>
+          <p v-if="filterMode === 'recent' && latestLocation">
+            Last Updated: {{ formatTime(latestLocation.time) }}
+          </p>
+          <p v-else-if="filterMode === 'date' && routeHistory.length > 0">
+            Viewing History: {{ selectedDate }}
+          </p>
           <p v-else>Waiting for data...</p>
         </div>
         <div class="status-indicator" :class="{ active: isLive }">
           <span class="pulse"></span>
-          {{ isLive ? 'Live Tracking Active' : 'Connecting...' }}
+          {{ isLive ? "Live Tracking Active" : "Connecting..." }}
         </div>
       </div>
 
       <div class="map-wrapper">
         <div id="map" ref="mapElement"></div>
-        
+
         <div class="coordinates-overlay" v-if="latestLocation">
           <div class="coord-item">
             <span class="label">Latitude</span>
@@ -39,7 +43,9 @@
           <div class="badge">
             <span class="icon">📍</span>
             <span class="label">Current Status:</span>
-            <span class="value">{{ filterMode === 'recent' ? 'On Route' : 'Historical View' }}</span>
+            <span class="value">{{
+              filterMode === "recent" ? "On Route" : "Historical View"
+            }}</span>
           </div>
           <div class="badge">
             <span class="icon">🛣️</span>
@@ -50,7 +56,11 @@
         <div class="footer-actions">
           <div class="filter-group">
             <label>View Mode:</label>
-            <select class="select-hours" v-model="filterMode" @change="handleModeChange">
+            <select
+              class="select-hours"
+              v-model="filterMode"
+              @change="handleModeChange"
+            >
               <option value="recent">Recent Activity</option>
               <option value="date">Specific Date</option>
             </select>
@@ -58,7 +68,11 @@
 
           <div class="filter-group" v-if="filterMode === 'recent'">
             <label>Timeframe:</label>
-            <select class="select-hours" v-model="selectedHours" @change="fetchRouteHistory">
+            <select
+              class="select-hours"
+              v-model="selectedHours"
+              @change="fetchRouteHistory"
+            >
               <option value="1">Last 1 Hour</option>
               <option value="6">Last 6 Hours</option>
               <option value="12">Last 12 Hours</option>
@@ -68,19 +82,24 @@
 
           <div class="filter-group" v-else>
             <label>Date:</label>
-            <input type="date" class="date-input" v-model="selectedDate" @change="fetchRouteHistory" />
+            <input
+              type="date"
+              class="date-input"
+              v-model="selectedDate"
+              @change="fetchRouteHistory"
+            />
           </div>
 
           <div class="toggle-group">
             <label class="switch">
-              <input type="checkbox" v-model="showRoute">
+              <input type="checkbox" v-model="showRoute" />
               <span class="slider round"></span>
             </label>
             <span class="toggle-label">Show Route</span>
           </div>
 
           <button class="btn-refresh" @click="refreshAll" :disabled="loading">
-            {{ loading ? 'Updating...' : '🔄 Refresh' }}
+            {{ loading ? "Updating..." : "🔄 Refresh" }}
           </button>
         </div>
       </div>
@@ -105,7 +124,7 @@ export default {
       isLive: false,
       updateInterval: null,
       selectedHours: "24",
-      selectedDate: new Date().toLocaleDateString('en-CA'),
+      selectedDate: new Date().toLocaleDateString("en-CA"),
       filterMode: "recent", // 'recent' or 'date'
       showRoute: true,
       endMarker: null,
@@ -119,7 +138,7 @@ export default {
       if (this.startMarker) {
         this.startMarker.setMap(newVal ? this.map : null);
       }
-    }
+    },
   },
   mounted() {
     this.initMap();
@@ -148,15 +167,15 @@ export default {
           title: "Vehicle Location",
           icon: {
             url: "https://maps.google.com/mapfiles/kml/shapes/truck.png",
-            scaledSize: new window.google.maps.Size(40, 40)
-          }
+            scaledSize: new window.google.maps.Size(40, 40),
+          },
         });
       } else {
         console.error("Google Maps API not loaded");
       }
     },
     async fetchLatestLocation() {
-      if (this.filterMode === 'date') {
+      if (this.filterMode === "date") {
         this.isLive = false;
         return;
       }
@@ -181,9 +200,9 @@ export default {
           lat: this.latestLocation.latitude,
           lng: this.latestLocation.longitude,
         };
-        
+
         // Only show live marker if in 'recent' mode
-        if (this.filterMode === 'recent') {
+        if (this.filterMode === "recent") {
           this.marker.setMap(this.map);
           this.marker.setPosition(newPos);
           this.map.panTo(newPos);
@@ -195,9 +214,9 @@ export default {
     startTracking() {
       this.fetchLatestLocation();
       if (this.updateInterval) clearInterval(this.updateInterval);
-      
+
       this.updateInterval = setInterval(() => {
-        if (this.filterMode === 'recent') {
+        if (this.filterMode === "recent") {
           this.fetchLatestLocation();
         }
         this.fetchRouteHistory();
@@ -206,7 +225,7 @@ export default {
     async fetchRouteHistory() {
       try {
         let url = "/api/location/history";
-        if (this.filterMode === 'date') {
+        if (this.filterMode === "date") {
           url += `?date=${this.selectedDate}`;
         } else {
           url += `?hours=${this.selectedHours}`;
@@ -222,7 +241,7 @@ export default {
       }
     },
     handleModeChange() {
-      if (this.filterMode === 'recent') {
+      if (this.filterMode === "recent") {
         this.fetchLatestLocation();
       } else {
         if (this.marker) this.marker.setMap(null);
@@ -233,15 +252,15 @@ export default {
     // Simple Haversine distance to filter noise
     calculateDistance(p1, p2) {
       const R = 6371e3; // metres
-      const φ1 = p1.lat * Math.PI/180;
-      const φ2 = p2.lat * Math.PI/180;
-      const Δφ = (p2.lat-p1.lat) * Math.PI/180;
-      const Δλ = (p2.lng-p1.lng) * Math.PI/180;
+      const φ1 = (p1.lat * Math.PI) / 180;
+      const φ2 = (p2.lat * Math.PI) / 180;
+      const Δφ = ((p2.lat - p1.lat) * Math.PI) / 180;
+      const Δλ = ((p2.lng - p1.lng) * Math.PI) / 180;
 
-      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                Math.cos(φ1) * Math.cos(φ2) *
-                Math.sin(Δλ/2) * Math.sin(Δλ/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const a =
+        Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
       return R * c; // in metres
     },
@@ -269,7 +288,7 @@ export default {
             lat: this.routeHistory[i].latitude,
             lng: this.routeHistory[i].longitude,
           };
-          
+
           if (this.calculateDistance(lastPoint, currentPoint) > 5) {
             path.push(currentPoint);
           }
@@ -328,8 +347,8 @@ export default {
     formatTime(dateString) {
       const date = new Date(dateString);
       return date.toLocaleTimeString();
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -400,9 +419,18 @@ export default {
 }
 
 @keyframes pulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(39, 174, 96, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(39, 174, 96, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(39, 174, 96, 0);
+  }
 }
 
 .map-wrapper {
@@ -477,7 +505,8 @@ export default {
   font-weight: 500;
 }
 
-.select-hours, .date-input {
+.select-hours,
+.date-input {
   padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 6px;
@@ -522,7 +551,7 @@ export default {
   right: 0;
   bottom: 0;
   background-color: #ccc;
-  transition: .4s;
+  transition: 0.4s;
 }
 
 .slider:before {
@@ -533,7 +562,7 @@ export default {
   left: 4px;
   bottom: 4px;
   background-color: white;
-  transition: .4s;
+  transition: 0.4s;
 }
 
 input:checked + .slider {

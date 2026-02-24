@@ -9,7 +9,10 @@
 
       <div class="user-profile-small">
         <div class="user-avatar">
-          <img src="https://ui-avatars.com/api/?name=User&background=ff9a44&color=fff" alt="User" />
+          <img
+            src="https://ui-avatars.com/api/?name=User&background=ff9a44&color=fff"
+            alt="User"
+          />
         </div>
         <div class="user-info">
           <h4 class="user-name">{{ userName }}</h4>
@@ -19,25 +22,42 @@
 
       <nav class="sidebar-nav">
         <div class="nav-section">
-          <a href="#" class="nav-item"><span class="icon">📊</span> Dashboard</a>
-          <a href="#" class="nav-item active"><span class="icon">🛒</span> Pos</a>
-          <a href="#" class="nav-item" @click.prevent="showWallet = true"><span class="icon">👛</span> My Wallet</a>
-          <a href="#" class="nav-item" @click.prevent="showOrders = true"><span class="icon">📋</span> My Orders</a>
+          <a href="#" class="nav-item"
+            ><span class="icon">📊</span> Dashboard</a
+          >
+          <a href="#" class="nav-item active"
+            ><span class="icon">🛒</span> Pos</a
+          >
+          <a href="#" class="nav-item" @click.prevent="showWallet = true"
+            ><span class="icon">👛</span> My Wallet</a
+          >
+          <a href="#" class="nav-item" @click.prevent="showOrders = true"
+            ><span class="icon">📋</span> My Orders</a
+          >
           <a href="#" class="nav-item"><span class="icon">🪑</span> Table</a>
-          <a href="#" class="nav-item"><span class="icon">📅</span> Reservations</a>
+          <a href="#" class="nav-item"
+            ><span class="icon">📅</span> Reservations</a
+          >
         </div>
 
         <div class="nav-section">
           <label>Offering</label>
-          <a href="#" class="nav-item"><span class="icon">🚚</span> Delivery Executive</a>
-          <a href="#" class="nav-item"><span class="icon">💳</span> Payments <span class="badge-new">New</span></a>
+          <a href="#" class="nav-item"
+            ><span class="icon">🚚</span> Delivery Executive</a
+          >
+          <a href="#" class="nav-item"
+            ><span class="icon">💳</span> Payments
+            <span class="badge-new">New</span></a
+          >
           <a href="#" class="nav-item"><span class="icon">👤</span> Customer</a>
           <a href="#" class="nav-item"><span class="icon">📄</span> Invoice</a>
         </div>
 
         <div class="nav-section">
           <label>Back Office</label>
-          <a href="#" class="nav-item"><span class="icon">💬</span> Testimonial</a>
+          <a href="#" class="nav-item"
+            ><span class="icon">💬</span> Testimonial</a
+          >
           <a href="#" class="nav-item"><span class="icon">👥</span> User</a>
           <a href="#" class="nav-item"><span class="icon">📈</span> Reports</a>
           <a href="#" class="nav-item"><span class="icon">⚙️</span> Setting</a>
@@ -57,7 +77,11 @@
       <header class="pos-top-nav">
         <div class="nav-search">
           <span class="search-icon">🔍</span>
-          <input type="text" placeholder="Search (Ctrl+/)" v-model="searchQuery" />
+          <input
+            type="text"
+            placeholder="Search (Ctrl+/)"
+            v-model="searchQuery"
+          />
         </div>
         <div class="nav-actions">
           <div class="wallet-pill" @click="showWallet = true">
@@ -66,7 +90,9 @@
           </div>
           <button class="theme-toggle">☀️</button>
           <div class="user-action-avatar">
-            <img src="https://ui-avatars.com/api/?name=User&background=ddd&color=333" />
+            <img
+              src="https://ui-avatars.com/api/?name=User&background=ddd&color=333"
+            />
           </div>
         </div>
       </header>
@@ -89,7 +115,11 @@
         <div class="product-filter-bar">
           <div class="filter-input-group">
             <span class="icon">🔍</span>
-            <input type="text" placeholder="Search in products" v-model="searchQuery" />
+            <input
+              type="text"
+              placeholder="Search in products"
+              v-model="searchQuery"
+            />
           </div>
           <select v-model="selectedCategory" class="filter-select">
             <option :value="null">All Category</option>
@@ -104,15 +134,15 @@
 
         <!-- Category Tabs -->
         <div class="category-tabs">
-          <button 
-            class="tab-item" 
+          <button
+            class="tab-item"
             :class="{ active: selectedCategory === null }"
             @click="selectedCategory = null"
           >
             Show All
           </button>
-          <button 
-            v-for="cat in categories" 
+          <button
+            v-for="cat in categories"
             :key="cat._id"
             class="tab-item"
             :class="{ active: selectedCategory === cat._id }"
@@ -125,17 +155,24 @@
         <!-- Product Grid -->
         <div class="pos-product-grid">
           <div v-if="loading" class="grid-loading">Loading...</div>
-          <div 
-            v-for="product in filteredProducts" 
-            :key="product._id" 
+          <div
+            v-for="product in filteredProducts"
+            :key="product._id"
             class="pos-product-card"
           >
             <div class="product-img" @click="addToCart(product)">
-              <img :src="getImageUrl(product.image || product.imageFront)" :alt="product.name" />
+              <img
+                :src="getImageUrl(product.image || product.imageFront)"
+                :alt="product.name"
+              />
             </div>
             <div class="product-details">
-              <h3 class="name" @click="addToCart(product)">{{ product.name }}</h3>
-              <p class="description" @click="addToCart(product)">{{ product.description }}</p>
+              <h3 class="name" @click="addToCart(product)">
+                {{ product.name }}
+              </h3>
+              <p class="description" @click="addToCart(product)">
+                {{ product.description }}
+              </p>
               <div class="price-row">
                 <p class="price">₹{{ product.discountPrice }}</p>
                 <button class="btn-add-cart" @click.stop="addToCart(product)">
@@ -183,14 +220,28 @@
           <div v-for="item in cartItems" :key="item._id" class="order-item">
             <div class="item-info">
               <p class="name">{{ item.product.name }}</p>
-              <p class="price">₹{{ item.product.discountPrice }} × {{ item.quantity }} = <strong>₹{{ item.product.discountPrice * item.quantity }}</strong></p>
+              <p class="price">
+                ₹{{ item.product.discountPrice }} × {{ item.quantity }} =
+                <strong
+                  >₹{{ item.product.discountPrice * item.quantity }}</strong
+                >
+              </p>
             </div>
             <div class="item-actions">
-              <button class="btn-remove" @click="removeFromCart(item.product._id)">🗑️</button>
+              <button
+                class="btn-remove"
+                @click="removeFromCart(item.product._id)"
+              >
+                🗑️
+              </button>
               <div class="qty-controls">
-                <button @click="updateQty(item.product._id, item.quantity - 1)">-</button>
+                <button @click="updateQty(item.product._id, item.quantity - 1)">
+                  -
+                </button>
                 <span>{{ item.quantity }}</span>
-                <button @click="updateQty(item.product._id, item.quantity + 1)">+</button>
+                <button @click="updateQty(item.product._id, item.quantity + 1)">
+                  +
+                </button>
               </div>
               <button class="btn-add-notes">Add Notes</button>
             </div>
@@ -201,12 +252,30 @@
       <div class="order-summary" v-if="cartItems.length > 0">
         <!-- Payment Method Selection -->
         <div class="pos-payment-selection">
-          <label class="pay-method" :class="{ selected: selectedPaymentMethod === 'razorpay' }">
-            <input type="radio" value="razorpay" v-model="selectedPaymentMethod" />
+          <label
+            class="pay-method"
+            :class="{ selected: selectedPaymentMethod === 'razorpay' }"
+          >
+            <input
+              type="radio"
+              value="razorpay"
+              v-model="selectedPaymentMethod"
+            />
             <span>Razorpay</span>
           </label>
-          <label class="pay-method" :class="{ selected: selectedPaymentMethod === 'wallet', disabled: walletBalance < cartTotal - productDiscount }">
-            <input type="radio" value="wallet" v-model="selectedPaymentMethod" :disabled="walletBalance < cartTotal - productDiscount" />
+          <label
+            class="pay-method"
+            :class="{
+              selected: selectedPaymentMethod === 'wallet',
+              disabled: walletBalance < cartTotal - productDiscount,
+            }"
+          >
+            <input
+              type="radio"
+              value="wallet"
+              v-model="selectedPaymentMethod"
+              :disabled="walletBalance < cartTotal - productDiscount"
+            />
             <span>Wallet</span>
           </label>
         </div>
@@ -226,12 +295,12 @@
       </div>
 
       <div class="panel-actions">
-        <button 
-          class="btn-orange-wide payment-btn" 
-          @click="handlePayment" 
+        <button
+          class="btn-orange-wide payment-btn"
+          @click="handlePayment"
           :disabled="!selectedPaymentMethod || cartItems.length === 0"
         >
-          {{ processingPayment ? 'Processing...' : 'Place Order & Pay' }}
+          {{ processingPayment ? "Processing..." : "Place Order & Pay" }}
         </button>
         <div class="dual-actions">
           <button class="btn-navy-full">KOT & Print</button>
@@ -244,51 +313,57 @@
     <ProfilePage v-if="showProfile" @close="showProfile = false" />
     <WalletPage v-if="showWallet" @close="showWallet = false" />
     <OrdersPage v-if="showOrders" @close="showOrders = false" />
-      <ScratchCard
-        v-if="showScratchCard"
-        :orderId="scratchCardOrderId"
-        @close="closeScratchCard"
-        @wallet-updated="updateWalletBalance"
-      />
+    <ScratchCard
+      v-if="showScratchCard"
+      :orderId="scratchCardOrderId"
+      @close="closeScratchCard"
+      @wallet-updated="updateWalletBalance"
+    />
 
-      <!-- 3D Visualizer Modal -->
-      <div v-if="show3DModal" class="view3d-overlay" @click.self="show3DModal = false">
-        <div class="view3d-container">
-          <button class="close-3d" @click="show3DModal = false">✕</button>
-          <div class="view3d-header">
-            <h3>{{ selectedProduct3D?.name }} - 3D View</h3>
-          </div>
-          <div class="view3d-body">
-            <!-- Real 3D Model -->
-            <model-viewer
-              v-if="selectedProduct3D && selectedProduct3D.model3D"
-              :src="getModelUrl(selectedProduct3D.model3D)"
-              :alt="selectedProduct3D.name"
-              auto-rotate
-              camera-controls
-              ar
-              shadow-intensity="1"
-              style="width: 100%; height: 300px"
-            ></model-viewer>
+    <!-- 3D Visualizer Modal -->
+    <div
+      v-if="show3DModal"
+      class="view3d-overlay"
+      @click.self="show3DModal = false"
+    >
+      <div class="view3d-container">
+        <button class="close-3d" @click="show3DModal = false">✕</button>
+        <div class="view3d-header">
+          <h3>{{ selectedProduct3D?.name }} - 3D View</h3>
+        </div>
+        <div class="view3d-body">
+          <!-- Real 3D Model -->
+          <model-viewer
+            v-if="selectedProduct3D && selectedProduct3D.model3D"
+            :src="getModelUrl(selectedProduct3D.model3D)"
+            :alt="selectedProduct3D.name"
+            auto-rotate
+            camera-controls
+            ar
+            shadow-intensity="1"
+            style="width: 100%; height: 300px"
+          ></model-viewer>
 
-            <!-- Simulated 3D Box -->
-            <ThreeDBox 
-              v-else-if="selectedProduct3D"
-              :image="getImageUrl(selectedProduct3D.image)"
-              :image-front="getImageUrl(selectedProduct3D.imageFront)"
-              :image-side="getImageUrl(selectedProduct3D.imageSide)"
-              :image-back="getImageUrl(selectedProduct3D.imageBack)"
-              :image-top="getImageUrl(selectedProduct3D.imageTop)"
-              :image-bottom="getImageUrl(selectedProduct3D.imageBottom)"
-              :shape="selectedProduct3D.shape"
-            />
-          </div>
-          <div class="view3d-footer">
-            <button class="btn-orange-new" @click="handleAddToCartFrom3D">Add to Order</button>
-          </div>
+          <!-- Simulated 3D Box -->
+          <ThreeDBox
+            v-else-if="selectedProduct3D"
+            :image="getImageUrl(selectedProduct3D.image)"
+            :image-front="getImageUrl(selectedProduct3D.imageFront)"
+            :image-side="getImageUrl(selectedProduct3D.imageSide)"
+            :image-back="getImageUrl(selectedProduct3D.imageBack)"
+            :image-top="getImageUrl(selectedProduct3D.imageTop)"
+            :image-bottom="getImageUrl(selectedProduct3D.imageBottom)"
+            :shape="selectedProduct3D.shape"
+          />
+        </div>
+        <div class="view3d-footer">
+          <button class="btn-orange-new" @click="handleAddToCartFrom3D">
+            Add to Order
+          </button>
         </div>
       </div>
     </div>
+  </div>
 </template>
 
 <script>
@@ -357,7 +432,7 @@ export default {
     productDiscount() {
       // Mock discount or calculate based on business logic
       return Math.round(this.cartTotal * 0.1); // 10% discount example
-    }
+    },
   },
   mounted() {
     this.fetchProducts();
@@ -371,7 +446,8 @@ export default {
     if (userStr) {
       try {
         const user = JSON.parse(userStr);
-        this.userName = user.name || (user.email ? user.email.split("@")[0] : "User");
+        this.userName =
+          user.name || (user.email ? user.email.split("@")[0] : "User");
       } catch (e) {
         console.error("Error parsing user data", e);
       }
@@ -414,10 +490,12 @@ export default {
           this.$router.push("/login");
           return;
         }
-        
-        // Determine quantity to add. 
+
+        // Determine quantity to add.
         // Backend requirement: Min 10 for initial add.
-        const inCart = this.cartItems.find(item => item.product._id === product._id);
+        const inCart = this.cartItems.find(
+          (item) => item.product._id === product._id
+        );
         const qtyToAdd = inCart ? 1 : 10;
 
         await axios.post("/api/cart/add", {
@@ -434,7 +512,11 @@ export default {
     async updateQty(productId, qty) {
       if (qty < 10) return; // Enforce min 10
       try {
-        await axios.post("/api/cart/add", { productId, quantity: qty, overwrite: true });
+        await axios.post("/api/cart/add", {
+          productId,
+          quantity: qty,
+          overwrite: true,
+        });
         this.fetchCart();
       } catch (err) {
         console.error(err);
@@ -464,7 +546,9 @@ export default {
     async fetchCategories() {
       try {
         const res = await axios.get("/api/categories");
-        this.categories = Array.isArray(res.data) ? res.data : res.data.categories || [];
+        this.categories = Array.isArray(res.data)
+          ? res.data
+          : res.data.categories || [];
       } catch (err) {
         console.error("Error fetching categories:", err);
       }
@@ -509,7 +593,7 @@ export default {
       this.scratchCardOrderId = null;
     },
     updateWalletBalance(newBalance) {
-      if (typeof newBalance === 'number') {
+      if (typeof newBalance === "number") {
         this.walletBalance = newBalance;
       } else {
         this.fetchWalletBalance();
@@ -543,8 +627,17 @@ export default {
     },
     checkProfileCompletion() {
       if (!this.userProfile) return false;
-      const requiredFields = ["name", "phone", "pincode", "storeName", "storeAddress"];
-      return requiredFields.every(field => this.userProfile[field] && this.userProfile[field].trim() !== "");
+      const requiredFields = [
+        "name",
+        "phone",
+        "pincode",
+        "storeName",
+        "storeAddress",
+      ];
+      return requiredFields.every(
+        (field) =>
+          this.userProfile[field] && this.userProfile[field].trim() !== ""
+      );
     },
     async handlePayment() {
       if (!this.checkProfileCompletion()) {
@@ -562,7 +655,7 @@ export default {
       this.processingPayment = true;
       try {
         const res = await axios.post("/api/orders/place-order-wallet", {
-          items: this.cartItems.map(item => ({
+          items: this.cartItems.map((item) => ({
             product: item.product._id,
             quantity: item.quantity,
             price: item.product.discountPrice,
@@ -598,7 +691,7 @@ export default {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                items: this.cartItems.map(item => ({
+                items: this.cartItems.map((item) => ({
                   product: item.product._id,
                   quantity: item.quantity,
                   price: item.product.discountPrice,
@@ -610,7 +703,7 @@ export default {
               alert("Payment verification failed");
             }
           },
-          theme: { color: "#ff9a44" }
+          theme: { color: "#ff9a44" },
         };
         const rzp = new window.Razorpay(options);
         rzp.open();
@@ -625,7 +718,7 @@ export default {
       this.scratchCardOrderId = orderId;
       this.showScratchCard = true;
       this.selectedPaymentMethod = null;
-    }
+    },
   },
 };
 </script>
@@ -1441,8 +1534,12 @@ export default {
 }
 
 @media (max-width: 1400px) {
-  .pos-sidebar { width: 220px; }
-  .pos-order-panel { width: 320px; }
+  .pos-sidebar {
+    width: 220px;
+  }
+  .pos-order-panel {
+    width: 320px;
+  }
 }
 
 @media (max-width: 1024px) {

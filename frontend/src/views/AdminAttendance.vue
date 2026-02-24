@@ -8,15 +8,19 @@
       <div class="header-right">
         <div class="date-picker-wrapper">
           <label for="attendance-date">Select Date: </label>
-          <input 
-            type="date" 
-            id="attendance-date" 
-            v-model="selectedDate" 
+          <input
+            type="date"
+            id="attendance-date"
+            v-model="selectedDate"
             @change="fetchAttendance"
             class="date-input"
           />
         </div>
-        <button @click="fetchAttendance" class="btn-refresh" :disabled="loading">
+        <button
+          @click="fetchAttendance"
+          class="btn-refresh"
+          :disabled="loading"
+        >
           <span v-if="loading">Refreshing...</span>
           <span v-else>🔄 Refresh</span>
         </button>
@@ -56,25 +60,35 @@
             <td class="name-cell">
               <div class="staff-info">
                 <div class="avatar-sm">
-                  {{ record.staffName ? record.staffName.charAt(0).toUpperCase() : '?' }}
+                  {{
+                    record.staffName
+                      ? record.staffName.charAt(0).toUpperCase()
+                      : "?"
+                  }}
                 </div>
-                <span>{{ record.staffName || '—' }}</span>
+                <span>{{ record.staffName || "—" }}</span>
               </div>
             </td>
-            <td>{{ record.position || '—' }}</td>
+            <td>{{ record.position || "—" }}</td>
             <td class="time-cell">{{ formatTime(record.inTime) }}</td>
             <td class="time-cell">{{ formatTime(record.outTime) }}</td>
             <td class="hours-cell">
-              <span v-if="record.workingHours" class="hours-badge">{{ record.workingHours }}</span>
+              <span v-if="record.workingHours" class="hours-badge">{{
+                record.workingHours
+              }}</span>
               <span v-else class="pending">—</span>
             </td>
             <td>
-              <span v-if="record.outTime" class="status-badge success">Checked Out</span>
+              <span v-if="record.outTime" class="status-badge success"
+                >Checked Out</span
+              >
               <span v-else class="status-badge progress">Checked In</span>
             </td>
           </tr>
           <tr v-if="attendanceRecords.length === 0 && !loading">
-            <td colspan="6" class="no-data">No attendance records found for this date.</td>
+            <td colspan="6" class="no-data">
+              No attendance records found for this date.
+            </td>
           </tr>
         </tbody>
       </table>
@@ -91,24 +105,27 @@ export default {
   data() {
     return {
       attendanceRecords: [],
-      selectedDate: new Date().toISOString().split('T')[0],
+      selectedDate: new Date().toISOString().split("T")[0],
       loading: false,
-      refreshInterval: null
+      refreshInterval: null,
     };
   },
   computed: {
     currentlyInCount() {
-      return this.attendanceRecords.filter(r => r.inTime && !r.outTime).length;
+      return this.attendanceRecords.filter((r) => r.inTime && !r.outTime)
+        .length;
     },
     completedCount() {
-      return this.attendanceRecords.filter(r => r.outTime).length;
-    }
+      return this.attendanceRecords.filter((r) => r.outTime).length;
+    },
   },
   methods: {
     async fetchAttendance() {
       this.loading = true;
       try {
-        const res = await axios.get(`/api/attendance?date=${this.selectedDate}`);
+        const res = await axios.get(
+          `/api/attendance?date=${this.selectedDate}`
+        );
         if (res.data.success) {
           this.attendanceRecords = res.data.records;
         }
@@ -121,16 +138,19 @@ export default {
     formatTime(dateStr) {
       if (!dateStr) return "—";
       const date = new Date(dateStr);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    },
   },
   mounted() {
     this.fetchAttendance();
-    
+
     // Listen for real-time attendance updates
     socket.on("attendanceUpdate", () => {
       // Only refresh if we are looking at today's date
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
       if (this.selectedDate === today) {
         this.fetchAttendance();
       }
@@ -138,7 +158,7 @@ export default {
   },
   beforeUnmount() {
     socket.off("attendanceUpdate");
-  }
+  },
 };
 </script>
 
@@ -220,7 +240,7 @@ export default {
   background: white;
   padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -238,8 +258,12 @@ export default {
   color: #1e293b;
 }
 
-.green-text { color: #10b981 !important; }
-.blue-text { color: #3b82f6 !important; }
+.green-text {
+  color: #10b981 !important;
+}
+.blue-text {
+  color: #3b82f6 !important;
+}
 
 .table-container {
   background: white;

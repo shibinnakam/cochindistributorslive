@@ -178,7 +178,9 @@
                 </div>
                 <div class="employee-name-block">
                   <span class="employee-name">{{ s.name || "—" }}</span>
-                  <span v-if="s.rfidUid" class="rfid-badge">🪪 {{ s.rfidUid }}</span>
+                  <span v-if="s.rfidUid" class="rfid-badge"
+                    >🪪 {{ s.rfidUid }}</span
+                  >
                 </div>
               </div>
             </td>
@@ -339,9 +341,12 @@
           <button class="modal-close" @click="closeRfidModal">✕</button>
         </div>
         <div class="rfid-modal-body">
-          <p class="rfid-staff-name">Staff: <strong>{{ rfidForm.staffName }}</strong></p>
+          <p class="rfid-staff-name">
+            Staff: <strong>{{ rfidForm.staffName }}</strong>
+          </p>
           <p v-if="rfidForm.currentUid" class="rfid-current">
-            Current UID: <span class="rfid-badge-lg">{{ rfidForm.currentUid }}</span>
+            Current UID:
+            <span class="rfid-badge-lg">{{ rfidForm.currentUid }}</span>
           </p>
           <p v-else class="rfid-current">No RFID card assigned yet.</p>
           <form @submit.prevent="submitRfid" class="invite-form-modal">
@@ -352,11 +357,17 @@
                 type="text"
                 placeholder="e.g. A1B2C3"
                 maxlength="10"
-                @input="rfidForm.uid = rfidForm.uid.toUpperCase().replace(/[^A-Z0-9]/g, '')"
+                @input="
+                  rfidForm.uid = rfidForm.uid
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, '')
+                "
                 required
               />
               <p v-if="rfidError" class="field-error">{{ rfidError }}</p>
-              <p class="rfid-hint">3–10 characters, uppercase letters (A–Z) and numbers (0–9) only.</p>
+              <p class="rfid-hint">
+                3–10 characters, uppercase letters (A–Z) and numbers (0–9) only.
+              </p>
             </div>
             <button type="submit" class="btn-submit">Save RFID UID</button>
           </form>
@@ -626,17 +637,21 @@ export default {
     async submitRfid() {
       const uid = this.rfidForm.uid.trim();
       if (!/^[A-Z0-9]{3,10}$/.test(uid)) {
-        this.rfidError = "UID must be 3–10 uppercase letters (A–Z) and numbers (0–9) only.";
+        this.rfidError =
+          "UID must be 3–10 uppercase letters (A–Z) and numbers (0–9) only.";
         return;
       }
       this.rfidError = "";
       try {
-        const res = await axios.put(`/api/staff/rfid/${this.rfidForm.id}`, { rfidUid: uid });
+        const res = await axios.put(`/api/staff/rfid/${this.rfidForm.id}`, {
+          rfidUid: uid,
+        });
         this.showToast(res.data.message || "RFID UID assigned successfully");
         this.closeRfidModal();
         this.fetchStaff();
       } catch (err) {
-        this.rfidError = err.response?.data?.message || "Error assigning RFID UID";
+        this.rfidError =
+          err.response?.data?.message || "Error assigning RFID UID";
       }
     },
 

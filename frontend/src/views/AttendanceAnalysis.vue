@@ -3,15 +3,15 @@
     <div class="analysis-header">
       <div class="controls">
         <label for="month-select">Select Month:</label>
-        <input 
-          type="month" 
-          id="month-select" 
-          v-model="selectedMonth" 
+        <input
+          type="month"
+          id="month-select"
+          v-model="selectedMonth"
           @change="fetchAnalysis"
           class="month-input"
-        >
+        />
         <button @click="fetchAnalysis" class="refresh-btn" :disabled="loading">
-          {{ loading ? 'Loading...' : '🔄 Refresh' }}
+          {{ loading ? "Loading..." : "🔄 Refresh" }}
         </button>
       </div>
     </div>
@@ -21,14 +21,19 @@
       <div class="card-header">
         <h3>Working Hours Distribution</h3>
         <span class="legend">
-          <span class="legend-item"><span class="dot green"></span> Present</span>
+          <span class="legend-item"
+            ><span class="dot green"></span> Present</span
+          >
           <span class="legend-item"><span class="dot red"></span> Absent</span>
         </span>
       </div>
       <div class="chart-container">
         <canvas ref="attendanceChart"></canvas>
       </div>
-      <div v-if="!loading && (!staffList || staffList.length === 0)" class="no-data">
+      <div
+        v-if="!loading && (!staffList || staffList.length === 0)"
+        class="no-data"
+      >
         No staff records found for this period.
       </div>
     </div>
@@ -58,10 +63,14 @@
               </td>
               <td>{{ staff.position }}</td>
               <td>
-                <span class="hours-badge">{{ formatMs(summaries[staff._id]?.totalMs) }}</span>
+                <span class="hours-badge">{{
+                  formatMs(summaries[staff._id]?.totalMs)
+                }}</span>
               </td>
               <td>
-                {{ formatMs(summaries[staff._id]?.totalMs / workingDaysInMonth) }}
+                {{
+                  formatMs(summaries[staff._id]?.totalMs / workingDaysInMonth)
+                }}
               </td>
             </tr>
           </tbody>
@@ -72,16 +81,18 @@
 </template>
 
 <script>
-import Chart from 'chart.js/auto';
-import axios from '@/utils/axios';
+import Chart from "chart.js/auto";
+import axios from "@/utils/axios";
 
 export default {
-  name: 'AttendanceAnalysis',
+  name: "AttendanceAnalysis",
   data() {
     const now = new Date();
     // UTC+5:30 for consistency with backend todayIST
     const istNow = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
-    const month = `${istNow.getFullYear()}-${String(istNow.getMonth() + 1).padStart(2, '0')}`;
+    const month = `${istNow.getFullYear()}-${String(
+      istNow.getMonth() + 1
+    ).padStart(2, "0")}`;
     return {
       selectedMonth: month,
       loading: false,
@@ -90,20 +101,20 @@ export default {
       attendanceData: {},
       summaries: {},
       chart: null,
-      todayStr: istNow.toISOString().split('T')[0]
+      todayStr: istNow.toISOString().split("T")[0],
     };
   },
   computed: {
     daysInMonth() {
       if (!this.selectedMonth) return 30;
-      const [year, month] = this.selectedMonth.split('-').map(Number);
+      const [year, month] = this.selectedMonth.split("-").map(Number);
       return new Date(year, month, 0).getDate();
     },
     workingDaysInMonth() {
       if (!this.daysList || this.daysList.length === 0) return this.daysInMonth;
       // Count non-Sunday days in the daysList
-      return this.daysList.filter(day => new Date(day).getDay() !== 0).length;
-    }
+      return this.daysList.filter((day) => new Date(day).getDay() !== 0).length;
+    },
   },
   mounted() {
     this.fetchAnalysis();
@@ -120,7 +131,9 @@ export default {
     async fetchAnalysis() {
       this.loading = true;
       try {
-        const res = await axios.get(`/api/attendance/analysis?month=${this.selectedMonth}`);
+        const res = await axios.get(
+          `/api/attendance/analysis?month=${this.selectedMonth}`
+        );
         if (res.data.success) {
           this.staffList = res.data.staff;
           this.daysList = res.data.days;
@@ -135,52 +148,54 @@ export default {
       }
     },
     renderChart() {
-      const ctx = this.$refs.attendanceChart.getContext('2d');
+      const ctx = this.$refs.attendanceChart.getContext("2d");
       if (this.chart) {
         this.chart.destroy();
       }
 
-      const staffNames = this.staffList.map(s => s.name);
-      const dayLabels = Array.from({ length: this.daysInMonth }, (_, i) => String(i + 1));
-      
+      const staffNames = this.staffList.map((s) => s.name);
+      const dayLabels = Array.from({ length: this.daysInMonth }, (_, i) =>
+        String(i + 1)
+      );
+
       const datasets = [
         {
-          label: 'Present',
+          label: "Present",
           data: [],
-          backgroundColor: '#22c55e', // Green
+          backgroundColor: "#22c55e", // Green
           pointRadius: 8,
           pointHoverRadius: 10,
-          order: 1
+          order: 1,
         },
         {
-          label: 'Absent',
+          label: "Absent",
           data: [],
-          backgroundColor: '#ef4444', // Red
+          backgroundColor: "#ef4444", // Red
           pointRadius: 8,
           pointHoverRadius: 10,
-          order: 2
-        }
+          order: 2,
+        },
       ];
 
       this.staffList.forEach((staff) => {
         this.daysList.forEach((dayStr) => {
-          const dayNum = parseInt(dayStr.split('-')[2]);
+          const dayNum = parseInt(dayStr.split("-")[2]);
           const record = this.attendanceData[staff._id]?.[dayStr];
           const isSunday = new Date(dayStr).getDay() === 0;
-          
+
           if (record && record.present) {
             datasets[0].data.push({
               x: staff.name,
               y: String(dayNum),
               hours: record.hours,
-              isHoliday: isSunday
+              isHoliday: isSunday,
             });
           } else {
             if (dayStr <= this.todayStr && !isSunday) {
-               datasets[1].data.push({
+              datasets[1].data.push({
                 x: staff.name,
                 y: String(dayNum),
-                hours: 0
+                hours: 0,
               });
             }
           }
@@ -188,119 +203,143 @@ export default {
       });
 
       this.chart = new Chart(ctx, {
-        type: 'scatter',
+        type: "scatter",
         data: {
-          datasets: datasets
+          datasets: datasets,
         },
-        plugins: [{
-          id: 'sundayLabels',
-          beforeDraw: (chart) => {
-            const { ctx, chartArea: { left, right }, scales: { y } } = chart;
-            ctx.save();
-            this.daysList.forEach((dayStr) => {
-              if (new Date(dayStr).getDay() === 0) {
-                const dayNum = parseInt(dayStr.split('-')[2]);
-                const yPos = y.getPixelForValue(String(dayNum));
-                
-                // Calculate row height carefully
-                const rowHeight = Math.abs(y.getPixelForValue('1') - y.getPixelForValue('2')) || 30;
-                const h = rowHeight * 0.8; // Use 80% of row height for the box
-                
-                // Draw a nice rounded rectangle/pill background for the holiday
-                ctx.fillStyle = 'rgba(239, 246, 255, 0.9)'; // Very light blue
-                ctx.strokeStyle = '#3b82f6'; // Blue border
-                ctx.lineWidth = 1;
-                
-                const rectX = left + 10;
-                const rectW = (right - left) - 20;
-                const rectY = yPos - h/2;
-                
-                // Rounded rect manual path
-                const radius = 4;
-                ctx.beginPath();
-                ctx.moveTo(rectX + radius, rectY);
-                ctx.lineTo(rectX + rectW - radius, rectY);
-                ctx.quadraticCurveTo(rectX + rectW, rectY, rectX + rectW, rectY + radius);
-                ctx.lineTo(rectX + rectW, rectY + h - radius);
-                ctx.quadraticCurveTo(rectX + rectW, rectY + h, rectX + rectW - radius, rectY + h);
-                ctx.lineTo(rectX + radius, rectY + h);
-                ctx.quadraticCurveTo(rectX, rectY + h, rectX, rectY + h - radius);
-                ctx.lineTo(rectX, rectY + radius);
-                ctx.quadraticCurveTo(rectX, rectY, rectX + radius, rectY);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-                
-                // Text
-                ctx.font = 'bold 12px "Inter", sans-serif';
-                ctx.fillStyle = '#1d4ed8'; // Darker blue
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('sunday holiday', (left + right) / 2, yPos);
-              }
-            });
-            ctx.restore();
-          }
-        }],
+        plugins: [
+          {
+            id: "sundayLabels",
+            beforeDraw: (chart) => {
+              const {
+                ctx,
+                chartArea: { left, right },
+                scales: { y },
+              } = chart;
+              ctx.save();
+              this.daysList.forEach((dayStr) => {
+                if (new Date(dayStr).getDay() === 0) {
+                  const dayNum = parseInt(dayStr.split("-")[2]);
+                  const yPos = y.getPixelForValue(String(dayNum));
+
+                  // Calculate row height carefully
+                  const rowHeight =
+                    Math.abs(
+                      y.getPixelForValue("1") - y.getPixelForValue("2")
+                    ) || 30;
+                  const h = rowHeight * 0.8; // Use 80% of row height for the box
+
+                  // Draw a nice rounded rectangle/pill background for the holiday
+                  ctx.fillStyle = "rgba(239, 246, 255, 0.9)"; // Very light blue
+                  ctx.strokeStyle = "#3b82f6"; // Blue border
+                  ctx.lineWidth = 1;
+
+                  const rectX = left + 10;
+                  const rectW = right - left - 20;
+                  const rectY = yPos - h / 2;
+
+                  // Rounded rect manual path
+                  const radius = 4;
+                  ctx.beginPath();
+                  ctx.moveTo(rectX + radius, rectY);
+                  ctx.lineTo(rectX + rectW - radius, rectY);
+                  ctx.quadraticCurveTo(
+                    rectX + rectW,
+                    rectY,
+                    rectX + rectW,
+                    rectY + radius
+                  );
+                  ctx.lineTo(rectX + rectW, rectY + h - radius);
+                  ctx.quadraticCurveTo(
+                    rectX + rectW,
+                    rectY + h,
+                    rectX + rectW - radius,
+                    rectY + h
+                  );
+                  ctx.lineTo(rectX + radius, rectY + h);
+                  ctx.quadraticCurveTo(
+                    rectX,
+                    rectY + h,
+                    rectX,
+                    rectY + h - radius
+                  );
+                  ctx.lineTo(rectX, rectY + radius);
+                  ctx.quadraticCurveTo(rectX, rectY, rectX + radius, rectY);
+                  ctx.closePath();
+                  ctx.fill();
+                  ctx.stroke();
+
+                  // Text
+                  ctx.font = 'bold 12px "Inter", sans-serif';
+                  ctx.fillStyle = "#1d4ed8"; // Darker blue
+                  ctx.textAlign = "center";
+                  ctx.textBaseline = "middle";
+                  ctx.fillText("sunday holiday", (left + right) / 2, yPos);
+                }
+              });
+              ctx.restore();
+            },
+          },
+        ],
         options: {
           responsive: true,
           maintainAspectRatio: false,
           layout: {
             padding: {
-              bottom: 20
-            }
+              bottom: 20,
+            },
           },
           scales: {
             x: {
-              type: 'category',
+              type: "category",
               labels: staffNames,
               offset: true,
               title: {
                 display: true,
-                text: 'Staff Members',
-                font: { weight: 'bold' }
+                text: "Staff Members",
+                font: { weight: "bold" },
               },
               ticks: {
                 autoSkip: false,
                 maxRotation: 45,
                 minRotation: 45,
-                color: '#1e293b'
+                color: "#1e293b",
               },
               grid: {
                 display: true,
-                color: '#e2e8f0'
-              }
+                color: "#e2e8f0",
+              },
             },
             y: {
-              type: 'category',
+              type: "category",
               labels: dayLabels,
               offset: true,
               title: {
                 display: true,
-                text: 'Day of Month',
-                font: { weight: 'bold' }
+                text: "Day of Month",
+                font: { weight: "bold" },
               },
               ticks: {
                 autoSkip: false,
-                color: '#1e293b'
+                color: "#1e293b",
               },
               grid: {
-                color: '#e2e8f0'
-              }
-            }
+                color: "#e2e8f0",
+              },
+            },
           },
           plugins: {
             legend: {
-              position: 'top',
-              align: 'end',
+              position: "top",
+              align: "end",
               labels: {
                 usePointStyle: true,
-                pointStyle: 'circle',
-                padding: 15
-              }
+                pointStyle: "circle",
+                padding: 15,
+              },
             },
             tooltip: {
-              backgroundColor: 'rgba(15, 23, 42, 0.9)',
+              backgroundColor: "rgba(15, 23, 42, 0.9)",
               padding: 12,
               displayColors: true,
               callbacks: {
@@ -309,15 +348,17 @@ export default {
                   const day = context.raw.y;
                   const hours = context.raw.hours;
                   const isHoliday = context.raw.isHoliday;
-                  return `${staffName} | Day ${day}${isHoliday ? ' (Holiday)' : ''}: ${hours.toFixed(2)}h`;
-                }
-              }
-            }
-          }
-        }
+                  return `${staffName} | Day ${day}${
+                    isHoliday ? " (Holiday)" : ""
+                  }: ${hours.toFixed(2)}h`;
+                },
+              },
+            },
+          },
+        },
       });
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -339,7 +380,7 @@ export default {
   background: white;
   padding: 15px 20px;
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   width: fit-content;
 }
 
@@ -411,8 +452,12 @@ export default {
   border-radius: 50%;
 }
 
-.dot.green { background-color: #4ade80; }
-.dot.red { background-color: #f87171; }
+.dot.green {
+  background-color: #4ade80;
+}
+.dot.red {
+  background-color: #f87171;
+}
 
 .table-wrapper {
   overflow-x: auto;
