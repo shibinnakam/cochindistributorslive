@@ -5,9 +5,7 @@
         <div class="logo-circle">
           <img src="@/assets/logo.jpeg" alt="Logo" class="site-logo" />
         </div>
-        <span class="site-name"
-          >Bready <span class="accent-text">Bake</span></span
-        >
+        <span class="site-name">Cochin <span class="accent-text">Distributors</span></span>
       </router-link>
 
       <!-- Hamburger Menu Button -->
