@@ -365,8 +365,9 @@ export default {
 
 .product-actions {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
+  gap: 1rem;
   border-top: 1px solid #f5f5f5;
   padding-top: 1.5rem;
 }
@@ -388,6 +389,7 @@ export default {
   cursor: pointer;
   transition: all 0.3s ease;
   text-transform: uppercase;
+  width: 100%;
 }
 
 .btn-order:hover {
