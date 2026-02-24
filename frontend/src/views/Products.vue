@@ -307,12 +307,19 @@ export default {
   position: relative;
   height: 280px;
   overflow: hidden;
+  background-color: #fcfcfc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
 }
 
 .product-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
   transition: transform 0.6s ease;
 }
 
