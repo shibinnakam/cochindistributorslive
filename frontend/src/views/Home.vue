@@ -230,7 +230,7 @@ export default {
         el.scrollIntoView({ behavior: 'smooth' });
       }
     },
-    orderProduct(product) {
+    orderProduct() {
       // Redirect to user page or login if not logged in
       const token = localStorage.getItem("token");
       if (!token) {
