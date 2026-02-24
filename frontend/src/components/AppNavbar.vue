@@ -16,7 +16,7 @@
       <ul class="nav-links" :class="{ active: isMenuOpen }">
         <li><router-link to="/" exact @click="closeMenu">Home</router-link></li>
         <li><router-link to="/about" @click="closeMenu">About</router-link></li>
-        <li><a href="#products-section" @click="closeMenu">Products</a></li>
+        <li><router-link to="/products" @click="closeMenu">Products</router-link></li>
         <li>
           <router-link to="/contact" @click="closeMenu">Contact</router-link>
         </li>

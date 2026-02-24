@@ -12,12 +12,14 @@ import UserPage from "../views/UserPage.vue";
 import AdminPage from "../views/AdminPage.vue";
 import StaffRegister from "@/views/StaffRegister.vue";
 import ProductEdit from "@/views/ProductEdit.vue";
+import Products from "../views/Products.vue";
 
 const routes = [
   { path: "/", name: "Home", component: Home },
   { path: "/login", name: "LoginPage", component: Login },
   { path: "/about", name: "AboutPage", component: About },
   { path: "/contact", name: "ContactPage", component: Contact },
+  { path: "/products", name: "Products", component: Products },
   { path: "/profile", name: "ProfilePage", component: ProfilePage },
   {
     path: "/forgot-password",
@@ -118,6 +120,7 @@ router.beforeEach(async (to, from, next) => {
     "LoginPage",
     "AboutPage",
     "ContactPage",
+    "Products",
     "ForgotPassword",
     "ResetPassword",
     "SetPassword",

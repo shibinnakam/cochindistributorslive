@@ -92,152 +92,23 @@
       </div>
     </section>
 
-    <!-- Dynamic Menu Section -->
-    <section id="products-section" class="menu-section container">
-      <div class="menu-header">
-        <h2 class="section-title">Our Menu</h2>
-        <p class="section-subtitle">
-          Browse through our delectable menu of tasty treats and baked goodies.
-        </p>
-      </div>
-
-      <!-- Category Tabs -->
-      <div class="category-tabs">
-        <button 
-          class="tab-item" 
-          :class="{ active: selectedCategory === null }"
-          @click="selectedCategory = null"
-        >
-          All
-        </button>
-        <button 
-          v-for="cat in categories" 
-          :key="cat._id" 
-          class="tab-item"
-          :class="{ active: selectedCategory === cat._id }"
-          @click="selectedCategory = cat._id"
-        >
-          <span class="cat-icon">{{ getCategoryIcon(cat.name) }}</span>
-          {{ cat.name }}
-        </button>
-      </div>
-
-      <!-- Product Grid -->
-      <div class="product-grid">
-        <div v-if="loading" class="loading-state">
-          <div class="loader"></div>
-          <p>Freshly baking your menu...</p>
-        </div>
-        <div v-else-if="filteredProducts.length === 0" class="empty-state">
-          <p>No delicious items found in this category yet.</p>
-        </div>
-        <div 
-          v-else 
-          v-for="product in filteredProducts" 
-          :key="product._id" 
-          class="product-card"
-          v-animate-on-scroll
-        >
-          <div class="product-img-wrapper">
-            <img 
-              :src="getImageUrl(product.image || product.imageFront)" 
-              :alt="product.name"
-              class="product-img"
-            />
-            <div class="product-badge" v-if="product.discountPrice < product.originalPrice">Sale</div>
-          </div>
-          <div class="product-info">
-            <h3 class="product-name">{{ product.name }}</h3>
-            <p class="product-desc">{{ product.description }}</p>
-            <div class="product-actions">
-              <span class="product-price">₹{{ product.discountPrice }}</span>
-              <button class="btn-order" @click="orderProduct(product)">Order Now</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 
 <script>
-import axios from "@/utils/axios";
 
 export default {
   name: "HomePage",
   data() {
     return {
-      products: [],
-      categories: [],
-      selectedCategory: null,
-      loading: false,
-      categoryIconMap: {
-        "Cookies": "🍪",
-        "Cakes": "🍰",
-        "Bread": "🍞",
-        "Pastry": "🥐",
-        "Donuts": "🍩",
-        "Cupcakes": "🧁",
-        "Burgers": "🍔",
-        "Pizza": "🍕"
-      }
+      // Data cleaned up after products extraction
     };
   },
-  computed: {
-    filteredProducts() {
-      if (!this.selectedCategory) return this.products;
-      return this.products.filter(p => p.category && (p.category._id === this.selectedCategory || p.category === this.selectedCategory));
-    }
-  },
   mounted() {
-    this.fetchData();
   },
   methods: {
-    async fetchData() {
-      this.loading = true;
-      try {
-        const [prodRes, catRes] = await Promise.all([
-          axios.get("/api/products/getproduct"),
-          axios.get("/api/categories")
-        ]);
-        
-        if (prodRes.data.success) {
-          this.products = prodRes.data.products;
-        }
-        
-        this.categories = Array.isArray(catRes.data) 
-          ? catRes.data 
-          : (catRes.data.categories || []);
-          
-      } catch (err) {
-        console.error("Error fetching home data:", err);
-      } finally {
-        this.loading = false;
-      }
-    },
-    getCategoryIcon(name) {
-      return this.categoryIconMap[name] || "🍴";
-    },
-    getImageUrl(path) {
-      if (!path) return "https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&q=80&w=400";
-      const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
-      if (path.startsWith("http")) return path;
-      return path.startsWith("/") ? `${apiUrl}${path}` : `${apiUrl}/${path}`;
-    },
     scrollToProducts() {
-      const el = document.getElementById('products-section');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-      }
-    },
-    orderProduct() {
-      // Redirect to user page or login if not logged in
-      const token = localStorage.getItem("token");
-      if (!token) {
-        this.$router.push("/login");
-      } else {
-        this.$router.push("/user-page");
-      }
+      this.$router.push("/products");
     },
     scrollToAbout() {
       // Optional: preserve about scroll if needed elsewhere
@@ -468,185 +339,6 @@ export default {
   border: 15px solid white;
 }
 
-/* --- Dynamic Menu Section --- */
-.menu-section {
-  padding: 8rem 0;
-}
-
-.category-tabs {
-  display: flex;
-  justify-content: center;
-  gap: 1.5rem;
-  margin-bottom: 5rem;
-  flex-wrap: wrap;
-}
-
-.tab-item {
-  padding: 0.8rem 2rem;
-  background: white;
-  border: 1px solid #e0d5d0;
-  border-radius: 50px;
-  color: #5d4037;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.tab-item:hover {
-  border-color: #efa962;
-  color: #efa962;
-  transform: translateY(-3px);
-}
-
-.tab-item.active {
-  background-color: #efa962;
-  color: white;
-  border-color: #efa962;
-  box-shadow: 0 10px 20px rgba(239, 169, 98, 0.2);
-}
-
-.cat-icon {
-  font-size: 1.2rem;
-}
-
-/* Product Grid */
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 3rem;
-  min-height: 400px;
-}
-
-.product-card {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(74, 55, 45, 0.04);
-  transition: all 0.4s ease;
-  opacity: 0;
-  transform: translateY(30px);
-}
-
-.product-card.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.product-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 20px 50px rgba(74, 55, 45, 0.08);
-}
-
-.product-img-wrapper {
-  position: relative;
-  height: 250px;
-  overflow: hidden;
-}
-
-.product-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.6s ease;
-}
-
-.product-card:hover .product-img {
-  transform: scale(1.1);
-}
-
-.product-badge {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: #ff5252;
-  color: white;
-  padding: 0.4rem 1rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.product-info {
-  padding: 2rem;
-}
-
-.product-name {
-  font-size: 1.4rem;
-  color: #3e2723;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
-}
-
-.product-desc {
-  font-size: 0.9rem;
-  color: #8d6e63;
-  line-height: 1.6;
-  margin-bottom: 2rem;
-  height: 2.8rem;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.product-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.product-price {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #efa962;
-}
-
-.btn-order {
-  background: #3e2723;
-  color: white;
-  border: none;
-  padding: 0.7rem 1.2rem;
-  border-radius: 4px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-}
-
-.btn-order:hover {
-  background: #efa962;
-}
-
-/* Loading & States */
-.loading-state, .empty-state {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 5rem 0;
-}
-
-.loader {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #fff5e6;
-  border-top: 4px solid #efa962;
-  border-radius: 50%;
-  margin: 0 auto 2rem;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 @media (max-width: 1024px) {
   .features-grid {
     grid-template-columns: 1fr 1fr;
@@ -683,15 +375,6 @@ export default {
   }
   .main-title {
     font-size: 2.8rem;
-  }
-  .product-grid {
-    grid-template-columns: 1fr;
-  }
-  .category-tabs {
-    gap: 0.8rem;
-  }
-  .tab-item {
-    padding: 0.6rem 1.5rem;
   }
 }
 </style>
