@@ -238,8 +238,7 @@ export default {
       } else {
         this.$router.push("/user-page");
       }
-    }
-  },
+    },
     scrollToAbout() {
       // Optional: preserve about scroll if needed elsewhere
     },
