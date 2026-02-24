@@ -5,12 +5,11 @@
       <div class="hero-content container">
         <div class="hero-text">
           <h1 class="hero-title">
-            Delicious Baked <br /><span class="accent-font">Goodness</span>
+            Your Trusted <br /><span class="accent-font">Distribution Partner</span>
           </h1>
           <p class="hero-subtitle">
-            Start your morning the right way with our delicious, homemade bread.
-            Shop our huge selection and variety to find the perfect baked
-            goodness for your family.
+            Delivering quality packaged food products and beverages across Idukki for over 13 years. 
+            Reliable, efficient, and dedicated to your business growth.
           </p>
           <button class="btn-primary" @click="scrollToProducts">
             Shop Now
@@ -29,31 +28,31 @@
 
     <!-- Features Section -->
     <section class="features-section container">
-      <h2 class="section-title main-title">Indulge In The Taste</h2>
+      <h2 class="section-title main-title">Why Choose Us?</h2>
       <p class="section-subtitle">
-        Specially crafted for your delight, using the finest ingredients and
-        traditional recipes.
+        With 13 years of expertise in the FMGC distribution sector, we ensure 
+        timely and reliable service for all your retail needs.
       </p>
 
       <div class="features-grid">
         <div class="feature-column left">
           <div class="feature-item" v-animate-on-scroll>
-            <div class="feature-icon">🥖</div>
+            <div class="feature-icon">🚚</div>
             <div class="feature-text">
-              <h3>Gluten Free Food</h3>
+              <h3>Efficient Logistics</h3>
               <p>
-                Everything on our menu has gluten free options for you. Healthy
-                food has never tasted better.
+                Operating with our own self-managed delivery vehicles to ensure 
+                timely and reliable product transportation.
               </p>
             </div>
           </div>
           <div class="feature-item" v-animate-on-scroll>
-            <div class="feature-icon">🍓</div>
+            <div class="feature-icon">🌟</div>
             <div class="feature-text">
-              <h3>Fresh Ingredients</h3>
+              <h3>13 Years Experience</h3>
               <p>
-                We use only fresh ingredients from local suppliers for our food.
-                Get a taste of the best quality.
+                A well-established reputation for reliability and quality service 
+                across the entire Idukki region.
               </p>
             </div>
           </div>
@@ -69,22 +68,22 @@
 
         <div class="feature-column right">
           <div class="feature-item" v-animate-on-scroll>
-            <div class="feature-icon">🍞</div>
+            <div class="feature-icon">🛍️</div>
             <div class="feature-text">
-              <h3>Homemade Bread</h3>
+              <h3>Premium FMCG</h3>
               <p>
-                Taste the best, oven fresh gourmet homemade bread, cookies,
-                cakes, pastries and much more.
+                Wholesale distribution of top-tier packaged foods, snacks, 
+                and beverages from trusted brands.
               </p>
             </div>
           </div>
           <div class="feature-item" v-animate-on-scroll>
-            <div class="feature-icon">🥗</div>
+            <div class="feature-icon">👥</div>
             <div class="feature-text">
-              <h3>Healthy & Tasty</h3>
+              <h3>Dedicated Team</h3>
               <p>
-                Live a healthier life with freshly baked food that tastes good.
-                Get our delicious baked food.
+                A professional workforce of 10 staff members committed to 
+                smooth operations and customer satisfaction.
               </p>
             </div>
           </div>

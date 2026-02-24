@@ -10,42 +10,46 @@
     <section class="our-story container">
       <div class="story-grid">
         <div class="story-image" v-animate-on-scroll>
-          <img src="https://images.unsplash.com/photo-1583394202118-028302f37e44?auto=format&fit=crop&q=80&w=800" alt="Our Chef" class="chef-img" />
+          <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=800" alt="Warehouse Distribution" class="chef-img" />
         </div>
         <div class="story-content" v-animate-on-scroll>
-          <h2 class="section-title">Our Story</h2>
+          <h2 class="section-title">Our Heritage</h2>
           <p class="story-text">
-            We began our journey with a passion for good, homemade food. Our founder started this bakery to share his love of bread, cakes, pastries and other baked goodness with the world. Supported by our local farmers and suppliers, we have started this bakery to bring people together from far and wide with the love of freshly made food that tastes like home.
+            Cochin Distributors is a well-established merchant distribution agency located in Kattappana, Idukki. With over 13 years of experience, we have built a strong reputation for reliability, efficiency, and quality service across the Idukki region.
           </p>
           <p class="story-text">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo sed diam voluptua.
+            Founded with the vision of delivering quality packaged food products to retailers efficiently, we have grown into a trusted name in the local distribution sector, ensuring timely supply to shops, supermarkets, and merchants throughout the district.
           </p>
           <div class="founder-info">
-            <h4 class="founder-name">Adam Smith</h4>
-            <p class="founder-role">Owner, Bready Bake</p>
+            <h4 class="founder-name">Serving Idukki Since 2011</h4>
+            <p class="founder-role">Quality Service, Timely Delivery</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Testimonial Section -->
-    <section class="testimonial-section">
-      <div class="testimonial-bg">
-        <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&q=80&w=1200" alt="Baking session" class="bg-img" />
-        <div class="bg-overlay"></div>
-      </div>
-      <div class="testimonial-content container" v-animate-on-scroll>
-        <h2 class="testimonial-header">Hear From Our Customers</h2>
-        <p class="testimonial-subheader">Don't just take our word for it. Hear what our customers have to say about our bakery.</p>
-        
-        <div class="testimonial-card">
-          <p class="quote">
-            "Absolutely loved it! They were amazing and I was completely satisfied with them. Would definitely recommend to all my friends and family"
-          </p>
-          <div class="customer-info">
-            <img src="https://i.pravatar.cc/100?u=logan" alt="Logan May" class="customer-avatar" />
-            <h4 class="customer-name">Logan May</h4>
-          </div>
+    <!-- Distribution Features Section -->
+    <section class="distribution-details container">
+      <div class="details-grid">
+        <div class="detail-card" v-animate-on-scroll>
+          <div class="detail-icon">🛍️</div>
+          <h3>Products Distributed</h3>
+          <ul>
+            <li>🍪 Biscuits (Parle-G, 20-20, etc.)</li>
+            <li>🍿 Snacks and Packaged Chips</li>
+            <li>🥤 Cool Drinks and Beverages</li>
+            <li>🥨 Essential Packaged Foods</li>
+          </ul>
+        </div>
+        <div class="detail-card" v-animate-on-scroll>
+          <div class="detail-icon">🚚</div>
+          <h3>Distribution Network</h3>
+          <p>Our self-managed delivery system ensures timely transportation and safe product handling across Kattappana and surrounding hilly regions.</p>
+        </div>
+        <div class="detail-card" v-animate-on-scroll>
+          <div class="detail-icon">👥</div>
+          <h3>Our Workforce</h3>
+          <p>A dedicated team of 10 members including sales representatives, delivery personnel, and warehouse handlers ensuring smooth operations.</p>
         </div>
       </div>
     </section>
@@ -208,90 +212,57 @@ export default {
   font-size: 0.9rem;
 }
 
-/* --- Testimonial --- */
-.testimonial-section {
-  position: relative;
-  padding: 10rem 0;
-  min-height: 500px;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
+/* --- Distribution Details --- */
+.distribution-details {
+  padding-bottom: 8rem;
 }
 
-.testimonial-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
 }
 
-.bg-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.bg-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-}
-
-.testimonial-content {
-  position: relative;
-  z-index: 1;
+.detail-card {
+  background: #fff5e6;
+  padding: 3rem 2rem;
+  border-radius: 15px;
   text-align: center;
-  color: white;
+  transition: transform 0.3s ease;
+  opacity: 0;
+  transform: translateY(20px);
 }
 
-.testimonial-header {
-  font-family: 'Dancing Script', cursive;
-  font-size: 3.8rem;
+.detail-card.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.detail-card:hover {
+  transform: translateY(-10px);
+}
+
+.detail-icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+}
+
+.detail-card h3 {
+  font-size: 1.5rem;
+  color: #3e2723;
   margin-bottom: 1rem;
 }
 
-.testimonial-subheader {
-  font-size: 1.1rem;
-  margin-bottom: 4rem;
-  opacity: 0.9;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+.detail-card ul {
+  list-style: none;
+  padding: 0;
+  color: #8d6e63;
+  line-height: 2;
 }
 
-.testimonial-card {
-  background: white;
-  padding: 4rem 3rem;
-  max-width: 650px;
-  margin: 0 auto;
-  border-radius: 10px;
-  color: #5d4037;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-}
-
-.quote {
-  font-size: 1.2rem;
-  line-height: 1.8;
-  font-style: italic;
-  margin-bottom: 2.5rem;
-}
-
-.customer-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.customer-avatar {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  border: 3px solid #efa962;
-}
-
-.customer-name {
-  font-weight: 700;
-  font-size: 1.1rem;
+.detail-card p {
+  color: #8d6e63;
+  line-height: 1.6;
 }
 
 /* --- Newsletter --- */

@@ -26,8 +26,8 @@
             <div class="contact-card" v-animate-on-scroll :style="{ transitionDelay: '0.1s' }">
               <div class="card-icon"><i class="fas fa-map-marked-alt"></i></div>
               <div class="card-body">
-                <h3>Our Bakery</h3>
-                <p>123 Bakery Street, Cochin<br/>Kerala, India 682001</p>
+                <h3>Main Office</h3>
+                <p>Kattappana, Idukki District<br/>Kerala, India 685508</p>
               </div>
             </div>
 
@@ -35,7 +35,7 @@
               <div class="card-icon"><i class="fas fa-phone-volume"></i></div>
               <div class="card-body">
                 <h3>Phone</h3>
-                <p>+91 98765 43210<br/>+91 484 234 5678</p>
+                <p>+91 97452 79543<br/>+91 94478 21456</p>
               </div>
             </div>
 
@@ -43,7 +43,7 @@
               <div class="card-icon"><i class="fas fa-paper-plane"></i></div>
               <div class="card-body">
                 <h3>Email</h3>
-                <p>hello@cochindistributors.com<br/>support@cochin.dist</p>
+                <p>cochindistributors@gmail.com<br/>support@cochin.dist</p>
               </div>
             </div>
           </div>
