@@ -46,7 +46,7 @@
             <div class="invoice-paper">
               <div class="paper-header">
                 <div class="company-info">
-                  <h3>Caterway Invoices</h3>
+                  <h3>Cochin Distributors Invoices</h3>
                   <p>Order ID: {{ selectedInvoice.order }}</p>
                 </div>
                 <div class="invoice-meta">
@@ -87,7 +87,7 @@
                   <p v-if="selectedInvoice.paymentId"><strong>Transaction ID:</strong> {{ selectedInvoice.paymentId }}</p>
                 </div>
                 <div class="thank-you">
-                  <p>Thank you for choosing Caterway!</p>
+                  <p>Thank you for choosing Cochin Distributors!</p>
                 </div>
               </div>
             </div>
