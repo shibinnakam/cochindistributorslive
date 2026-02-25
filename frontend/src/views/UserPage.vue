@@ -323,10 +323,6 @@
       v-if="showInvoices"
       @close="showInvoices = false"
     />
-    <ProfilePage
-      v-if="showProfile"
-      @close="showProfile = false"
-    />
 
     <!-- 3D Visualizer Modal -->
     <div
@@ -383,7 +379,6 @@ import WalletPage from "@/views/WalletPage.vue";
 import OrdersPage from "@/views/OrdersPage.vue";
 import ScratchCardsPage from "@/views/ScratchCardsPage.vue";
 import InvoicesPage from "@/views/InvoicesPage.vue";
-import ProfilePage from "@/views/ProfilePage.vue";
 import ThreeDBox from "@/components/ThreeDBox.vue";
 
 export default {
@@ -395,7 +390,6 @@ export default {
     OrdersPage,
     ScratchCardsPage,
     InvoicesPage,
-    ProfilePage,
     ThreeDBox,
   },
   data() {
