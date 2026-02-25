@@ -82,17 +82,73 @@ module.exports = (io) => {
                 // Second scan today → CHECK OUT
                 record.outTime = new Date();
                 record.workingHours = calcWorkingHours(record.inTime, record.outTime);
+
+                // --- AI ANOMALY DETECTION START ---
+                try {
+                    // 1. Extract Behavioral Features
+                    const inTime = new Date(record.inTime);
+                    const outTime = new Date(record.outTime);
+                    const durationMs = outTime - inTime;
+                    const durationMinutes = Math.floor(durationMs / 60000);
+
+                    // Arrival deviation: compare with 9:00 AM standard
+                    const nineAM = new Date(inTime);
+                    nineAM.setHours(9, 0, 0, 0);
+                    const arrivalDeviation = Math.abs(Math.floor((inTime - nineAM) / 60000));
+
+                    // For now, simplicity: scanInterval and shortStayCount placeholder 
+                    // (would need previous days' records for deeper analysis)
+                    const scanInterval = 0;
+                    const shortStayCount = durationMinutes < 15 ? 1 : 0;
+
+                    const features = {
+                        duration_minutes: durationMinutes,
+                        arrival_deviation: arrivalDeviation,
+                        scan_interval: scanInterval,
+                        short_stay_count: shortStayCount
+                    };
+
+                    record.features = {
+                        durationMinutes,
+                        arrivalDeviation,
+                        scanInterval,
+                        shortStayCount
+                    };
+
+                    // 2. Call Python AI Microservice
+                    const axios = require("axios");
+                    const PYTHON_AI_URL = process.env.PYTHON_AI_SERVICE_URL || "http://localhost:5001/analyze";
+
+                    const aiResponse = await axios.post(PYTHON_AI_URL, {
+                        features: [features]
+                    });
+
+                    if (aiResponse.data && aiResponse.data.success && aiResponse.data.results.length > 0) {
+                        const result = aiResponse.data.results[0];
+                        record.anomalyScore = result.score;
+                        record.anomalyStatus = result.status;
+                    }
+                } catch (aiErr) {
+                    console.error("AI Anomaly Detection Error:", aiErr.message);
+                    // Silently fail or log, don't block attendance recording
+                }
+                // --- AI ANOMALY DETECTION END ---
+
                 await record.save();
 
                 // Emit Socket Event
                 if (io) {
-                    io.to("admin").emit("attendanceUpdate", { action: "checkout", record });
+                    io.to("admin").emit("attendanceUpdate", {
+                        action: "checkout",
+                        record,
+                        alert: record.anomalyStatus === "Suspicious"
+                    });
                 }
 
                 return res.json({
                     success: true,
                     action: "checkout",
-                    message: `Goodbye ${staff.name || "Staff"}! Working hours: ${record.workingHours}`,
+                    message: `Goodbye ${staff.name || "Staff"}! Working hours: ${record.workingHours}${record.anomalyStatus === "Suspicious" ? " (Suspicious activity detected)" : ""}`,
                     record,
                 });
             }

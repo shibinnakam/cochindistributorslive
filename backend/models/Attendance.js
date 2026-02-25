@@ -10,6 +10,14 @@ const attendanceSchema = new mongoose.Schema(
         inTime: { type: Date, default: null },
         outTime: { type: Date, default: null },
         workingHours: { type: String, default: null }, // e.g. "7h 30m"
+        anomalyScore: { type: Number, default: 0 },
+        anomalyStatus: { type: String, enum: ["Normal", "Suspicious"], default: "Normal" },
+        features: {
+            durationMinutes: { type: Number },
+            arrivalDeviation: { type: Number },
+            scanInterval: { type: Number },
+            shortStayCount: { type: Number }
+        }
     },
     { timestamps: true }
 );

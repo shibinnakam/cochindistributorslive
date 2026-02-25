@@ -16,3 +16,16 @@ services:
         value: https://distribution-agency.onrender.com # Update with your service name
       - key: PORT
         value: 5000
+      - key: PYTHON_AI_SERVICE_URL
+        value: https://distribution-agency-ai.onrender.com/analyze # Will be set after Python service is created
+
+  - type: web
+    name: distribution-agency-ai
+    env: python
+    plan: free
+    rootDir: python-ai
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PORT
+        value: 10000

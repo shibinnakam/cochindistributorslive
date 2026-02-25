@@ -52,6 +52,7 @@
             <th>In Time</th>
             <th>Out Time</th>
             <th>Working Hours</th>
+            <th>Anomaly Status</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -76,6 +77,15 @@
               <span v-if="record.workingHours" class="hours-badge">{{
                 record.workingHours
               }}</span>
+              <span v-else class="pending">—</span>
+            </td>
+            <td>
+              <span v-if="record.anomalyStatus === 'Suspicious'" class="status-badge danger" :title="'Anomaly Score: ' + record.anomalyScore">
+                Suspicious ({{ record.anomalyScore }}%)
+              </span>
+              <span v-else-if="record.outTime" class="status-badge info">
+                Normal
+              </span>
               <span v-else class="pending">—</span>
             </td>
             <td>
@@ -348,6 +358,15 @@ export default {
 .status-badge.progress {
   background: #fff7ed;
   color: #d97706;
+}
+.status-badge.danger {
+  background: #fef2f2;
+  color: #dc2626;
+  cursor: help;
+}
+.status-badge.info {
+  background: #f0f9ff;
+  color: #0369a1;
 }
 
 .no-data {
