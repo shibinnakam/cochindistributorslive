@@ -483,5 +483,20 @@ module.exports = (io) => {
     }
   });
 
+  // Get User's Unrevealed Scratch Cards
+  router.get("/my-scratchcards", authMiddleware, async (req, res) => {
+    try {
+      const orders = await Order.find({
+        user: req.user._id,
+        scratchCardOffer: { $gt: 0 },
+        scratchCardRevealed: false
+      }).sort({ createdAt: -1 });
+      res.json(orders);
+    } catch (error) {
+      console.error("Get scratchcards error:", error);
+      res.status(500).json({ msg: "Server error" });
+    }
+  });
+
   return router;
 };

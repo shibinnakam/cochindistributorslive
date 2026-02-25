@@ -34,6 +34,9 @@
           <a href="#" class="nav-item" @click.prevent="showOrders = true"
             ><span class="icon">📋</span> My Orders</a
           >
+          <a href="#" class="nav-item" @click.prevent="showScratchCardsList = true"
+            ><span class="icon">🎫</span> Scratchcards</a
+          >
           <a href="#" class="nav-item"><span class="icon">🪑</span> Table</a>
           <a href="#" class="nav-item"
             ><span class="icon">📅</span> Reservations</a
@@ -313,6 +316,11 @@
     <ProfilePage v-if="showProfile" @close="showProfile = false" />
     <WalletPage v-if="showWallet" @close="showWallet = false" />
     <OrdersPage v-if="showOrders" @close="showOrders = false" />
+    <ScratchCardsPage
+      v-if="showScratchCardsList"
+      @close="showScratchCardsList = false"
+      @reveal-card="handleRevealFromList"
+    />
     <ScratchCard
       v-if="showScratchCard"
       :orderId="scratchCardOrderId"
@@ -373,6 +381,7 @@ import ScratchCard from "@/components/ScratchCard.vue";
 import ProfilePage from "@/views/ProfilePage.vue";
 import WalletPage from "@/views/WalletPage.vue";
 import OrdersPage from "@/views/OrdersPage.vue";
+import ScratchCardsPage from "@/views/ScratchCardsPage.vue";
 import ThreeDBox from "@/components/ThreeDBox.vue";
 
 export default {
@@ -382,6 +391,7 @@ export default {
     ProfilePage,
     WalletPage,
     OrdersPage,
+    ScratchCardsPage,
     ThreeDBox,
   },
   data() {
@@ -395,6 +405,7 @@ export default {
       showProfile: false,
       showWallet: false,
       showOrders: false,
+      showScratchCardsList: false,
       selectedCategory: null,
       showScratchCard: false,
       scratchCardOrderId: null,
@@ -718,6 +729,11 @@ export default {
       this.scratchCardOrderId = orderId;
       this.showScratchCard = true;
       this.selectedPaymentMethod = null;
+    },
+    handleRevealFromList(orderId) {
+      this.scratchCardOrderId = orderId;
+      this.showScratchCard = true;
+      this.showScratchCardsList = false;
     },
   },
 };
