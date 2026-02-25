@@ -453,7 +453,7 @@ module.exports = (io) => {
       const order = await Order.findOne({ _id: orderId, user: req.user._id });
       if (!order) return res.status(404).json({ msg: "Order not found" });
 
-      if (!order.scratchCardOffer) {
+      if (order.scratchCardOffer === null || order.scratchCardOffer === undefined) {
         return res.status(400).json({ msg: "No scratch card offer for this order" });
       }
 
@@ -488,7 +488,7 @@ module.exports = (io) => {
     try {
       const orders = await Order.find({
         user: req.user._id,
-        scratchCardOffer: { $gt: 0 },
+        scratchCardOffer: { $ne: null },
         scratchCardRevealed: false
       }).sort({ createdAt: -1 });
       res.json(orders);

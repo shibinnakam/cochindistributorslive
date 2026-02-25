@@ -49,7 +49,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/utils/axios";
 
 export default {
   name: "ScratchCard",
@@ -74,13 +74,9 @@ export default {
     async revealCard() {
       this.loading = true;
       try {
-        const token = localStorage.getItem("token");
-        const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
-        const res = await axios.post(
-          `${apiUrl}/api/orders/scratch-card`,
-          { orderId: this.orderId },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const res = await axios.post("/api/orders/scratch-card", {
+          orderId: this.orderId,
+        });
 
         this.amount = res.data.amount;
         this.isRevealed = true;
