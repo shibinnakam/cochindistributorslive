@@ -83,6 +83,11 @@ export default {
 
         // Emit event to update wallet balance
         this.$emit("wallet-updated", res.data.newBalance);
+
+        // Auto-close after 4 seconds
+        setTimeout(() => {
+          this.$emit("close");
+        }, 4000);
       } catch (err) {
         console.error("Error revealing scratch card:", err);
         alert("Failed to reveal reward. Please try again.");
