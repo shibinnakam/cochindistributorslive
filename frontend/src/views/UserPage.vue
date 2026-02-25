@@ -108,7 +108,7 @@
       <!-- Top Navigation -->
       <header class="pos-top-nav">
         <div class="nav-search">
-          <span class="search-icon">🔍</span>
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           <input
             type="text"
             placeholder="Search (Ctrl+/)"
@@ -117,10 +117,12 @@
         </div>
         <div class="nav-actions">
           <div class="wallet-pill" @click="showWallet = true">
-            <span class="wallet-icon">👛</span>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg>
             <span class="wallet-amount">₹{{ walletBalance }}</span>
           </div>
-          <button class="theme-toggle">☀️</button>
+          <button class="theme-toggle">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          </button>
           <div class="user-action-avatar">
             <img
               src="https://ui-avatars.com/api/?name=User&background=ddd&color=333"
@@ -146,7 +148,7 @@
         <!-- Product Filter Bar -->
         <div class="product-filter-bar">
           <div class="filter-input-group">
-            <span class="icon">🔍</span>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <input
               type="text"
               placeholder="Search in products"
@@ -214,7 +216,8 @@
             </div>
             <div class="card-extra-actions">
               <button class="btn-3d-mini" @click.stop="toggle3D(product)">
-                <span class="icon">📦</span> 3D
+                <svg class="nav-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                3D
               </button>
             </div>
           </div>
@@ -226,7 +229,7 @@
     <aside class="pos-order-panel" v-if="cartItems.length > 0">
       <div class="panel-header">
         <div class="search-existing">
-          <span class="icon">🔍</span>
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           <input type="text" placeholder="Search in Existing" />
         </div>
       </div>
@@ -242,7 +245,8 @@
 
       <div class="current-order-section">
         <div class="order-id-row">
-          <span class="icon">🍱</span> <strong>Order #20</strong>
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          <strong>Order #20</strong>
         </div>
 
         <div class="order-items-list">
@@ -264,7 +268,7 @@
                 class="btn-remove"
                 @click="removeFromCart(item.product._id)"
               >
-                🗑️
+                <svg class="trash-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
               </button>
               <div class="qty-controls">
                 <button @click="updateQty(item.product._id, item.quantity - 1)">
@@ -987,17 +991,28 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #fff0e1;
+  background: #f0f4ff;
   padding: 8px 16px;
   border-radius: 50px;
   cursor: pointer;
   transition: all 0.2s;
-  border: 1px solid #ff9a44;
+  border: 1px solid #d0dfff;
+  color: #2b59ff;
 }
 
 .wallet-pill:hover {
-  background: #ff9a44;
+  background: #2b59ff;
   color: white;
+}
+
+.wallet-pill .nav-icon {
+  stroke: #2b59ff;
+  width: 16px;
+  height: 16px;
+}
+
+.wallet-pill:hover .nav-icon {
+  stroke: white;
 }
 
 .wallet-amount {
