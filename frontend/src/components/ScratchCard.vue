@@ -3,29 +3,20 @@
     <div class="scratch-card-modal">
       <div class="scratch-card-header">
         <h2>Congratulations! 🎉</h2>
-        <p>You've earned a scratch card!</p>
+        <p>You've earned a reward!</p>
         <button class="close-btn" @click="$emit('close')">✕</button>
       </div>
 
       <div class="scratch-card-body">
         <div class="scratch-card-container">
-          <div class="scratch-card" :class="{ revealed: isRevealed }">
-            <canvas
-              ref="scratchCanvas"
-              class="scratch-canvas"
-              width="300"
-              height="200"
-              @mousedown="startScratching"
-              @mousemove="scratch"
-              @mouseup="stopScratching"
-              @touchstart="startScratching"
-              @touchmove="scratch"
-              @touchend="stopScratching"
-            ></canvas>
-
+          <div 
+            class="scratch-card" 
+            :class="{ revealed: isRevealed }"
+            @click="handleCardClick"
+          >
             <div class="scratch-content">
               <div v-if="!isRevealed" class="scratch-text">
-                <p>Scratch to reveal your reward!</p>
+                <p>Tap to reveal your reward!</p>
                 <div class="coin-icon">🪙</div>
               </div>
 
@@ -44,7 +35,7 @@
         </div>
 
         <div v-if="!isRevealed" class="instructions">
-          <p>Scratch the card above to reveal your reward</p>
+          <p>Tap the card above to reveal your reward</p>
         </div>
 
         <div v-if="isRevealed" class="success-actions">
@@ -72,132 +63,16 @@ export default {
     return {
       isRevealed: false,
       amount: 0,
-      canvas: null,
-      ctx: null,
-      isScratching: false,
-      scratchedPixels: 0,
-      totalPixels: 0,
-      scratchRadius: 20,
+      loading: false
     };
   },
-  mounted() {
-    this.initCanvas();
-  },
   methods: {
-    initCanvas() {
-      this.canvas = this.$refs.scratchCanvas;
-      if (!this.canvas) return;
-
-      this.ctx = this.canvas.getContext("2d");
-      this.totalPixels = this.canvas.width * this.canvas.height;
-
-      // Create gradient overlay
-      const gradient = this.ctx.createLinearGradient(
-        0,
-        0,
-        this.canvas.width,
-        this.canvas.height
-      );
-      gradient.addColorStop(0, "rgba(0, 0, 0, 0.8)");
-      gradient.addColorStop(0.5, "rgba(0, 0, 0, 0.9)");
-      gradient.addColorStop(1, "rgba(0, 0, 0, 0.8)");
-
-      this.ctx.fillStyle = gradient;
-      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-      // Add some texture/noise
-      this.addTexture();
-    },
-    addTexture() {
-      const imageData = this.ctx.getImageData(
-        0,
-        0,
-        this.canvas.width,
-        this.canvas.height
-      );
-      const data = imageData.data;
-
-      for (let i = 0; i < data.length; i += 4) {
-        const noise = Math.random() * 50 - 25;
-        data[i] = Math.max(0, Math.min(255, data[i] + noise)); // Red
-        data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise)); // Green
-        data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise)); // Blue
-      }
-
-      this.ctx.putImageData(imageData, 0, 0);
-    },
-    getEventPos(e) {
-      const rect = this.canvas.getBoundingClientRect();
-      const scaleX = this.canvas.width / rect.width;
-      const scaleY = this.canvas.height / rect.height;
-
-      let clientX, clientY;
-      if (e.touches && e.touches[0]) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-      } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
-      }
-
-      return {
-        x: (clientX - rect.left) * scaleX,
-        y: (clientY - rect.top) * scaleY,
-      };
-    },
-    startScratching(e) {
-      if (this.isRevealed) return;
-      e.preventDefault();
-      this.isScratching = true;
-      const pos = this.getEventPos(e);
-      this.scratchAt(pos.x, pos.y);
-    },
-    scratch(e) {
-      if (!this.isScratching || this.isRevealed) return;
-      e.preventDefault();
-      const pos = this.getEventPos(e);
-      this.scratchAt(pos.x, pos.y);
-    },
-    stopScratching(e) {
-      if (this.isRevealed) return;
-      e.preventDefault();
-      this.isScratching = false;
-      this.checkScratchProgress();
-    },
-    scratchAt(x, y) {
-      this.ctx.save();
-      this.ctx.globalCompositeOperation = "destination-out";
-      this.ctx.beginPath();
-      this.ctx.arc(x, y, this.scratchRadius, 0, Math.PI * 2);
-      this.ctx.fill();
-      this.ctx.restore();
-    },
-    checkScratchProgress() {
-      const imageData = this.ctx.getImageData(
-        0,
-        0,
-        this.canvas.width,
-        this.canvas.height
-      );
-      const data = imageData.data;
-      let transparentPixels = 0;
-
-      for (let i = 3; i < data.length; i += 4) {
-        if (data[i] < 128) {
-          // Alpha channel < 128 means mostly transparent
-          transparentPixels++;
-        }
-      }
-
-      const scratchedPercentage = (transparentPixels / this.totalPixels) * 100;
-
-      if (scratchedPercentage > 60) {
-        this.revealCard();
-      }
+    async handleCardClick() {
+      if (this.isRevealed || this.loading) return;
+      await this.revealCard();
     },
     async revealCard() {
-      if (this.isRevealed) return;
-
+      this.loading = true;
       try {
         const token = localStorage.getItem("token");
         const apiUrl = process.env.VUE_APP_API_URL || window.location.origin;
@@ -210,14 +85,13 @@ export default {
         this.amount = res.data.amount;
         this.isRevealed = true;
 
-        // Clear the entire canvas to show the revealed state
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
         // Emit event to update wallet balance
         this.$emit("wallet-updated", res.data.newBalance);
       } catch (err) {
         console.error("Error revealing scratch card:", err);
-        alert("Failed to reveal scratch card. Please try again.");
+        alert("Failed to reveal reward. Please try again.");
+      } finally {
+        this.loading = false;
       }
     },
   },
@@ -301,68 +175,69 @@ export default {
   cursor: pointer;
   user-select: none;
   background: linear-gradient(135deg, #ffd700, #ffa500, #ff6347);
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.scratch-card:hover:not(.revealed) {
+  transform: scale(1.02);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.scratch-card:active:not(.revealed) {
+  transform: scale(0.98);
 }
 
 .scratch-card.revealed {
   background: linear-gradient(135deg, #4caf50, #45a049);
   cursor: default;
-}
-
-.scratch-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  cursor: crosshair;
-  touch-action: none; /* Prevent scrolling on touch devices */
+  transform: rotateY(360deg);
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
 }
 
 .scratch-content {
   width: 100%;
   height: 100%;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   color: white;
+  text-align: center;
 }
 
 .scratch-text {
-  text-align: center;
-  margin-bottom: 20px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
 .scratch-text p {
   margin: 0 0 10px 0;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1.1rem;
 }
 
 .coin-icon {
-  font-size: 2rem;
+  font-size: 2.5rem;
   animation: bounce 2s infinite;
 }
 
 @keyframes bounce {
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
-  60% {
-    transform: translateY(-5px);
-  }
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
 }
 
 .revealed-amount {
-  text-align: center;
-  animation: reveal 0.5s ease-out;
+  animation: reveal 0.5s ease-out forwards;
 }
 
 @keyframes reveal {
@@ -377,7 +252,7 @@ export default {
 }
 
 .amount-text {
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: bold;
   margin-bottom: 8px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
@@ -385,8 +260,8 @@ export default {
 
 .credit-text {
   margin: 0;
-  font-size: 0.9rem;
-  opacity: 0.9;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
 .better-luck {
@@ -401,14 +276,14 @@ export default {
 .better-luck-text {
   font-size: 1.2rem;
   font-weight: 700;
-  line-height: 1.4;
 }
 
 .instructions {
   text-align: center;
   color: #666;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   margin-bottom: 20px;
+  font-weight: 500;
 }
 
 .success-actions {
@@ -424,11 +299,14 @@ export default {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s;
+  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
 }
 
 .continue-btn:hover {
   background: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
 }
 
 @media (max-width: 480px) {
@@ -437,13 +315,9 @@ export default {
   }
 
   .scratch-card {
-    width: 250px;
-    height: 167px;
-  }
-
-  .scratch-canvas {
-    width: 250px;
-    height: 167px;
+    width: 280px;
+    height: 180px;
   }
 }
 </style>
+
