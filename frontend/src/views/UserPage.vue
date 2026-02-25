@@ -68,7 +68,7 @@
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             Customer
           </a>
-          <a href="#" class="nav-item">
+          <a href="#" class="nav-item" @click.prevent="showInvoices = true">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             Invoice
           </a>
@@ -362,6 +362,10 @@
       @close="closeScratchCard"
       @wallet-updated="updateWalletBalance"
     />
+    <InvoicesPage
+      v-if="showInvoices"
+      @close="showInvoices = false"
+    />
 
     <!-- 3D Visualizer Modal -->
     <div
@@ -417,6 +421,7 @@ import ProfilePage from "@/views/ProfilePage.vue";
 import WalletPage from "@/views/WalletPage.vue";
 import OrdersPage from "@/views/OrdersPage.vue";
 import ScratchCardsPage from "@/views/ScratchCardsPage.vue";
+import InvoicesPage from "@/views/InvoicesPage.vue";
 import ThreeDBox from "@/components/ThreeDBox.vue";
 
 export default {
@@ -427,6 +432,7 @@ export default {
     WalletPage,
     OrdersPage,
     ScratchCardsPage,
+    InvoicesPage,
     ThreeDBox,
   },
   data() {
@@ -441,6 +447,7 @@ export default {
       showWallet: false,
       showOrders: false,
       showScratchCardsList: false,
+      showInvoices: false,
       selectedCategory: null,
       showScratchCard: false,
       scratchCardOrderId: null,

@@ -7,6 +7,7 @@ module.exports = (io) => {
   const User = require("../models/User");
   const Product = require("../models/Product");
   const Notification = require("../models/Notification");
+  const Invoice = require("../models/Invoice");
   const { authMiddleware, adminMiddleware } = require("../middleware/auth");
 
   const checkProfileCompletion = (user) => {
@@ -27,7 +28,39 @@ module.exports = (io) => {
         });
       }
     } catch (error) {
-      console.error("Error notifying admins:", error);
+    }
+  };
+
+  const createInvoice = async (order, user, paymentMethod, paymentId = "") => {
+    try {
+      const invoiceNumber = `INV-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      const invoiceItems = await Promise.all(order.items.map(async (item) => {
+        const product = await Product.findById(item.product);
+        return {
+          product: item.product,
+          productName: product ? product.name : "Product",
+          quantity: item.quantity,
+          price: item.price
+        };
+      }));
+
+      const newInvoice = new Invoice({
+        invoiceNumber,
+        user: user._id,
+        order: order._id,
+        items: invoiceItems,
+        totalAmount: order.totalAmount,
+        paymentMethod,
+        paymentId,
+        status: "paid"
+      });
+
+      await newInvoice.save();
+      console.log(`Invoice generated: ${invoiceNumber}`);
+      return newInvoice;
+    } catch (error) {
+      console.error("Error generating invoice:", error);
     }
   };
 
@@ -127,6 +160,9 @@ module.exports = (io) => {
 
       await newOrder.save();
 
+      // Generate Invoice
+      await createInvoice(newOrder, req.user, "razorpay", razorpay_payment_id);
+
       // Notify Admins
       await notifyAdmins(
         `New order placed by ${req.user.email}. Total: ₹${totalAmount}`,
@@ -199,6 +235,9 @@ module.exports = (io) => {
       });
 
       await newOrder.save();
+
+      // Generate Invoice
+      await createInvoice(newOrder, user, "wallet");
 
       // Notify Admins
       await notifyAdmins(
