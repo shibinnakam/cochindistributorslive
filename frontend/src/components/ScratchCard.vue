@@ -58,11 +58,19 @@ export default {
       type: String,
       required: true,
     },
+    initialRevealed: {
+      type: Boolean,
+      default: false
+    },
+    initialAmount: {
+      type: Number,
+      default: 0
+    }
   },
   data() {
     return {
-      isRevealed: false,
-      amount: 0,
+      isRevealed: this.initialRevealed,
+      amount: this.initialAmount,
       loading: false
     };
   },
@@ -96,6 +104,23 @@ export default {
       }
     },
   },
+  watch: {
+    initialRevealed(newVal) {
+      if (newVal) {
+        this.isRevealed = true;
+        this.amount = this.initialAmount;
+      }
+    }
+  },
+  mounted() {
+    if (this.initialRevealed) {
+      // Auto-close even for pre-revealed cards if opened from list? 
+      // User said: "close in 4 seconds automatically"
+      setTimeout(() => {
+        this.$emit("close");
+      }, 4000);
+    }
+  }
 };
 </script>
 
