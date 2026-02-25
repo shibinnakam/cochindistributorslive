@@ -24,13 +24,19 @@
             v-for="order in scratchCards"
             :key="order._id"
             class="scratch-card-item"
-            @click="openScratchCard(order._id)"
+            :class="{ revealed: order.scratchCardRevealed }"
+            @click="openScratchCard(order)"
           >
             <div class="card-visual">
               <div class="card-pattern"></div>
               <div class="card-content">
-                <span class="card-icon">🎁</span>
-                <span class="card-label">Tap to reveal</span>
+                <span class="card-icon">{{ order.scratchCardRevealed ? '💰' : '🎁' }}</span>
+                <span class="card-label">
+                  {{ order.scratchCardRevealed ? 'Rewarded' : 'Tap to reveal' }}
+                </span>
+                <div v-if="order.scratchCardRevealed" class="reward-amount">
+                  ₹{{ order.scratchCardOffer }}
+                </div>
               </div>
             </div>
             <div class="card-info">
@@ -70,8 +76,8 @@ export default {
         this.loading = false;
       }
     },
-    openScratchCard(orderId) {
-      this.$emit("reveal-card", orderId);
+    openScratchCard(order) {
+      this.$emit("reveal-card", order._id, order.scratchCardRevealed, order.scratchCardOffer);
     },
     formatDate(date) {
       return new Date(date).toLocaleDateString("en-IN", {
@@ -201,6 +207,22 @@ export default {
 .scratch-card-item:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.scratch-card-item.revealed {
+  border-color: #4caf50;
+  opacity: 0.9;
+}
+
+.scratch-card-item.revealed .card-visual {
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+}
+
+.reward-amount {
+  font-size: 24px;
+  font-weight: 800;
+  margin-top: 5px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .card-visual {

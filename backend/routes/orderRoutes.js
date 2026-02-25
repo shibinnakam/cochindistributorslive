@@ -42,7 +42,7 @@ module.exports = (io) => {
     if (totalAmount <= 100) {
       const random = Math.random() * 100;
       if (random < 90) {
-        return 0; // Better luck next time
+        return 0;
       } else if (random < 95) {
         return 1;
       } else {
@@ -488,8 +488,7 @@ module.exports = (io) => {
     try {
       const orders = await Order.find({
         user: req.user._id,
-        scratchCardOffer: { $ne: null },
-        scratchCardRevealed: false
+        scratchCardOffer: { $ne: null }
       }).sort({ createdAt: -1 });
       res.json(orders);
     } catch (error) {

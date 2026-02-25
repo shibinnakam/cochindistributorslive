@@ -324,6 +324,8 @@
     <ScratchCard
       v-if="showScratchCard"
       :orderId="scratchCardOrderId"
+      :initialRevealed="scratchCardInitialRevealed"
+      :initialAmount="scratchCardInitialAmount"
       @close="closeScratchCard"
       @wallet-updated="updateWalletBalance"
     />
@@ -409,6 +411,8 @@ export default {
       selectedCategory: null,
       showScratchCard: false,
       scratchCardOrderId: null,
+      scratchCardInitialRevealed: false,
+      scratchCardInitialAmount: 0,
       walletBalance: 0,
       show3DModal: false,
       selectedProduct3D: null,
@@ -730,8 +734,10 @@ export default {
       this.showScratchCard = true;
       this.selectedPaymentMethod = null;
     },
-    handleRevealFromList(orderId) {
+    handleRevealFromList(orderId, isRevealed, amount) {
       this.scratchCardOrderId = orderId;
+      this.scratchCardInitialRevealed = isRevealed || false;
+      this.scratchCardInitialAmount = amount || 0;
       this.showScratchCard = true;
       this.showScratchCardsList = false;
     },
