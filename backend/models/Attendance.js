@@ -10,6 +10,10 @@ const attendanceSchema = new mongoose.Schema(
         inTime: { type: Date, default: null },
         outTime: { type: Date, default: null },
         workingHours: { type: String, default: null }, // e.g. "7h 30m"
+        checkInImage: { type: String, default: null },
+        checkOutImage: { type: String, default: null },
+        isFaceVerified: { type: Boolean, default: false },
+        faceScore: { type: Number, default: 0 },
         anomalyScore: { type: Number, default: 0 },
         anomalyStatus: { type: String, enum: ["Normal", "Suspicious"], default: "Normal" },
         features: {
