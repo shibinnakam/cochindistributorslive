@@ -101,7 +101,7 @@ def analyze():
             if col not in df.columns:
                 df[col] = 0
 
-        if len(df) < 4:
+        if len(df) < 2:
             results = []
             for _, row in df.iterrows():
                 result = rule_based_analysis(row)
