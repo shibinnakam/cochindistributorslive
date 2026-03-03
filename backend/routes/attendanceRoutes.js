@@ -367,10 +367,10 @@ module.exports = (io) => {
                 "features.durationMinutes": { $exists: true }
             }).sort({ date: -1 }).limit(100);
 
-            if (records.length < 5) {
+            if (records.length < 4) {
                 return res.json({
                     success: false,
-                    message: "Insufficient data for benchmark (need at least 5 records with behavioral features)"
+                    message: "Insufficient data for benchmark (need at least 4 records with behavioral features)"
                 });
             }
 
