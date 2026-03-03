@@ -362,25 +362,25 @@ module.exports = (io) => {
     // Benchmarks multiple algorithms across recent records
     router.get("/comparison", async (req, res) => {
         try {
-            // Fetch records from the last 30 days that have behavioral features
+            // Fetch records from the last 30 days that have outTime (completed check-outs)
             const records = await Attendance.find({
-                "features.durationMinutes": { $exists: true }
+                outTime: { $ne: null }
             }).sort({ date: -1 }).limit(100);
 
             if (records.length < 2) {
                 return res.json({
                     success: false,
-                    message: "Insufficient data for benchmark (need at least 2 records with behavioral features)"
+                    message: "Insufficient data for benchmark (need at least 2 records with completed check-outs)"
                 });
             }
 
             const featuresList = records.map(r => ({
-                duration_minutes: r.features.durationMinutes || 0,
-                arrival_deviation: r.features.arrivalDeviation || 0,
-                scan_interval: r.features.scanInterval || 0,
-                short_stay_count: r.features.shortStayCount || 0,
-                inter_arrival_time: r.features.interArrivalTime || 0,
-                frequency_score: r.features.frequencyScore || 1
+                duration_minutes: (r.features && r.features.durationMinutes) || 0,
+                arrival_deviation: (r.features && r.features.arrivalDeviation) || 0,
+                scan_interval: (r.features && r.features.scanInterval) || 0,
+                short_stay_count: (r.features && r.features.shortStayCount) || 0,
+                inter_arrival_time: (r.features && r.features.interArrivalTime) || 0,
+                frequency_score: (r.features && r.features.frequencyScore) || 1
             }));
 
             const PYTHON_AI_URL = process.env.PYTHON_AI_SERVICE_URL || "http://localhost:5001";
