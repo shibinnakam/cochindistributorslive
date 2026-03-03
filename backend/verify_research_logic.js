@@ -8,9 +8,14 @@ const axios = require('axios');
  * 2. 5-Way Algorithm Comparison (Research Paper Requirement)
  */
 
-// ✅ Adjust these as needed
-const API_URL = 'http://localhost:5000/api/attendance';
-const AI_URL = 'http://localhost:5001';
+// ✅ Set to true to test against LIVE Render, false for localhost
+const USE_LIVE = true;
+
+const LIVE_BACKEND_URL = 'https://www.cochindistributors.xyz'; // Your Render backend URL
+const LIVE_AI_URL = 'https://python-ai-service.onrender.com'; // Your Render AI service URL
+
+const API_URL = USE_LIVE ? `${LIVE_BACKEND_URL}/api/attendance` : 'http://localhost:5000/api/attendance';
+const AI_URL = USE_LIVE ? LIVE_AI_URL : 'http://localhost:5001';
 const TEST_UID = 'D08AA55F'; // Ensure this exists in your Staff collection
 
 async function verifyProxyDetection() {
