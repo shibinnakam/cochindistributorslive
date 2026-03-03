@@ -32,10 +32,12 @@
       </div>
       
       <div v-else-if="!comparisonData" class="empty-state">
-        <div class="empty-icon">📊</div>
-        <h3>No benchmark data</h3>
-        <p>Click "Run Benchmark" to evaluate algorithms across recent behavioral records.</p>
-        <button @click="fetchComparison" class="btn-primary mt-4">Run Benchmark</button>
+        <div class="empty-icon">{{ error ? '⚠️' : '📊' }}</div>
+        <h3>{{ error ? 'Analysis Error' : 'No benchmark data' }}</h3>
+        <p>{{ error || 'Click "Run Benchmark" to evaluate algorithms across recent behavioral records.' }}</p>
+        <button @click="fetchComparison" class="btn-primary mt-4">
+          {{ error ? 'Try Again' : 'Run Benchmark' }}
+        </button>
       </div>
 
       <div v-else class="comparison-content">
@@ -100,20 +102,25 @@ export default {
     return {
       comparisonData: null,
       comparisonCount: 0,
-      loading: false
+      loading: false,
+      error: null
     };
   },
   methods: {
     async fetchComparison() {
       this.loading = true;
+      this.error = null;
       try {
         const res = await axios.get("/api/attendance/comparison");
         if (res.data.success) {
           this.comparisonData = res.data.comparison;
           this.comparisonCount = res.data.count;
+        } else {
+          this.error = res.data.message || "Unable to fetch comparison data.";
         }
       } catch (err) {
         console.error("Benchmark failed:", err);
+        this.error = "Connection failed. Please ensure the backend and AI services are running.";
       } finally {
         this.loading = false;
       }
