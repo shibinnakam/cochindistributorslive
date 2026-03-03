@@ -20,7 +20,9 @@ const attendanceSchema = new mongoose.Schema(
             durationMinutes: { type: Number },
             arrivalDeviation: { type: Number },
             scanInterval: { type: Number },
-            shortStayCount: { type: Number }
+            shortStayCount: { type: Number },
+            interArrivalTime: { type: Number, default: 0 }, // ms since last scan at this reader
+            frequencyScore: { type: Number, default: 0 }    // cards per 60s
         }
     },
     { timestamps: true }

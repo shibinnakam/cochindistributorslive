@@ -3,8 +3,12 @@ from flask_cors import CORS
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.svm import OneClassSVM
+from sklearn.cluster import KMeans
 import joblib
 import os
+import time
 import face_recognition
 import cv2
 import requests
@@ -28,23 +32,25 @@ def get_model():
 
 def rule_based_analysis(row):
     """
-    Rule-based anomaly detection aligned with the research paper.
-    Uses feature vector x = [d, a, i, s] as per Equations (6)-(9).
-
-    Scenarios:
-    - d < 5 min  → Suspicious (score 90%) — proxy attendance / scan & leave
-    - d < 15 min → Suspicious (score 80%) — short stay indicator s=1 per Eq(9)
-    - d < 30 min → Suspicious (score 65%) — abnormally short work session
-    - a > 180 min (3hr late) → adds suspicion
-    - s >= 1 (short_stay_count from history) → boosts score
-    - d >= 30 min, normal arrival → Normal (score ≤ 25%)
+    Enhanced Rule-based anomaly detection.
+    Features: [duration_minutes, arrival_deviation, scan_interval, short_stay_count, inter_arrival_time, frequency_score]
     """
     duration = row.get('duration_minutes', 0)
     arrival_dev = row.get('arrival_deviation', 0)
     short_stay = row.get('short_stay_count', 0)
+    inter_arrival = row.get('inter_arrival_time', 0)
+    frequency = row.get('frequency_score', 1)
 
     score = 0
     reasons = []
+
+    # Proxy Detection: Burst Scans (High Frequency + Low Inter-Arrival)
+    if frequency > 3 and inter_arrival < 5000: # 3+ unique cards in 60s, <5s gap
+        score = max(score, 95)
+        reasons.append(f"Proxy Alert: Burst scans detected ({frequency} cards, {inter_arrival/1000:.1f}s gap)")
+    elif inter_arrival < 2000: # <2s gap between scans
+        score = max(score, 85)
+        reasons.append("Extreme proximity scan (<2s gap)")
 
     # Rule 1: Very short duration (< 5 min) — proxy attendance / scan & leave
     if duration < 5:
@@ -58,33 +64,18 @@ def rule_based_analysis(row):
     elif duration < 30:
         score = max(score, 65)
         reasons.append("Short work session (<30 min)")
-    # Rule 4: Below half-day
-    elif duration < 120:
-        score = max(score, 40)
-        reasons.append("Less than 2 hours")
-    else:
-        # Normal duration — low score based on how close to full day
-        full_day_minutes = 480  # 8 hours
-        ratio = min(duration / full_day_minutes, 1.0)
-        score = max(0, int(25 * (1 - ratio)))
-
+    
     # Rule 5: Very late arrival (> 3 hours from 9 AM)
     if arrival_dev > 180:
-        score = max(score, score + 10, 60)
+        score = max(score, 60)
         reasons.append("Very late arrival (>3hr from 9AM)")
-    elif arrival_dev > 120:
-        score = max(score, score + 5)
-        reasons.append("Late arrival (>2hr from 9AM)")
 
     # Rule 6: Historical short stay pattern
     if short_stay >= 3:
         score = min(100, score + 15)
         reasons.append(f"Repeated short stays ({short_stay} times)")
-    elif short_stay >= 1 and duration < 30:
-        score = min(100, score + 10)
-        reasons.append(f"Short stay with history ({short_stay} prev)")
 
-    # Threshold τ = 70% as per paper Equation (5)
+    # Threshold τ = 70%
     status = "Suspicious" if score > 70 else "Normal"
 
     return {"score": score, "status": status, "reasons": reasons}
@@ -97,45 +88,33 @@ def analyze():
         if not data or 'features' not in data:
             return jsonify({"success": False, "error": "No features provided"}), 400
 
-        features_list = data['features']  # List of dicts
+        features_list = data['features']
         df = pd.DataFrame(features_list)
 
-        # Features: [duration_minutes, arrival_deviation, scan_interval, short_stay_count]
-        # As per paper Equations (6)-(9)
+        # Ensure all columns exist
+        for col in ['duration_minutes', 'arrival_deviation', 'scan_interval', 'short_stay_count', 'inter_arrival_time', 'frequency_score']:
+            if col not in df.columns:
+                df[col] = 0
 
         if len(df) < 5:
-            # Cold Start: Not enough data for ML-based Isolation Forest
-            # Use rule-based analysis per paper Section VI.E
             results = []
             for _, row in df.iterrows():
                 result = rule_based_analysis(row)
                 results.append(result)
             return jsonify({"success": True, "results": results})
 
-        # Sufficient data — Use Isolation Forest ML (Paper Section III)
         model = get_model()
-
-        # Fit the model on the data
         model.fit(df)
         predictions = model.predict(df)
-
-        # Decision function: lower values = more anomalous
-        # Paper Equation (3): s(x,n) = 2^(-E[h(x)]/c(n))
         scores = model.decision_function(df)
 
         results = []
         for idx, (pred, ml_score) in enumerate(zip(predictions, scores)):
-            # Paper Equation (4): score% = max(0, min(100, floor((0.5 - f(x)) * 100)))
             anomaly_percentage = max(0, min(100, int((0.5 - ml_score) * 100)))
-
-            # Also run rule-based check
             row = df.iloc[idx]
             rule_result = rule_based_analysis(row)
 
-            # Combine: take the higher score between ML and rules
             final_score = max(anomaly_percentage, rule_result["score"])
-
-            # Paper Equation (5): Suspicious if score% > τ (70%) OR ŷ = -1
             status = "Normal"
             if pred == -1 or final_score > 70:
                 status = "Suspicious"
@@ -148,7 +127,6 @@ def analyze():
                 "reasons": rule_result["reasons"]
             })
 
-        # Save model for future use
         try:
             joblib.dump(model, MODEL_PATH)
         except Exception:
@@ -156,6 +134,69 @@ def analyze():
 
         return jsonify({"success": True, "results": results})
 
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/compare', methods=['POST'])
+def compare():
+    """
+    Research Paper Endpoint: Compares 5 algorithms.
+    """
+    try:
+        data = request.get_json()
+        features_list = data.get('features', [])
+        if not features_list:
+            return jsonify({"success": False, "error": "No data"}), 400
+        
+        df = pd.DataFrame(features_list)
+        results = {}
+
+        # 1. Isolation Forest
+        start = time.time()
+        iforest = IsolationForest(contamination=0.1, random_state=42).fit(df)
+        results['Isolation Forest'] = {
+            "time_ms": (time.time() - start) * 1000,
+            "anomalies": int((iforest.predict(df) == -1).sum())
+        }
+
+        # 2. Local Outlier Factor
+        start = time.time()
+        lof = LocalOutlierFactor(n_neighbors=min(20, len(df)-1), contamination=0.1).fit_predict(df)
+        results['LOF'] = {
+            "time_ms": (time.time() - start) * 1000,
+            "anomalies": int((lof == -1).sum())
+        }
+
+        # 3. One-Class SVM
+        start = time.time()
+        ocsvm = OneClassSVM(nu=0.1, kernel="rbf", gamma=0.1).fit(df)
+        results['OCSVM'] = {
+            "time_ms": (time.time() - start) * 1000,
+            "anomalies": int((ocsvm.predict(df) == -1).sum())
+        }
+
+        # 4. K-Means (Distance-based anomaly)
+        start = time.time()
+        kmeans = KMeans(n_clusters=2, random_state=42).fit(df)
+        distances = np.min(kmeans.transform(df), axis=1)
+        threshold = np.percentile(distances, 90)
+        results['K-Means'] = {
+            "time_ms": (time.time() - start) * 1000,
+            "anomalies": int((distances > threshold).sum())
+        }
+
+        # 5. Rule-Based
+        start = time.time()
+        rule_anomalies = 0
+        for _, row in df.iterrows():
+            if rule_based_analysis(row)["status"] == "Suspicious":
+                rule_anomalies += 1
+        results['Rule-Based'] = {
+            "time_ms": (time.time() - start) * 1000,
+            "anomalies": rule_anomalies
+        }
+
+        return jsonify({"success": True, "comparison": results})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 

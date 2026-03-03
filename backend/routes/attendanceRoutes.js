@@ -24,6 +24,15 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+// Queue for camera triggers (UID: timestamp)
+const pendingTriggers = {};
+
+// Global scan history for burst detection (Proxy Detection)
+// Array of { timestamp: Date, rfidUid: String }
+let globalScanHistory = [];
+const BURST_WINDOW_MS = 60000; // 60 seconds
+let lastScanTimestamp = Date.now();
+
 // Helper: today's date string "YYYY-MM-DD" in IST
 function todayIST() {
     const now = new Date();
@@ -91,6 +100,9 @@ module.exports = (io) => {
                     io.to("admin").emit("attendanceUpdate", { action: "checkin", record });
                 }
 
+                // Queue a trigger for the wireless camera
+                pendingTriggers[staff.rfidUid] = Date.now();
+
                 return res.json({
                     success: true,
                     action: "checkin",
@@ -130,6 +142,20 @@ module.exports = (io) => {
                         outTime: { $ne: null }
                     }).sort({ date: -1 });
 
+                    // --- NEW PROXY DETECTION FEATURES ---
+                    // 1. Inter-Arrival Time (ms since last scan at this reader)
+                    const interArrivalTime = Date.now() - lastScanTimestamp;
+                    lastScanTimestamp = Date.now();
+
+                    // 2. Frequency Score (unique cards in last 60s)
+                    const nowMs = Date.now();
+                    globalScanHistory.push({ timestamp: nowMs, rfidUid: staff.rfidUid });
+                    // Cleanup old scans from history
+                    globalScanHistory = globalScanHistory.filter(s => (nowMs - s.timestamp) < BURST_WINDOW_MS);
+                    // Count unique UIDs in the window
+                    const uniqueUids = new Set(globalScanHistory.map(s => s.rfidUid));
+                    const frequencyScore = uniqueUids.size;
+
                     // shortStayCount: number of days with duration < 15 min in past 30 days
                     // Paper Eq(9): s = 1[d < 15] — we count total occurrences
                     let shortStayCount = 0;
@@ -164,14 +190,18 @@ module.exports = (io) => {
                         duration_minutes: durationMinutes,
                         arrival_deviation: arrivalDeviation,
                         scan_interval: scanInterval,
-                        short_stay_count: shortStayCount
+                        short_stay_count: shortStayCount,
+                        inter_arrival_time: interArrivalTime,
+                        frequency_score: frequencyScore
                     };
 
                     record.features = {
                         durationMinutes,
                         arrivalDeviation,
                         scanInterval,
-                        shortStayCount
+                        shortStayCount,
+                        interArrivalTime,
+                        frequencyScore
                     };
 
                     // 2. Call Python AI Microservice
@@ -187,7 +217,9 @@ module.exports = (io) => {
                                 duration_minutes: pastRec.features.durationMinutes,
                                 arrival_deviation: pastRec.features.arrivalDeviation || 0,
                                 scan_interval: pastRec.features.scanInterval || 0,
-                                short_stay_count: pastRec.features.shortStayCount || 0
+                                short_stay_count: pastRec.features.shortStayCount || 0,
+                                inter_arrival_time: pastRec.features.interArrivalTime || 0,
+                                frequency_score: pastRec.features.frequencyScore || 1
                             });
                         }
                     }
@@ -252,6 +284,9 @@ module.exports = (io) => {
                         alert: record.anomalyStatus === "Suspicious"
                     });
                 }
+
+                // Queue a trigger for the wireless camera
+                pendingTriggers[staff.rfidUid] = Date.now();
 
                 return res.json({
                     success: true,
@@ -332,6 +367,29 @@ module.exports = (io) => {
             console.error("Image upload error:", err);
             res.status(500).json({ success: false, error: err.message });
         }
+    });
+
+    // GET /api/attendance/get-trigger
+    // Called by ESP32-CAM (polling)
+    router.get("/get-trigger", (req, res) => {
+        const uids = Object.keys(pendingTriggers);
+        if (uids.length === 0) {
+            return res.json({ trigger: false });
+        }
+
+        // Get the oldest trigger
+        const rfidUid = uids[0];
+        const timestamp = pendingTriggers[rfidUid];
+
+        // If trigger is older than 30 seconds, ignore it
+        if (Date.now() - timestamp > 30000) {
+            delete pendingTriggers[rfidUid];
+            return res.json({ trigger: false });
+        }
+
+        // Return trigger and clear it
+        delete pendingTriggers[rfidUid];
+        res.json({ trigger: true, rfidUid });
     });
 
     // GET /api/attendance?date=YYYY-MM-DD
