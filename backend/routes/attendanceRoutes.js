@@ -52,8 +52,16 @@ function calcWorkingHours(inTime, outTime) {
 
 // Helper: robustly get AI service base URL
 function getAiBaseUrl() {
-    let url = process.env.PYTHON_AI_SERVICE_URL || "http://localhost:5001";
-    // Remove trailing /analyze if mistakenly included
+    // 1. Check for manual override in environment
+    let url = process.env.PYTHON_AI_SERVICE_URL;
+
+    // 2. Fallback to Internal Render URL (More reliable for inter-service communication)
+    // Format: http://<service-name>:<port>
+    if (!url || url.includes("localhost")) {
+        url = "http://distribution-agency-ai:10000";
+    }
+
+    // Clean the URL
     return url.replace(/\/analyze$/, "").replace(/\/$/, "");
 }
 
@@ -392,12 +400,26 @@ module.exports = (io) => {
             }));
 
             const PYTHON_AI_BASE = getAiBaseUrl();
-            const aiRes = await axios.post(`${PYTHON_AI_BASE}/compare`, { features: featuresList });
+            const fullUrl = `${PYTHON_AI_BASE}/compare`;
+            console.log(`[AI-COMP] Calling: ${fullUrl} for ${records.length} records`);
+
+            const aiRes = await axios.post(fullUrl, { features: featuresList }, { timeout: 15000 }).catch(e => {
+                console.error(`[AI-COMP] Call failed: ${e.message}`);
+                return { error: true, message: e.message };
+            });
+
+            if (aiRes.error) {
+                return res.status(502).json({
+                    success: false,
+                    message: `AI Service Unreachable: ${aiRes.message}. (Check if https://distribution-agency-ai.onrender.com is live)`
+                });
+            }
 
             if (aiRes.data && aiRes.data.success) {
+                console.log(`[AI-COMP] Success: ${Object.keys(aiRes.data.comparison).length} algos evaluated`);
                 return res.json({ success: true, comparison: aiRes.data.comparison, count: records.length });
             } else {
-                return res.status(500).json({ success: false, message: "AI Comparison failed" });
+                return res.status(500).json({ success: false, message: (aiRes.data && aiRes.data.error) || "AI Comparison engine failure" });
             }
         } catch (err) {
             console.error("Comparison error:", err.message);

@@ -120,7 +120,14 @@ export default {
         }
       } catch (err) {
         console.error("Benchmark failed:", err);
-        this.error = "Connection failed. Please ensure the backend and AI services are running.";
+        // Show the specific error message from the backend if available
+        if (err.response && err.response.data && err.response.data.message) {
+          this.error = err.response.data.message;
+        } else if (err.message) {
+          this.error = `Connection error: ${err.message}`;
+        } else {
+          this.error = "Connection failed. Please ensure the backend and AI services are running.";
+        }
       } finally {
         this.loading = false;
       }
