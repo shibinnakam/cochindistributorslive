@@ -2,6 +2,35 @@ const express = require("express");
 const router = express.Router();
 const Attendance = require("../models/Attendance");
 const Staff = require("../models/Staff");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const axios = require("axios");
+
+// Configure Multer for image storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = "uploads/attendance";
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        cb(null, file.fieldname + "-" + uniqueSuffix + ".jpg");
+    },
+});
+
+const upload = multer({ storage: storage });
+
+// Queue for camera triggers (UID: timestamp)
+const pendingTriggers = {};
+
+// Global scan history for burst detection (Proxy Detection)
+let globalScanHistory = [];
+const BURST_WINDOW_MS = 60000; // 60 seconds
+let lastScanTimestamp = Date.now();
 
 // Helper: today's date string "YYYY-MM-DD" in IST
 function todayIST() {
@@ -84,6 +113,7 @@ module.exports = (io) => {
                 record.workingHours = calcWorkingHours(record.inTime, record.outTime);
 
                 // --- AI ANOMALY DETECTION START ---
+                // Feature Vector: x = [d, a, i, s, t, f] per Research Paper
                 try {
                     // 1. Extract Behavioral Features
                     const inTime = new Date(record.inTime);
@@ -91,37 +121,94 @@ module.exports = (io) => {
                     const durationMs = outTime - inTime;
                     const durationMinutes = Math.floor(durationMs / 60000);
 
-                    // Arrival deviation: compare with 9:00 AM standard
+                    // Eq(7): Arrival deviation from 9:00 AM standard (in minutes)
                     const nineAM = new Date(inTime);
                     nineAM.setHours(9, 0, 0, 0);
                     const arrivalDeviation = Math.abs(Math.floor((inTime - nineAM) / 60000));
 
-                    // For now, simplicity: scanInterval and shortStayCount placeholder 
-                    // (would need previous days' records for deeper analysis)
-                    const scanInterval = 0;
-                    const shortStayCount = durationMinutes < 15 ? 1 : 0;
+                    // Eq(8)-(9): Compute REAL historical features from past records
+                    const thirtyDaysAgo = new Date();
+                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                    const pastDateStr = thirtyDaysAgo.toISOString().split("T")[0];
 
-                    const features = {
+                    const historyRecords = await Attendance.find({
+                        staffId: staff._id,
+                        date: { $gte: pastDateStr, $lt: today },
+                        outTime: { $ne: null }
+                    }).sort({ date: -1 });
+
+                    // --- NEW PROXY DETECTION FEATURES ---
+                    // 1. Inter-Arrival Time (ms since last scan at this reader)
+                    const interArrivalTime = Date.now() - lastScanTimestamp;
+                    lastScanTimestamp = Date.now();
+
+                    // 2. Frequency Score (unique cards in last 60s)
+                    const nowMs = Date.now();
+                    globalScanHistory.push({ timestamp: nowMs, rfidUid: staff.rfidUid });
+                    globalScanHistory = globalScanHistory.filter(s => (nowMs - s.timestamp) < BURST_WINDOW_MS);
+                    const uniqueUids = new Set(globalScanHistory.map(s => s.rfidUid));
+                    const frequencyScore = uniqueUids.size;
+
+                    // shortStayCount: number of days with duration < 15 min
+                    let shortStayCount = 0;
+                    const scanDates = [];
+                    for (const pastRec of historyRecords) {
+                        if (pastRec.inTime && pastRec.outTime) {
+                            const pastDuration = Math.floor((new Date(pastRec.outTime) - new Date(pastRec.inTime)) / 60000);
+                            if (pastDuration < 15) shortStayCount++;
+                            scanDates.push(new Date(pastRec.date));
+                        }
+                    }
+                    if (durationMinutes < 15) shortStayCount++;
+
+                    // scanInterval: average days between scans
+                    let scanInterval = 0;
+                    if (scanDates.length >= 2) {
+                        let totalGapDays = 0;
+                        for (let g = 0; g < scanDates.length - 1; g++) {
+                            const gapMs = Math.abs(scanDates[g] - scanDates[g + 1]);
+                            totalGapDays += gapMs / (1000 * 60 * 60 * 24);
+                        }
+                        scanInterval = Math.round(totalGapDays / (scanDates.length - 1));
+                    }
+
+                    const currentFeatures = {
                         duration_minutes: durationMinutes,
                         arrival_deviation: arrivalDeviation,
                         scan_interval: scanInterval,
-                        short_stay_count: shortStayCount
+                        short_stay_count: shortStayCount,
+                        inter_arrival_time: interArrivalTime,
+                        frequency_score: frequencyScore
                     };
 
                     record.features = {
                         durationMinutes,
                         arrivalDeviation,
                         scanInterval,
-                        shortStayCount
+                        shortStayCount,
+                        interArrivalTime,
+                        frequencyScore
                     };
 
                     // 2. Call Python AI Microservice
-                    const axios = require("axios");
                     const PYTHON_AI_URL = process.env.PYTHON_AI_SERVICE_URL || "http://localhost:5001/analyze";
+                    const allFeatures = [currentFeatures];
 
-                    const aiResponse = await axios.post(PYTHON_AI_URL, {
-                        features: [features]
-                    });
+                    // Add history for batch ML context
+                    for (const pastRec of historyRecords.slice(0, 19)) {
+                        if (pastRec.features && pastRec.features.durationMinutes !== undefined) {
+                            allFeatures.push({
+                                duration_minutes: pastRec.features.durationMinutes,
+                                arrival_deviation: pastRec.features.arrivalDeviation || 0,
+                                scan_interval: pastRec.features.scanInterval || 0,
+                                short_stay_count: pastRec.features.shortStayCount || 0,
+                                inter_arrival_time: pastRec.features.interArrivalTime || 0,
+                                frequency_score: pastRec.features.frequencyScore || 1
+                            });
+                        }
+                    }
+
+                    const aiResponse = await axios.post(PYTHON_AI_URL, { features: allFeatures });
 
                     if (aiResponse.data && aiResponse.data.success && aiResponse.data.results.length > 0) {
                         const result = aiResponse.data.results[0];
@@ -130,7 +217,8 @@ module.exports = (io) => {
                     }
                 } catch (aiErr) {
                     console.error("AI Anomaly Detection Error:", aiErr.message);
-                    // Silently fail or log, don't block attendance recording
+                    // Minimal fallback
+                    record.anomalyStatus = (calcWorkingHours(record.inTime, record.outTime).includes("0h 0m")) ? "Suspicious" : "Normal";
                 }
                 // --- AI ANOMALY DETECTION END ---
 
@@ -144,6 +232,9 @@ module.exports = (io) => {
                         alert: record.anomalyStatus === "Suspicious"
                     });
                 }
+
+                // Queue a trigger for the wireless camera
+                pendingTriggers[staff.rfidUid] = Date.now();
 
                 return res.json({
                     success: true,
@@ -263,6 +354,45 @@ module.exports = (io) => {
             });
         } catch (err) {
             console.error("Attendance analysis error:", err);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // GET /api/attendance/comparison
+    // Benchmarks multiple algorithms across recent records
+    router.get("/comparison", async (req, res) => {
+        try {
+            // Fetch records from the last 30 days that have behavioral features
+            const records = await Attendance.find({
+                "features.durationMinutes": { $exists: true }
+            }).sort({ date: -1 }).limit(100);
+
+            if (records.length < 5) {
+                return res.json({
+                    success: false,
+                    message: "Insufficient data for benchmark (need at least 5 records with behavioral features)"
+                });
+            }
+
+            const featuresList = records.map(r => ({
+                duration_minutes: r.features.durationMinutes || 0,
+                arrival_deviation: r.features.arrivalDeviation || 0,
+                scan_interval: r.features.scanInterval || 0,
+                short_stay_count: r.features.shortStayCount || 0,
+                inter_arrival_time: r.features.interArrivalTime || 0,
+                frequency_score: r.features.frequencyScore || 1
+            }));
+
+            const PYTHON_AI_URL = process.env.PYTHON_AI_SERVICE_URL || "http://localhost:5001";
+            const aiRes = await axios.post(`${PYTHON_AI_URL}/compare`, { features: featuresList });
+
+            if (aiRes.data && aiRes.data.success) {
+                return res.json({ success: true, comparison: aiRes.data.comparison, count: records.length });
+            } else {
+                return res.status(500).json({ success: false, message: "AI Comparison failed" });
+            }
+        } catch (err) {
+            console.error("Comparison error:", err.message);
             res.status(500).json({ success: false, error: err.message });
         }
     });

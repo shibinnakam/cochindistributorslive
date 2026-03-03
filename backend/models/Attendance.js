@@ -16,7 +16,9 @@ const attendanceSchema = new mongoose.Schema(
             durationMinutes: { type: Number },
             arrivalDeviation: { type: Number },
             scanInterval: { type: Number },
-            shortStayCount: { type: Number }
+            shortStayCount: { type: Number },
+            interArrivalTime: { type: Number },
+            frequencyScore: { type: Number }
         }
     },
     { timestamps: true }
