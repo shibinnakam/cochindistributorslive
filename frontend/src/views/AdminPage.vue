@@ -132,6 +132,15 @@
             <span class="icon">📊</span>
             Attendance Analysis
           </a>
+          <a
+            href="#"
+            class="nav-item"
+            :class="{ active: selectedMenu === 'algorithm-comparison' }"
+            @click.prevent="selectMenu('algorithm-comparison')"
+          >
+            <span class="icon">🔬</span>
+            Algorithm Comparison
+          </a>
         </div>
 
         <div class="nav-section">
@@ -363,6 +372,7 @@
         <LiveTracking v-if="selectedMenu === 'tracking'" />
         <AdminAttendance v-if="selectedMenu === 'attendance'" />
         <AttendanceAnalysis v-if="selectedMenu === 'attendance-analysis'" />
+        <AlgorithmComparison v-if="selectedMenu === 'algorithm-comparison'" />
 
         <!-- Reviews View -->
         <div v-if="selectedMenu === 'reviews'" class="reviews-section">
@@ -613,6 +623,7 @@ import ChatWindow from "@/views/ChatWindow.vue";
 import LiveTracking from "@/views/LiveTracking.vue";
 import AdminAttendance from "@/views/AdminAttendance.vue";
 import AttendanceAnalysis from "@/views/AttendanceAnalysis.vue";
+import AlgorithmComparison from "@/views/AlgorithmComparison.vue";
 
 const API_BASE_URL = "/api";
 
@@ -630,6 +641,7 @@ export default {
     LiveTracking,
     AdminAttendance,
     AttendanceAnalysis,
+    AlgorithmComparison,
   },
   data() {
     return {
@@ -746,6 +758,7 @@ export default {
         tracking: "Live Vehicle Tracking",
         attendance: "Staff Attendance Monitoring",
         "attendance-analysis": "Attendance Analysis & Trends",
+        "algorithm-comparison": "ML Algorithm Comparative Analysis",
       };
       return titles[menu] || "Dashboard";
     },

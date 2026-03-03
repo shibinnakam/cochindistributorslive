@@ -17,13 +17,6 @@
           />
         </div>
         <button
-          @click="runComparison"
-          class="btn-research"
-          :disabled="compLoading"
-        >
-          🔬 Algorithm Comparison
-        </button>
-        <button
           @click="fetchAttendance"
           class="btn-refresh"
           :disabled="loading"
@@ -31,48 +24,6 @@
           <span v-if="loading">Refreshing...</span>
           <span v-else>🔄 Refresh</span>
         </button>
-      </div>
-    </div>
-
-    <!-- Research Comparison Section -->
-    <div class="research-section" v-if="showComparison">
-      <div class="comparison-card shadow-sm">
-        <div class="card-header">
-          <h3>Algorithm Comparison (Research Benchmark)</h3>
-          <button @click="showComparison = false" class="btn-close">×</button>
-        </div>
-        <div v-if="compLoading" class="comp-loading">
-          <div class="spinner"></div>
-          <span>Analyzing recent records across 5 algorithms...</span>
-        </div>
-        <div v-else-if="comparisonData" class="comparison-content">
-          <p class="data-info">Analysis performed on the last <b>{{ comparisonCount }}</b> attendance records with behavioral features.</p>
-          <div class="comp-table-wrapper">
-            <table class="comp-table">
-              <thead>
-                <tr>
-                  <th>Algorithm</th>
-                  <th>Computational Latency (ms)</th>
-                  <th>Anomalies Detected</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(metrics, algo) in comparisonData" :key="algo" :class="{ 'highlight-algo': algo === 'Isolation Forest' }">
-                  <td class="algo-name">
-                    {{ algo }}
-                    <span v-if="algo === 'Isolation Forest'" class="target-badge">Target Model</span>
-                  </td>
-                  <td class="latency-cell">{{ metrics.time_ms.toFixed(2) }}ms</td>
-                  <td class="anomaly-cell">{{ metrics.anomalies }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="research-note">
-            <span class="note-icon">💡</span>
-            <p><b>Research Insight:</b> Isolation Forest demonstrates superior performance in computational complexity and anomaly discrimination for this RFID-based multi-dimensional behavioral feature space.</p>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -167,10 +118,8 @@ export default {
       selectedDate: new Date().toISOString().split("T")[0],
       loading: false,
       refreshInterval: null,
-      showComparison: false,
-      compLoading: false,
-      comparisonData: null,
-      comparisonCount: 0
+      loading: false,
+      refreshInterval: null,
     };
   },
   computed: {
@@ -196,21 +145,6 @@ export default {
         console.error("Error fetching attendance:", err);
       } finally {
         this.loading = false;
-      }
-    },
-    async runComparison() {
-      this.showComparison = true;
-      this.compLoading = true;
-      try {
-        const res = await axios.get("/api/attendance/comparison");
-        if (res.data.success) {
-          this.comparisonData = res.data.comparison;
-          this.comparisonCount = res.data.count;
-        }
-      } catch (err) {
-        console.error("Comparison error:", err);
-      } finally {
-        this.compLoading = false;
       }
     },
     formatTime(dateStr) {
