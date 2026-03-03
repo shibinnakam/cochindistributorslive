@@ -494,5 +494,41 @@ module.exports = (io) => {
         }
     });
 
+    // GET /api/attendance/comparison
+    // Calls AI service to compare 5 algorithms on recent data
+    router.get("/comparison", async (req, res) => {
+        try {
+            // Fetch last 100 records with features
+            const records = await Attendance.find({ "features.durationMinutes": { $exists: true } })
+                .sort({ createdAt: -1 })
+                .limit(100);
+
+            if (records.length === 0) {
+                return res.json({ success: false, message: "No attendance data with features found for comparison." });
+            }
+
+            const featuresList = records.map(r => ({
+                duration_minutes: r.features.durationMinutes || 0,
+                arrival_deviation: r.features.arrivalDeviation || 0,
+                scan_interval: r.features.scanInterval || 0,
+                short_stay_count: r.features.shortStayCount || 0,
+                inter_arrival_time: r.features.interArrivalTime || 0,
+                frequency_score: r.features.frequencyScore || 1
+            }));
+
+            const PYTHON_AI_URL = process.env.PYTHON_AI_SERVICE_URL || "http://localhost:5001";
+            const aiRes = await axios.post(`${PYTHON_AI_URL}/compare`, { features: featuresList });
+
+            if (aiRes.data && aiRes.data.success) {
+                return res.json({ success: true, comparison: aiRes.data.comparison, count: records.length });
+            } else {
+                return res.status(500).json({ success: false, message: "AI Comparison failed" });
+            }
+        } catch (err) {
+            console.error("Comparison error:", err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
     return router;
 };
