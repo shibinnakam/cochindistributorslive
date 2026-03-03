@@ -50,6 +50,13 @@ function calcWorkingHours(inTime, outTime) {
     return `${hours}h ${minutes}m`;
 }
 
+// Helper: robustly get AI service base URL
+function getAiBaseUrl() {
+    let url = process.env.PYTHON_AI_SERVICE_URL || "http://localhost:5001";
+    // Remove trailing /analyze if mistakenly included
+    return url.replace(/\/analyze$/, "").replace(/\/$/, "");
+}
+
 module.exports = (io) => {
     // POST /api/attendance/scan
     // Called by ESP8266 with { rfidUid: "ABCD1234" }
@@ -191,7 +198,8 @@ module.exports = (io) => {
                     };
 
                     // 2. Call Python AI Microservice
-                    const PYTHON_AI_URL = process.env.PYTHON_AI_SERVICE_URL || "http://localhost:5001/analyze";
+                    const PYTHON_AI_BASE = getAiBaseUrl();
+                    const PYTHON_AI_URL = `${PYTHON_AI_BASE}/analyze`;
                     const allFeatures = [currentFeatures];
 
                     // Add history for batch ML context
@@ -383,8 +391,8 @@ module.exports = (io) => {
                 frequency_score: (r.features && r.features.frequencyScore) || 1
             }));
 
-            const PYTHON_AI_URL = process.env.PYTHON_AI_SERVICE_URL || "http://localhost:5001";
-            const aiRes = await axios.post(`${PYTHON_AI_URL}/compare`, { features: featuresList });
+            const PYTHON_AI_BASE = getAiBaseUrl();
+            const aiRes = await axios.post(`${PYTHON_AI_BASE}/compare`, { features: featuresList });
 
             if (aiRes.data && aiRes.data.success) {
                 return res.json({ success: true, comparison: aiRes.data.comparison, count: records.length });

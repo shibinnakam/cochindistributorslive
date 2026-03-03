@@ -17,7 +17,7 @@ services:
       - key: PORT
         value: 5000
       - key: PYTHON_AI_SERVICE_URL
-        value: https://distribution-agency-ai.onrender.com/analyze # Will be set after Python service is created
+        value: https://distribution-agency-ai.onrender.com
 
   - type: web
     name: distribution-agency-ai
