@@ -25,6 +25,15 @@ CORS(app)
 # Path to save the model
 MODEL_PATH = "isolation_forest_model.joblib"
 
+@app.route('/', methods=['GET'])
+def index():
+    return jsonify({
+        "status": "online",
+        "message": "AI Behavior Analysis Service is Running",
+        "version": "1.1.0",
+        "endpoints": ["/analyze", "/compare", "/health"]
+    })
+
 # Initialize model
 def get_model():
     if os.path.exists(MODEL_PATH):

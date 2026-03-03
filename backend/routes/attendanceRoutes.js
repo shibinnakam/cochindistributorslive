@@ -403,15 +403,17 @@ module.exports = (io) => {
             const fullUrl = `${PYTHON_AI_BASE}/compare`;
             console.log(`[AI-COMP] Calling: ${fullUrl} for ${records.length} records`);
 
-            const aiRes = await axios.post(fullUrl, { features: featuresList }, { timeout: 15000 }).catch(e => {
-                console.error(`[AI-COMP] Call failed: ${e.message}`);
-                return { error: true, message: e.message };
+            const aiRes = await axios.post(fullUrl, { features: featuresList }, { timeout: 30000 }).catch(e => {
+                const status = e.response ? e.response.status : 'NO_RESPONSE';
+                const data = e.response ? e.response.data : e.message;
+                console.error(`[AI-COMP] Call failed. Status: ${status}, Detail:`, data);
+                return { error: true, message: e.message, status, data };
             });
 
             if (aiRes.error) {
                 return res.status(502).json({
                     success: false,
-                    message: `AI Service Unreachable: ${aiRes.message}. (Check if https://distribution-agency-ai.onrender.com is live)`
+                    message: `AI Service Unreachable: ${aiRes.message}. Status: ${aiRes.status}. (Check https://distribution-agency-ai.onrender.com in browser)`
                 });
             }
 
@@ -419,6 +421,7 @@ module.exports = (io) => {
                 console.log(`[AI-COMP] Success: ${Object.keys(aiRes.data.comparison).length} algos evaluated`);
                 return res.json({ success: true, comparison: aiRes.data.comparison, count: records.length });
             } else {
+                console.error(`[AI-COMP] Engine Failure:`, aiRes.data);
                 return res.status(500).json({ success: false, message: (aiRes.data && aiRes.data.error) || "AI Comparison engine failure" });
             }
         } catch (err) {
