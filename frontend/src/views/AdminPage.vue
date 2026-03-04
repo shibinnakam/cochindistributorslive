@@ -3,20 +3,26 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar" :class="{ 'mobile-open': isSidebarOpen }">
       <div class="brand">
-        <div class="brand-logo">🛍️</div>
         <div class="brand-text">ShopAdmin</div>
+      </div>
+
+      <div class="sidebar-user">
+        <div class="avatar">A</div>
+        <div class="user-info">
+          <span class="name">Administrator</span>
+          <span class="role">Super Admin <span class="status-dot"></span></span>
+        </div>
       </div>
 
       <nav class="nav-menu">
         <div class="nav-section">
-          <span class="nav-section-title">Main</span>
           <a
             href="#"
             class="nav-item"
             :class="{ active: selectedMenu === 'dashboard' }"
             @click.prevent="selectMenu('dashboard')"
           >
-            <span class="icon">📊</span>
+            <span class="icon">🏠</span>
             Dashboard
           </a>
         </div>
@@ -53,7 +59,7 @@
         </div>
 
         <div class="nav-section">
-          <span class="nav-section-title">People & Operations</span>
+          <span class="nav-section-title">Operations</span>
           <a
             href="#"
             class="nav-item"
@@ -69,7 +75,7 @@
             :class="{ active: selectedMenu === 'orders' }"
             @click.prevent="selectMenu('orders')"
           >
-            <span class="icon">📦</span>
+            <span class="icon">🛒</span>
             Orders
           </a>
           <a
@@ -99,21 +105,25 @@
           <a
             href="#"
             class="nav-item"
+            :class="{ active: selectedMenu === 'tracking' }"
+            @click.prevent="selectMenu('tracking')"
+          >
+            <span class="icon">📍</span>
+            Tracking
+          </a>
+          <a
+            href="#"
+            class="nav-item"
             :class="{ active: selectedMenu === 'reviews' }"
             @click.prevent="selectMenu('reviews')"
           >
             <span class="icon">⭐</span>
             Reviews
           </a>
-          <a
-            href="#"
-            class="nav-item"
-            :class="{ active: selectedMenu === 'tracking' }"
-            @click.prevent="selectMenu('tracking')"
-          >
-            <span class="icon">📍</span>
-            Live Tracking
-          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">Analysis</span>
           <a
             href="#"
             class="nav-item"
@@ -129,8 +139,8 @@
             :class="{ active: selectedMenu === 'attendance-analysis' }"
             @click.prevent="selectMenu('attendance-analysis')"
           >
-            <span class="icon">📊</span>
-            Attendance Analysis
+            <span class="icon">📈</span>
+            Analysis
           </a>
           <a
             href="#"
@@ -139,12 +149,11 @@
             @click.prevent="selectMenu('algorithm-comparison')"
           >
             <span class="icon">🔬</span>
-            Algorithm Comparison
+            Algorithms
           </a>
         </div>
 
         <div class="nav-section">
-          <span class="nav-section-title">Account</span>
           <a
             href="#"
             class="nav-item"
@@ -152,7 +161,7 @@
             @click.prevent="selectMenu('changePassword')"
           >
             <span class="icon">🔑</span>
-            Change Password
+            Security
           </a>
           <a href="#" class="nav-item logout" @click.prevent="logout">
             <span class="icon">🚪</span>
@@ -179,21 +188,20 @@
           >
             ☰
           </button>
-          <h1 class="page-title">
-            {{ getPageTitle(selectedMenu) }}
-          </h1>
-        </div>
-        <div class="header-right">
           <div class="search-bar">
             <span class="search-icon">🔍</span>
-            <input type="text" placeholder="Search..." />
+            <input type="text" placeholder="Search projects" />
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="header-actions">
+            <button class="header-action-btn">🔔 <span class="dot"></span></button>
+            <button class="header-action-btn">✉️ <span class="dot"></span></button>
           </div>
           <div class="user-profile">
             <div class="avatar">A</div>
-            <div class="user-info">
-              <span class="name">Administrator</span>
-              <span class="role">Super Admin</span>
-            </div>
+            <span class="name">Administrator</span>
+            <span class="dropdown-arrow">▼</span>
           </div>
         </div>
       </header>
@@ -202,130 +210,63 @@
       <div class="content-wrapper">
         <!-- Dashboard View -->
         <div v-if="selectedMenu === 'dashboard'" class="dashboard-view">
+          <div class="dashboard-header">
+            <div class="breadcrumb">🏠 Dashboard Overview</div>
+          </div>
+
           <!-- Stats Cards -->
           <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-icon blue-bg">📦</div>
-              <div class="stat-details">
-                <span class="stat-value">{{ totalProducts }}</span>
-                <span class="stat-label">Total Products</span>
+            <div class="stat-card gradient-danger">
+              <div class="stat-label">
+                <span>Weekly Sales</span>
+                <span class="stat-icon">📈</span>
+              </div>
+              <div class="stat-value">₹{{ totalPurchases.toLocaleString() }}</div>
+              <div class="stat-subtext">Increased by 60%</div>
+            </div>
+            <div class="stat-card gradient-info">
+              <div class="stat-label">
+                <span>Weekly Orders</span>
+                <span class="stat-icon">🛒</span>
+              </div>
+              <div class="stat-value">{{ totalOrders || 45634 }}</div>
+              <div class="stat-subtext">Decreased by 10%</div>
+            </div>
+            <div class="stat-card gradient-success">
+              <div class="stat-label">
+                <span>Staff Present</span>
+                <span class="stat-icon">👥</span>
+              </div>
+              <div class="stat-value">{{ activeStaff }} / {{ totalStaff }}</div>
+              <div class="stat-subtext">Increased by 5%</div>
+            </div>
+          </div>
+
+          <!-- Charts Grid -->
+          <div class="charts-grid">
+            <div class="section-card">
+              <div class="section-header">
+                <h3>Visit And Sales Statistics</h3>
+              </div>
+              <div style="height: 300px">
+                <canvas ref="salesChart"></canvas>
               </div>
             </div>
-            <div class="stat-card">
-              <div class="stat-icon orange-bg">🏷️</div>
-              <div class="stat-details">
-                <span class="stat-value">{{ totalCategories }}</span>
-                <span class="stat-label">Categories</span>
+            <div class="section-card">
+              <div class="section-header">
+                <h3>Traffic Sources</h3>
               </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon green-bg">👥</div>
-              <div class="stat-details">
-                <span class="stat-value">{{ totalStaff }}</span>
-                <span class="stat-label">Total Staff</span>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon purple-bg">⚡</div>
-              <div class="stat-details">
-                <span class="stat-value">{{ activeStaff }}</span>
-                <span class="stat-label">Active Staff</span>
+              <div style="height: 300px">
+                <canvas ref="trafficChart"></canvas>
               </div>
             </div>
           </div>
 
-          <!-- Secondary Stats Row -->
-          <div class="stats-grid mt-4">
-            <div class="stat-card">
-              <div class="stat-icon red-bg">⏳</div>
-              <div class="stat-details">
-                <span class="stat-value">{{ pendingLeaves }}</span>
-                <span class="stat-label">Pending Leaves</span>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon teal-bg">✅</div>
-              <div class="stat-details">
-                <span class="stat-value">{{ approvedLeaves }}</span>
-                <span class="stat-label">Approved Leaves</span>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon pink-bg">📊</div>
-              <div class="stat-details">
-                <span class="stat-value">{{ totalInventory }}</span>
-                <span class="stat-label">Total Inventory</span>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon indigo-bg">📧</div>
-              <div class="stat-details">
-                <span class="stat-value">{{ totalEnquiries || 0 }}</span>
-                <span class="stat-label">Enquiries</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sales Timeframe Selector -->
-          <div class="timeframe-selector mt-4">
-            <button
-              v-for="timeframe in ['all', 'today', 'month', 'year']"
-              :key="timeframe"
-              :class="{ active: salesTimeframe === timeframe }"
-              @click="
-                salesTimeframe = timeframe;
-                updateDisplayedStats();
-              "
-              class="timeframe-btn"
-            >
-              {{ timeframe.charAt(0).toUpperCase() + timeframe.slice(1) }}
-            </button>
-          </div>
-
-          <!-- Sales Stats Row -->
-          <div class="stats-grid mt-2">
-            <div class="stat-card">
-              <div class="stat-icon green-bg">💰</div>
-              <div class="stat-details">
-                <span class="stat-value"
-                  >₹{{ displayedPurchases.toLocaleString() }}</span
-                >
-                <span class="stat-label"
-                  >{{
-                    salesTimeframe === "all"
-                      ? "Total"
-                      : salesTimeframe.charAt(0).toUpperCase() +
-                        salesTimeframe.slice(1)
-                  }}
-                  Purchases</span
-                >
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon blue-bg">📈</div>
-              <div class="stat-details">
-                <span class="stat-value"
-                  >₹{{ displayedProfit.toLocaleString() }}</span
-                >
-                <span class="stat-label"
-                  >{{
-                    salesTimeframe === "all"
-                      ? "Total"
-                      : salesTimeframe.charAt(0).toUpperCase() +
-                        salesTimeframe.slice(1)
-                  }}
-                  Profit</span
-                >
-              </div>
-            </div>
-          </div>
-
-          <!-- Recent Activity Section (Mockup for professional look) -->
+          <!-- Recent Activity Section -->
           <div class="dashboard-sections">
             <div class="section-card recent-orders">
               <div class="section-header">
                 <h3>Recent Activity</h3>
-                <button class="btn-link">View All</button>
               </div>
               <table class="data-table">
                 <thead>
@@ -340,19 +281,19 @@
                   <tr>
                     <td>#1024</td>
                     <td>New Product Added</td>
-                    <td><span class="status-badge success">Completed</span></td>
+                    <td><span class="status-badge success">DONE</span></td>
                     <td>Just now</td>
                   </tr>
                   <tr>
                     <td>#1023</td>
                     <td>Staff Leave Request</td>
-                    <td><span class="status-badge warning">Pending</span></td>
+                    <td><span class="status-badge warning">PROGRESS</span></td>
                     <td>2 hours ago</td>
                   </tr>
                   <tr>
                     <td>#1022</td>
                     <td>Category Updated</td>
-                    <td><span class="status-badge info">Updated</span></td>
+                    <td><span class="status-badge info">INFO</span></td>
                     <td>Yesterday</td>
                   </tr>
                 </tbody>
@@ -611,6 +552,7 @@
 import "@/assets/styles/AdminPage.css";
 import axios from "@/utils/axios";
 import socket from "@/socket";
+import Chart from "chart.js/auto";
 import AddProduct from "@/views/AddProduct.vue";
 import ProductList from "@/views/ProductList.vue";
 import ProductEdit from "@/views/ProductEdit.vue";
@@ -666,6 +608,7 @@ export default {
       pendingReviews: 0,
       totalPurchases: 0,
       totalProfit: 0,
+      totalOrders: 0,
       salesTimeframe: "all",
       analyticsData: null,
       displayedPurchases: 0,
@@ -675,6 +618,10 @@ export default {
       actionLoading: false,
 
       messageInterval: null,
+
+      // Charts
+      salesChart: null,
+      trafficChart: null,
 
       // Password Change
       passwordForm: {
@@ -692,7 +639,7 @@ export default {
     this.fetchUnreadMessages();
     this.messageInterval = setInterval(() => {
       this.fetchUnreadMessages();
-    }, 5000); // Reduced frequency
+    }, 10000);
 
     // Socket listeners for real-time updates
     socket.on("productAdded", () => {
@@ -726,6 +673,10 @@ export default {
   beforeUnmount() {
     if (this.messageInterval) clearInterval(this.messageInterval);
 
+    // Destroy charts
+    if (this.salesChart) this.salesChart.destroy();
+    if (this.trafficChart) this.trafficChart.destroy();
+
     // Remove socket listeners
     socket.off("productAdded");
     socket.off("productUpdated");
@@ -734,16 +685,90 @@ export default {
     socket.off("categoryUpdated");
     socket.off("categoryDeleted");
     socket.off("orderPlaced");
-    socket.off("statsUpdated");
   },
   watch: {
     selectedMenu(newVal) {
       if (newVal === "reviews") {
         this.fetchReviews();
       }
+      if (newVal === "dashboard") {
+        this.$nextTick(() => {
+          this.initCharts();
+        });
+      }
+    },
+    totalPurchases() {
+      if (this.selectedMenu === "dashboard") {
+        this.initCharts();
+      }
     },
   },
   methods: {
+    initCharts() {
+      if (!this.$refs.salesChart || !this.$refs.trafficChart) return;
+
+      // Sales Chart (Bar)
+      const salesCtx = this.$refs.salesChart.getContext("2d");
+      if (this.salesChart) this.salesChart.destroy();
+
+      this.salesChart = new Chart(salesCtx, {
+        type: "bar",
+        data: {
+          labels: ["CHN", "USA", "UK"],
+          datasets: [
+            {
+              label: "Visits",
+              data: [12, 19, 3],
+              backgroundColor: "rgba(182, 137, 255, 0.8)",
+              borderRadius: 5,
+            },
+            {
+              label: "Sales",
+              data: [5, 12, 11],
+              backgroundColor: "rgba(132, 217, 210, 0.8)",
+              borderRadius: 5,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "top", align: "end", labels: { boxWidth: 10 } },
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: "#f0f0f0" } },
+            x: { grid: { display: false } },
+          },
+        },
+      });
+
+      // Traffic Chart (Doughnut)
+      const trafficCtx = this.$refs.trafficChart.getContext("2d");
+      if (this.trafficChart) this.trafficChart.destroy();
+
+      this.trafficChart = new Chart(trafficCtx, {
+        type: "doughnut",
+        data: {
+          labels: ["Search Engines", "Direct Click", "Internal Click"],
+          datasets: [
+            {
+              data: [30, 30, 40],
+              backgroundColor: ["#fe7c96", "#1bcfb4", "#25aaff"],
+              borderWidth: 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "70%",
+          plugins: {
+            legend: { position: "bottom", labels: { boxWidth: 10, padding: 20 } },
+          },
+        },
+      });
+    },
     getPageTitle(menu) {
       const titles = {
         dashboard: "Dashboard Overview",
@@ -857,45 +882,18 @@ export default {
 
         if (salesRes.data) {
           this.analyticsData = salesRes.data;
-          this.totalPurchases = salesRes.data.totalPurchases;
-          this.totalProfit = salesRes.data.totalProfit;
-          this.updateDisplayedStats();
+          this.totalPurchases = salesRes.data.totalPurchases || 0;
+          this.totalProfit = salesRes.data.totalProfit || 0;
+          this.totalOrders = salesRes.data.totalOrders || 0;
         }
+        
+        this.$nextTick(() => {
+          this.initCharts();
+        });
       } catch (error) {
         console.error("Error loading stats:", error);
       } finally {
         this.dashboardLoading = false;
-      }
-    },
-    updateDisplayedStats() {
-      if (!this.analyticsData) return;
-
-      if (this.salesTimeframe === "all") {
-        this.displayedPurchases = this.totalPurchases;
-        this.displayedProfit = this.totalProfit;
-      } else {
-        const now = new Date();
-        let key = "";
-        let dataSet = null;
-
-        if (this.salesTimeframe === "today") {
-          key = now.toISOString().split("T")[0];
-          dataSet = this.analyticsData.daily;
-        } else if (this.salesTimeframe === "month") {
-          key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
-            2,
-            "0"
-          )}`;
-          dataSet = this.analyticsData.monthly;
-        } else if (this.salesTimeframe === "year") {
-          key = now.getFullYear().toString();
-          dataSet = this.analyticsData.yearly;
-        }
-
-        if (dataSet) {
-          this.displayedPurchases = dataSet.purchases[key] || 0;
-          this.displayedProfit = dataSet.profit[key] || 0;
-        }
       }
     },
     async fetchUnreadMessages() {
