@@ -232,17 +232,29 @@ a {
 }
 
 .icon {
-  margin-right: 1.25rem;
-  width: 24px;
-  text-align: center;
-  font-size: 1.25rem;
+  margin-right: 1rem;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text-light);
   transition: all 0.2s;
 }
 
-.nav-item:hover .icon {
-  color: var(--primary-color);
+.icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  flex-shrink: 0;
 }
+
+.nav-item:hover .icon,
+.nav-item.active .icon {
+  color: inherit;
+}
+
 
 .badge-pill {
   margin-left: auto;
