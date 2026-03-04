@@ -214,23 +214,23 @@
             <div class="breadcrumb">🏠 Dashboard Overview</div>
           </div>
 
-          <!-- Stats Cards -->
+          <!-- Stats Cards (Main Row) -->
           <div class="stats-grid">
             <div class="stat-card gradient-danger">
               <div class="stat-label">
-                <span>Weekly Sales</span>
-                <span class="stat-icon">📈</span>
+                <span>Total Revenue</span>
+                <span class="stat-icon">💰</span>
               </div>
               <div class="stat-value">₹{{ totalPurchases.toLocaleString() }}</div>
-              <div class="stat-subtext">Increased by 60%</div>
+              <div class="stat-subtext">Cumulative Sales</div>
             </div>
             <div class="stat-card gradient-info">
               <div class="stat-label">
-                <span>Weekly Orders</span>
+                <span>Active Orders</span>
                 <span class="stat-icon">🛒</span>
               </div>
-              <div class="stat-value">{{ totalOrders || 45634 }}</div>
-              <div class="stat-subtext">Decreased by 10%</div>
+              <div class="stat-value">{{ totalOrders || 0 }}</div>
+              <div class="stat-subtext">Proccessing now</div>
             </div>
             <div class="stat-card gradient-success">
               <div class="stat-label">
@@ -238,25 +238,51 @@
                 <span class="stat-icon">👥</span>
               </div>
               <div class="stat-value">{{ activeStaff }} / {{ totalStaff }}</div>
-              <div class="stat-subtext">Increased by 5%</div>
+              <div class="stat-subtext">Real-time attendance</div>
+            </div>
+          </div>
+
+          <!-- Secondary Stats Row (New) -->
+          <div class="stats-grid mt-4">
+            <div class="stat-card mini white">
+              <div class="stat-label">📦 Total Products</div>
+              <div class="stat-value dark">{{ totalProducts }}</div>
+            </div>
+            <div class="stat-card mini white">
+              <div class="stat-label">🏗️ Total Inventory</div>
+              <div class="stat-value dark">{{ totalInventory }}</div>
+            </div>
+            <div class="stat-card mini white">
+              <div class="stat-label">⏳ Pending Leaves</div>
+              <div class="stat-value dark">{{ pendingLeaves }}</div>
+            </div>
+            <div class="stat-card mini white">
+              <div class="stat-label">📧 Enquiries</div>
+              <div class="stat-value dark">{{ totalEnquiries || 0 }}</div>
             </div>
           </div>
 
           <!-- Charts Grid -->
-          <div class="charts-grid">
+          <div class="charts-grid mt-4">
             <div class="section-card">
               <div class="section-header">
-                <h3>Visit And Sales Statistics</h3>
+                <h3>Sales & Profit Analytics</h3>
+                <div class="time-filter">
+                  <select v-model="chartTimeframe" @change="initCharts" class="chart-select">
+                    <option value="daily">Last 7 Days</option>
+                    <option value="monthly">This Year</option>
+                  </select>
+                </div>
               </div>
-              <div style="height: 300px">
+              <div style="height: 350px">
                 <canvas ref="salesChart"></canvas>
               </div>
             </div>
             <div class="section-card">
               <div class="section-header">
-                <h3>Traffic Sources</h3>
+                <h3>System Distribution</h3>
               </div>
-              <div style="height: 300px">
+              <div style="height: 350px">
                 <canvas ref="trafficChart"></canvas>
               </div>
             </div>
@@ -611,6 +637,7 @@ export default {
       totalOrders: 0,
       salesTimeframe: "all",
       analyticsData: null,
+      chartTimeframe: "daily", // New: for chart filtering
       displayedPurchases: 0,
       displayedProfit: 0,
       reviewsLoading: false,
@@ -707,26 +734,48 @@ export default {
     initCharts() {
       if (!this.$refs.salesChart || !this.$refs.trafficChart) return;
 
-      // Sales Chart (Bar)
       const salesCtx = this.$refs.salesChart.getContext("2d");
       if (this.salesChart) this.salesChart.destroy();
+
+      // Extract data from analyticsData
+      let labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      let salesData = [0, 0, 0, 0, 0, 0, 0];
+      let profitData = [0, 0, 0, 0, 0, 0, 0];
+
+      if (this.analyticsData && this.analyticsData[this.chartTimeframe]) {
+        const dataSet = this.analyticsData[this.chartTimeframe];
+        const purchases = dataSet.purchases || {};
+        const profits = dataSet.profit || {};
+        
+        // Get last 7 entries for labels/data
+        const keys = Object.keys(purchases).sort().slice(-7);
+        if (keys.length > 0) {
+          labels = keys.map(k => k.split('-').slice(-1)[0]); // Shorten date
+          salesData = keys.map(k => purchases[k] || 0);
+          profitData = keys.map(k => profits[k] || 0);
+        }
+      }
 
       this.salesChart = new Chart(salesCtx, {
         type: "bar",
         data: {
-          labels: ["CHN", "USA", "UK"],
+          labels: labels,
           datasets: [
             {
-              label: "Visits",
-              data: [12, 19, 3],
+              label: "Sales (₹)",
+              data: salesData,
               backgroundColor: "rgba(182, 137, 255, 0.8)",
-              borderRadius: 5,
+              borderRadius: 8,
+              borderWidth: 0,
+              barThickness: 20
             },
             {
-              label: "Sales",
-              data: [5, 12, 11],
+              label: "Profit (₹)",
+              data: profitData,
               backgroundColor: "rgba(132, 217, 210, 0.8)",
-              borderRadius: 5,
+              borderRadius: 8,
+              borderWidth: 0,
+              barThickness: 20
             },
           ],
         },
@@ -734,27 +783,48 @@ export default {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: "top", align: "end", labels: { boxWidth: 10 } },
+            legend: { 
+              position: "top", 
+              align: "end", 
+              labels: { 
+                usePointStyle: true,
+                pointStyle: 'circle',
+                padding: 20,
+                font: { family: 'Inter', size: 12, weight: '600' }
+              } 
+            },
           },
           scales: {
-            y: { beginAtZero: true, grid: { color: "#f0f0f0" } },
-            x: { grid: { display: false } },
+            y: { 
+              beginAtZero: true, 
+              grid: { color: "#f3f4f6", drawBorder: false },
+              ticks: { font: { size: 11 } }
+            },
+            x: { 
+              grid: { display: false },
+              ticks: { font: { size: 11 } }
+            },
           },
         },
       });
 
-      // Traffic Chart (Doughnut)
+      // System Distribution (Pie/Doughnut)
       const trafficCtx = this.$refs.trafficChart.getContext("2d");
       if (this.trafficChart) this.trafficChart.destroy();
+
+      // Use inventory and staff ratios for distribution mock if real data is missing
+      const inventoryRatio = Math.min(this.totalInventory / 1000, 1) * 100;
+      const staffRatio = (this.activeStaff / (this.totalStaff || 1)) * 100;
 
       this.trafficChart = new Chart(trafficCtx, {
         type: "doughnut",
         data: {
-          labels: ["Search Engines", "Direct Click", "Internal Click"],
+          labels: ["Inventory", "Active Staff", "Pending"],
           datasets: [
             {
-              data: [30, 30, 40],
+              data: [inventoryRatio, staffRatio, 100 - staffRatio],
               backgroundColor: ["#fe7c96", "#1bcfb4", "#25aaff"],
+              hoverOffset: 10,
               borderWidth: 0,
             },
           ],
@@ -762,9 +832,17 @@ export default {
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: "70%",
+          cutout: "75%",
           plugins: {
-            legend: { position: "bottom", labels: { boxWidth: 10, padding: 20 } },
+            legend: { 
+              position: "bottom", 
+              labels: { 
+                usePointStyle: true,
+                pointStyle: 'circle',
+                padding: 30,
+                font: { family: 'Inter', size: 12, weight: '500' }
+              } 
+            },
           },
         },
       });
