@@ -338,7 +338,7 @@
                   >
                     <div class="tp-rank">{{ index + 1 }}</div>
                     <img
-                      :src="product.image ? '/' + product.image : '/placeholder.png'"
+                      :src="getImageUrl(product.image)"
                       :alt="product.name"
                       class="tp-img"
                       @error="$event.target.src = 'https://via.placeholder.com/48x48/f1f5f9/94a3b8?text=N%2FA'"
@@ -834,6 +834,13 @@ export default {
       } finally {
         this.topProductsLoading = false;
       }
+    },
+    getImageUrl(path) {
+      if (!path) return 'https://via.placeholder.com/48x48/f1f5f9/94a3b8?text=N%2FA';
+      // If path already starts with / or http, use it as is
+      if (path.startsWith('/') || path.startsWith('http')) return path;
+      // Otherwise add leading slash
+      return `/${path}`;
     },
     handleTimeframeChange() {
       if (this.chartTimeframe === 'today') {
