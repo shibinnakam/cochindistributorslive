@@ -3,7 +3,11 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar" :class="{ 'mobile-open': isSidebarOpen, 'collapsed': !isSidebarOpen }">
       <div class="brand">
-        <div class="brand-text">ShopAdmin</div>
+        <div class="brand-text">
+          <span class="brand-first">Cochin</span>
+          <span class="brand-second">Distributors</span>
+        </div>
+        <img :src="logo" alt="Logo" class="brand-logo-img" />
       </div>
 
       <div class="sidebar-user">
@@ -606,6 +610,7 @@
 
 <script>
 import "@/assets/styles/AdminPage.css";
+import logo from "@/assets/logo.jpeg";
 import axios from "@/utils/axios";
 import socket from "@/socket";
 import Chart from "chart.js/auto";
@@ -689,6 +694,7 @@ export default {
       passwordError: "",
       passwordSuccess: "",
       passwordLoading: false,
+      logo,
     };
   },
   mounted() {
