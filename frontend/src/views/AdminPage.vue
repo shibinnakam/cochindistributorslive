@@ -322,12 +322,37 @@
                 <canvas ref="salesChart"></canvas>
               </div>
             </div>
-            <div class="section-card">
+            <div class="section-card top-products-card">
               <div class="section-header">
-                <h3>System Distribution</h3>
+                <h3>🏆 Top Selling Products</h3>
+                <span class="live-badge">● LIVE</span>
               </div>
-              <div style="height: 350px">
-                <canvas ref="trafficChart"></canvas>
+              <div class="top-products-list">
+                <div v-if="topProductsLoading" class="tp-loading">Loading...</div>
+                <div v-else-if="topProducts.length === 0" class="tp-empty">No sales data yet.</div>
+                <div v-else>
+                  <div
+                    v-for="(product, index) in topProducts"
+                    :key="product._id"
+                    class="tp-item"
+                  >
+                    <div class="tp-rank">{{ index + 1 }}</div>
+                    <img
+                      :src="product.image ? '/' + product.image : '/placeholder.png'"
+                      :alt="product.name"
+                      class="tp-img"
+                      @error="$event.target.src = 'https://via.placeholder.com/48x48/f1f5f9/94a3b8?text=N%2FA'"
+                    />
+                    <div class="tp-info">
+                      <div class="tp-name">{{ product.name }}</div>
+                      <div class="tp-revenue">₹{{ Number(product.revenue || 0).toLocaleString() }}</div>
+                    </div>
+                    <div class="tp-units-badge">
+                      <span class="tp-units">{{ product.unitsSold }}</span>
+                      <span class="tp-units-label">units</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -682,14 +707,18 @@ export default {
       totalOrders: 0,
       salesTimeframe: "all",
       analyticsData: null,
-      chartTimeframe: "daily", // New: for chart filtering
+      chartTimeframe: "daily",
       displayedPurchases: 0,
       displayedProfit: 0,
       reviewsLoading: false,
       currentReviews: [],
       actionLoading: false,
-
       messageInterval: null,
+      topProductsInterval: null,
+
+      // Top Products
+      topProducts: [],
+      topProductsLoading: false,
 
       // Charts
       salesChart: null,
@@ -715,9 +744,13 @@ export default {
     }
     this.fetchDashboardStats();
     this.fetchUnreadMessages();
+    this.fetchTopProducts();
     this.messageInterval = setInterval(() => {
       this.fetchUnreadMessages();
     }, 10000);
+    this.topProductsInterval = setInterval(() => {
+      this.fetchTopProducts();
+    }, 30000);
 
     // Socket listeners for real-time updates
     socket.on("productAdded", () => {
@@ -746,10 +779,12 @@ export default {
 
     socket.on("orderPlaced", () => {
       this.fetchDashboardStats();
+      this.fetchTopProducts();
     });
   },
   beforeUnmount() {
     if (this.messageInterval) clearInterval(this.messageInterval);
+    if (this.topProductsInterval) clearInterval(this.topProductsInterval);
 
     // Destroy charts
     if (this.salesChart) this.salesChart.destroy();
@@ -787,6 +822,19 @@ export default {
     }
   },
   methods: {
+    async fetchTopProducts() {
+      this.topProductsLoading = this.topProducts.length === 0;
+      try {
+        const res = await axios.get(`${API_BASE_URL}/orders/admin/top-products`);
+        if (res.data && res.data.topProducts) {
+          this.topProducts = res.data.topProducts;
+        }
+      } catch (e) {
+        console.error("fetchTopProducts error:", e);
+      } finally {
+        this.topProductsLoading = false;
+      }
+    },
     handleTimeframeChange() {
       if (this.chartTimeframe === 'today') {
         this.fetchDashboardStats();

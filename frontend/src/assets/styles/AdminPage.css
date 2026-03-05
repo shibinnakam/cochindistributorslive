@@ -1338,3 +1338,130 @@ a {
 .section-card {
   padding: 2rem !important;
 }
+
+/* Top Selling Products Widget */
+.top-products-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.live-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--danger-color);
+  background: rgba(239, 68, 68, 0.1);
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.top-products-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.tp-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.tp-item:hover {
+  background: #f8fafc;
+  border-color: var(--border-color);
+  transform: translateX(5px);
+}
+
+.tp-rank {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-light);
+  width: 20px;
+}
+
+.tp-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #f1f5f9;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.tp-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tp-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.tp-revenue {
+  font-size: 0.8rem;
+  color: var(--success-color);
+  font-weight: 600;
+}
+
+.tp-units-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: rgba(125, 51, 255, 0.05);
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  min-width: 65px;
+}
+
+.tp-units {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  line-height: 1;
+}
+
+.tp-units-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-light);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.tp-loading,
+.tp-empty {
+  text-align: center;
+  padding: 3rem 0;
+  color: var(--text-light);
+  font-style: italic;
+  font-size: 0.9rem;
+}

@@ -446,6 +446,42 @@ module.exports = (io) => {
     }
   });
 
+  // Admin: Get Top Selling Products
+  router.get("/admin/top-products", authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+      const orders = await Order.find({ status: { $ne: "cancelled" } }).populate("items.product");
+
+      const productMap = {};
+
+      orders.forEach(order => {
+        order.items.forEach(item => {
+          if (!item.product) return;
+          const pid = item.product._id.toString();
+          if (!productMap[pid]) {
+            productMap[pid] = {
+              _id: pid,
+              name: item.product.name || "Unknown",
+              image: item.product.imageFront || item.product.image || null,
+              unitsSold: 0,
+              revenue: 0
+            };
+          }
+          productMap[pid].unitsSold += Number(item.quantity) || 0;
+          productMap[pid].revenue += (Number(item.price) || 0) * (Number(item.quantity) || 0);
+        });
+      });
+
+      const topProducts = Object.values(productMap)
+        .sort((a, b) => b.unitsSold - a.unitsSold)
+        .slice(0, 5);
+
+      res.json({ topProducts });
+    } catch (error) {
+      console.error("Top products error:", error);
+      res.status(500).json({ msg: "Server error" });
+    }
+  });
+
   // Rate Order Item
   router.patch("/rate-item", authMiddleware, async (req, res) => {
     const { orderId, itemId, rating, suggestion } = req.body;
