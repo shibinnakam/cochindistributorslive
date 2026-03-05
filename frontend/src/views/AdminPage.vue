@@ -1189,10 +1189,6 @@ export default {
         this.actionLoading = false;
       }
     },
-    getImageUrl(path) {
-      if (!path) return "/placeholder.jpg";
-      return path.startsWith("/") ? path : `/${path}`;
-    },
     formatDate(date) {
       return new Date(date).toLocaleDateString("en-IN", {
         day: "numeric",
