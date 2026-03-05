@@ -805,38 +805,91 @@ export default {
       let salesData = [];
       let profitData = [];
 
+      const formatDateKey = (date) => date.toLocaleDateString('sv-SE');
+
       if (this.analyticsData) {
         if (this.chartTimeframe === "today" || this.chartTimeframe === "custom") {
           const dataSet = this.analyticsData.hourly || { purchases: {}, profit: {} };
-          labels = Object.keys(dataSet.purchases).sort();
-          salesData = labels.map(label => dataSet.purchases[label] || 0);
-          profitData = labels.map(label => dataSet.profit[label] || 0);
+          const keys = Object.keys(dataSet.purchases).sort();
+          labels = keys;
+          
+          let runningSales = 0;
+          let runningProfit = 0;
+          salesData = keys.map(k => {
+            runningSales += (dataSet.purchases[k] || 0);
+            return runningSales;
+          });
+          profitData = keys.map(k => {
+            runningProfit += (dataSet.profit[k] || 0);
+            return runningProfit;
+          });
         } else if (this.chartTimeframe === "daily") {
-          // Generate last 7 days including today
           const dataSet = this.analyticsData.daily || { purchases: {}, profit: {} };
+          
+          let runningSales = 0;
+          let runningProfit = 0;
+          
+          // To make it look like the internet image (rising curve), we sum everything up to the start of the 7-day window first
+          const allKeys = Object.keys(dataSet.purchases).sort();
+          const last7DaysKeys = [];
           for (let i = 6; i >= 0; i--) {
             const date = new Date();
             date.setDate(date.getDate() - i);
-            const key = date.toISOString().split('T')[0];
-            labels.push(date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })); // DD/MM
-            salesData.push(dataSet.purchases[key] || 0);
-            profitData.push(dataSet.profit[key] || 0);
+            last7DaysKeys.push(formatDateKey(date));
           }
+
+          // Initial cumulative value from before the window
+          allKeys.forEach(k => {
+            if (k < last7DaysKeys[0]) {
+              runningSales += (dataSet.purchases[k] || 0);
+              runningProfit += (dataSet.profit[k] || 0);
+            }
+          });
+
+          last7DaysKeys.forEach(key => {
+            const dateObj = new Date(key);
+            labels.push(dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }));
+            runningSales += (dataSet.purchases[key] || 0);
+            runningProfit += (dataSet.profit[key] || 0);
+            salesData.push(runningSales);
+            profitData.push(runningProfit);
+          });
         } else if (this.chartTimeframe === "monthly") {
           const dataSet = this.analyticsData.monthly || { purchases: {}, profit: {} };
           const keys = Object.keys(dataSet.purchases).sort();
+          
+          let runningSales = 0;
+          let runningProfit = 0;
+          
           labels = keys.map(k => {
             const [y, m] = k.split('-');
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             return `${months[parseInt(m)-1]} ${y}`;
           });
-          salesData = keys.map(k => dataSet.purchases[k] || 0);
-          profitData = keys.map(k => dataSet.profit[k] || 0);
+          salesData = keys.map(k => {
+            runningSales += (dataSet.purchases[k] || 0);
+            return runningSales;
+          });
+          profitData = keys.map(k => {
+            runningProfit += (dataSet.profit[k] || 0);
+            return runningProfit;
+          });
         } else if (this.chartTimeframe === "yearly") {
           const dataSet = this.analyticsData.yearly || { purchases: {}, profit: {} };
-          labels = Object.keys(dataSet.purchases).sort();
-          salesData = labels.map(k => dataSet.purchases[k] || 0);
-          profitData = labels.map(k => dataSet.profit[k] || 0);
+          const keys = Object.keys(dataSet.purchases).sort();
+          labels = keys;
+          
+          let runningSales = 0;
+          let runningProfit = 0;
+          
+          salesData = keys.map(k => {
+            runningSales += (dataSet.purchases[k] || 0);
+            return runningSales;
+          });
+          profitData = keys.map(k => {
+            runningProfit += (dataSet.profit[k] || 0);
+            return runningProfit;
+          });
         }
       }
 
@@ -846,25 +899,31 @@ export default {
           labels: labels,
           datasets: [
             {
-              label: "Sales (₹)",
+              label: "Cumulative Sales (₹)",
               data: salesData,
               borderColor: "#7d33ff",
-              backgroundColor: "rgba(125, 51, 255, 0.1)",
+              backgroundColor: "rgba(125, 51, 255, 0.15)",
               fill: true,
               tension: 0.4,
-              pointRadius: labels.length > 50 ? 0 : 4,
-              pointBackgroundColor: "#7d33ff",
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              pointBackgroundColor: "#fff",
+              pointBorderColor: "#7d33ff",
+              pointBorderWidth: 2,
               borderWidth: 3
             },
             {
-              label: "Profit (₹)",
+              label: "Cumulative Profit (₹)",
               data: profitData,
               borderColor: "#10d9ac",
               backgroundColor: "rgba(16, 217, 172, 0.1)",
               fill: true,
               tension: 0.4,
-              pointRadius: labels.length > 50 ? 0 : 4,
-              pointBackgroundColor: "#10d9ac",
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              pointBackgroundColor: "#fff",
+              pointBorderColor: "#10d9ac",
+              pointBorderWidth: 2,
               borderWidth: 3
             },
           ],
@@ -879,6 +938,7 @@ export default {
               labels: { 
                 usePointStyle: true,
                 pointStyle: 'circle',
+                boxWidth: 8,
                 padding: 20,
                 font: { family: 'Inter', size: 12, weight: '600' }
               } 
@@ -886,14 +946,25 @@ export default {
             tooltip: {
               mode: 'index',
               intersect: false,
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              backgroundColor: '#fff',
               titleColor: '#1e293b',
               bodyColor: '#475569',
               borderColor: '#e2e8f0',
               borderWidth: 1,
               padding: 12,
               boxPadding: 6,
-              usePointStyle: true
+              bodyFont: { family: 'Inter', size: 13 },
+              titleFont: { family: 'Inter', size: 14, weight: '700' },
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) { label += ': '; }
+                  if (context.parsed.y !== null) {
+                    label += new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(context.parsed.y);
+                  }
+                  return label;
+                }
+              }
             }
           },
           scales: {
@@ -907,7 +978,7 @@ export default {
             },
             x: { 
               grid: { display: false },
-              ticks: { font: { size: 11 } }
+              ticks: { font: { size: 11, weight: '500' } }
             },
           },
           interaction: {
@@ -918,20 +989,20 @@ export default {
         },
       });
 
-      // Restore Traffic Chart
-      const inventoryRatio = Math.min(this.totalInventory / 1000, 1) * 100;
-      const staffRatio = (this.activeStaff / (this.totalStaff || 1)) * 100;
+      // System Distribution
+      const invPercent = Math.min((this.totalInventory / 1000) * 100, 100);
+      const staffPercent = Math.min((this.activeStaff / (this.totalStaff || 1)) * 100, 100);
 
       this.trafficChart = new Chart(trafficCtx, {
         type: "doughnut",
         data: {
-          labels: ["Inventory", "Active Staff", "Capacity"],
+          labels: ["Inventory Utilization", "Staff Coverage", "Overall Capacity"],
           datasets: [
             {
-              data: [inventoryRatio, staffRatio, 100 - staffRatio],
-              backgroundColor: ["#fe7c96", "#1bcfb4", "#25aaff"],
-              hoverOffset: 10,
+              data: [invPercent, staffPercent, 100 - ((invPercent + staffPercent)/2)],
+              backgroundColor: ["#7d33ff", "#10d9ac", "#f1f5f9"],
               borderWidth: 0,
+              hoverOffset: 4
             },
           ],
         },
@@ -945,8 +1016,8 @@ export default {
               labels: { 
                 usePointStyle: true,
                 pointStyle: 'circle',
-                padding: 30,
-                font: { family: 'Inter', size: 12, weight: '500' }
+                padding: 15,
+                font: { family: 'Inter', size: 11, weight: '500' }
               } 
             },
           },

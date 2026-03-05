@@ -376,7 +376,12 @@ module.exports = (io) => {
       let hourlyPurchases = {};
       let hourlyProfit = {};
 
-      const targetDateStr = targetDate || new Date().toISOString().split('T')[0];
+      // Use local date string for consistent grouping
+      const formatDateKey = (date) => {
+        return date.toLocaleDateString('sv-SE'); // YYYY-MM-DD
+      };
+
+      const targetDateStr = targetDate || formatDateKey(new Date());
 
       // Initialize 24 hours
       for (let i = 0; i < 24; i++) {
@@ -387,45 +392,39 @@ module.exports = (io) => {
 
       orders.forEach(order => {
         const date = new Date(order.createdAt);
-        const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; // YYYY-MM
-        const yearKey = date.getFullYear().toString(); // YYYY
+        const dayKey = formatDateKey(date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const yearKey = date.getFullYear().toString();
 
         let orderProfit = 0;
         order.items.forEach(item => {
-          const cost = (item.costPrice || 0) * item.quantity;
-          const revenue = (item.price || 0) * item.quantity;
+          const cost = Number(item.costPrice || 0) * Number(item.quantity || 0);
+          const revenue = Number(item.price || 0) * Number(item.quantity || 0);
           orderProfit += revenue - cost;
         });
 
-        totalPurchases += order.totalAmount;
+        totalPurchases += Number(order.totalAmount || 0);
         totalProfit += orderProfit;
 
         // Hourly for target date
         if (dayKey === targetDateStr) {
           const hour = date.getHours();
           const hourKey = String(hour).padStart(2, '0') + ":00";
-          hourlyPurchases[hourKey] += order.totalAmount;
+          hourlyPurchases[hourKey] += Number(order.totalAmount || 0);
           hourlyProfit[hourKey] += orderProfit;
         }
 
         // Daily
-        if (!dailyPurchases[dayKey]) dailyPurchases[dayKey] = 0;
-        if (!dailyProfit[dayKey]) dailyProfit[dayKey] = 0;
-        dailyPurchases[dayKey] += order.totalAmount;
-        dailyProfit[dayKey] += orderProfit;
+        dailyPurchases[dayKey] = (dailyPurchases[dayKey] || 0) + Number(order.totalAmount || 0);
+        dailyProfit[dayKey] = (dailyProfit[dayKey] || 0) + orderProfit;
 
         // Monthly
-        if (!monthlyPurchases[monthKey]) monthlyPurchases[monthKey] = 0;
-        if (!monthlyProfit[monthKey]) monthlyProfit[monthKey] = 0;
-        monthlyPurchases[monthKey] += order.totalAmount;
-        monthlyProfit[monthKey] += orderProfit;
+        monthlyPurchases[monthKey] = (monthlyPurchases[monthKey] || 0) + Number(order.totalAmount || 0);
+        monthlyProfit[monthKey] = (monthlyProfit[monthKey] || 0) + orderProfit;
 
         // Yearly
-        if (!yearlyPurchases[yearKey]) yearlyPurchases[yearKey] = 0;
-        if (!yearlyProfit[yearKey]) yearlyProfit[yearKey] = 0;
-        yearlyPurchases[yearKey] += order.totalAmount;
-        yearlyProfit[yearKey] += orderProfit;
+        yearlyPurchases[yearKey] = (yearlyPurchases[yearKey] || 0) + Number(order.totalAmount || 0);
+        yearlyProfit[yearKey] = (yearlyProfit[yearKey] || 0) + orderProfit;
       });
 
       res.json({
