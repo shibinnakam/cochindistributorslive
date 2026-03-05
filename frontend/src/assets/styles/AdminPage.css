@@ -85,18 +85,21 @@ a {
 }
 
 .sidebar.collapsed {
-  width: 0;
-  opacity: 0;
-  pointer-events: none;
+  width: 80px;
 }
 
 .brand {
   height: 80px;
-  /* Slightly taller */
   display: flex;
   align-items: center;
-  padding: 0 2rem;
+  padding: 0 1.5rem;
   margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.sidebar.collapsed .brand {
+  padding: 0;
+  justify-content: center;
 }
 
 .brand-logo {
@@ -106,22 +109,45 @@ a {
 
 .brand-text {
   font-size: 1.75rem;
-  /* Larger */
   font-weight: 800;
   color: var(--primary-color);
   letter-spacing: -1px;
+  transition: opacity 0.2s;
+}
+
+.sidebar.collapsed .brand-text {
+  display: none;
+}
+
+.sidebar.collapsed .brand::before {
+  content: "S";
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--primary-color);
 }
 
 /* User Profile in Sidebar */
 .sidebar-user {
-  padding: 1.25rem 1.5rem;
+  padding: 1.25rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin: 0 1rem 2rem 1rem;
+  margin: 0 0.75rem 2rem 0.75rem;
   background: rgba(125, 51, 255, 0.04);
   border-radius: 12px;
   border: 1px solid rgba(125, 51, 255, 0.05);
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.sidebar.collapsed .sidebar-user {
+  padding: 1rem 0;
+  margin: 0 0.5rem 2rem 0.5rem;
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-user .user-info {
+  display: none;
 }
 
 .sidebar-user .avatar {
@@ -195,6 +221,11 @@ a {
   letter-spacing: 1.5px;
   font-weight: 700;
   color: #c3c3c3;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .nav-section-title {
+  display: none;
 }
 
 .nav-item {
@@ -207,12 +238,34 @@ a {
   transition: all 0.2s ease;
   border-radius: 12px;
   margin-bottom: 0.4rem;
+  overflow: hidden;
+}
+
+.sidebar.collapsed .nav-item {
+  padding: 0.75rem 0;
+  justify-content: center;
+}
+
+.sidebar.collapsed .nav-text {
+  display: none;
+}
+
+.sidebar.collapsed .nav-item .icon {
+  margin-right: 0;
+}
+
+.sidebar.collapsed .nav-item .badge-pill {
+  display: none;
 }
 
 .nav-item:hover {
   background-color: rgba(125, 51, 255, 0.05);
   color: var(--primary-color);
   transform: translateX(4px);
+}
+
+.sidebar.collapsed .nav-item:hover {
+  transform: scale(1.1);
 }
 
 .nav-item.active {
@@ -1173,6 +1226,12 @@ a {
 .sidebar-overlay.active {
   visibility: visible;
   opacity: 1;
+}
+
+@media (min-width: 1025px) {
+  .sidebar-overlay {
+    display: none !important;
+  }
 }
 
 /* Stats Mini Cards */
