@@ -357,16 +357,33 @@ module.exports = (io) => {
   // Admin: Get Sales Analytics
   router.get("/admin/sales-analytics", authMiddleware, adminMiddleware, async (req, res) => {
     try {
+      const { date: targetDate } = req.query;
       const orders = await Order.find({ status: { $ne: "cancelled" } }).populate("items.product");
 
       let totalPurchases = 0;
       let totalProfit = 0;
+      let totalOrders = orders.length;
+
       let dailyPurchases = {};
       let monthlyPurchases = {};
       let yearlyPurchases = {};
+
       let dailyProfit = {};
       let monthlyProfit = {};
       let yearlyProfit = {};
+
+      // Hourly data for a specific date (or today)
+      let hourlyPurchases = {};
+      let hourlyProfit = {};
+
+      const targetDateStr = targetDate || new Date().toISOString().split('T')[0];
+
+      // Initialize 24 hours
+      for (let i = 0; i < 24; i++) {
+        const hourKey = String(i).padStart(2, '0') + ":00";
+        hourlyPurchases[hourKey] = 0;
+        hourlyProfit[hourKey] = 0;
+      }
 
       orders.forEach(order => {
         const date = new Date(order.createdAt);
@@ -376,13 +393,21 @@ module.exports = (io) => {
 
         let orderProfit = 0;
         order.items.forEach(item => {
-          const cost = item.costPrice * item.quantity;
-          const revenue = item.price * item.quantity;
+          const cost = (item.costPrice || 0) * item.quantity;
+          const revenue = (item.price || 0) * item.quantity;
           orderProfit += revenue - cost;
         });
 
         totalPurchases += order.totalAmount;
         totalProfit += orderProfit;
+
+        // Hourly for target date
+        if (dayKey === targetDateStr) {
+          const hour = date.getHours();
+          const hourKey = String(hour).padStart(2, '0') + ":00";
+          hourlyPurchases[hourKey] += order.totalAmount;
+          hourlyProfit[hourKey] += orderProfit;
+        }
 
         // Daily
         if (!dailyPurchases[dayKey]) dailyPurchases[dayKey] = 0;
@@ -406,6 +431,12 @@ module.exports = (io) => {
       res.json({
         totalPurchases,
         totalProfit,
+        totalOrders,
+        hourly: {
+          purchases: hourlyPurchases,
+          profit: hourlyProfit,
+          date: targetDateStr
+        },
         daily: { purchases: dailyPurchases, profit: dailyProfit },
         monthly: { purchases: monthlyPurchases, profit: monthlyProfit },
         yearly: { purchases: yearlyPurchases, profit: yearlyProfit }

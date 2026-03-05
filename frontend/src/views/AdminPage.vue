@@ -302,10 +302,20 @@
               <div class="section-header">
                 <h3>Sales & Profit Analytics</h3>
                 <div class="time-filter">
-                  <select v-model="chartTimeframe" @change="initCharts" class="chart-select">
+                  <select v-model="chartTimeframe" @change="handleTimeframeChange" class="chart-select">
+                    <option value="today">Today</option>
+                    <option value="custom">Custom Day</option>
                     <option value="daily">Last 7 Days</option>
-                    <option value="monthly">This Year</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
                   </select>
+                  <input 
+                    v-if="chartTimeframe === 'custom'" 
+                    type="date" 
+                    v-model="customChartDate" 
+                    @change="fetchDashboardStats(customChartDate)" 
+                    class="date-picker-input"
+                  />
                 </div>
               </div>
               <div style="height: 350px">
@@ -684,6 +694,7 @@ export default {
       // Charts
       salesChart: null,
       trafficChart: null,
+      customChartDate: new Date().toISOString().split('T')[0],
 
       // Password Change
       passwordForm: {
@@ -769,53 +780,80 @@ export default {
         this.initCharts();
       }
     },
+    chartTimeframe(newVal) {
+      if (newVal === 'today') {
+        this.fetchDashboardStats();
+      }
+    }
   },
   methods: {
+    handleTimeframeChange() {
+      if (this.chartTimeframe !== 'custom') {
+        this.initCharts();
+      }
+    },
     initCharts() {
       if (!this.$refs.salesChart || !this.$refs.trafficChart) return;
 
       const salesCtx = this.$refs.salesChart.getContext("2d");
       if (this.salesChart) this.salesChart.destroy();
 
-      // Extract data from analyticsData
-      let labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-      let salesData = [0, 0, 0, 0, 0, 0, 0];
-      let profitData = [0, 0, 0, 0, 0, 0, 0];
+      let labels = [];
+      let salesData = [];
+      let profitData = [];
 
-      if (this.analyticsData && this.analyticsData[this.chartTimeframe]) {
-        const dataSet = this.analyticsData[this.chartTimeframe];
-        const purchases = dataSet.purchases || {};
-        const profits = dataSet.profit || {};
-        
-        // Get last 7 entries for labels/data
-        const keys = Object.keys(purchases).sort().slice(-7);
-        if (keys.length > 0) {
-          labels = keys.map(k => k.split('-').slice(-1)[0]); // Shorten date
-          salesData = keys.map(k => purchases[k] || 0);
-          profitData = keys.map(k => profits[k] || 0);
+      if (this.analyticsData) {
+        if (this.chartTimeframe === "today" || this.chartTimeframe === "custom") {
+          const dataSet = this.analyticsData.hourly || { purchases: {}, profit: {} };
+          labels = Object.keys(dataSet.purchases).sort();
+          salesData = labels.map(label => dataSet.purchases[label] || 0);
+          profitData = labels.map(label => dataSet.profit[label] || 0);
+        } else if (this.chartTimeframe === "daily") {
+          const dataSet = this.analyticsData.daily || { purchases: {}, profit: {} };
+          const keys = Object.keys(dataSet.purchases).sort().slice(-7);
+          labels = keys.map(k => k.split('-').slice(-2).join('/')); // MM/DD
+          salesData = keys.map(k => dataSet.purchases[k] || 0);
+          profitData = keys.map(k => dataSet.profit[k] || 0);
+        } else if (this.chartTimeframe === "monthly") {
+          const dataSet = this.analyticsData.monthly || { purchases: {}, profit: {} };
+          const keys = Object.keys(dataSet.purchases).sort();
+          labels = keys.map(k => k.split('-').slice(1).join('/')); // MM/YYYY
+          salesData = keys.map(k => dataSet.purchases[k] || 0);
+          profitData = keys.map(k => dataSet.profit[k] || 0);
+        } else if (this.chartTimeframe === "yearly") {
+          const dataSet = this.analyticsData.yearly || { purchases: {}, profit: {} };
+          labels = Object.keys(dataSet.purchases).sort();
+          salesData = labels.map(k => dataSet.purchases[k] || 0);
+          profitData = labels.map(k => dataSet.profit[k] || 0);
         }
       }
 
       this.salesChart = new Chart(salesCtx, {
-        type: "bar",
+        type: "line", // Line chart looks more professional for trends
         data: {
           labels: labels,
           datasets: [
             {
               label: "Sales (₹)",
               data: salesData,
-              backgroundColor: "rgba(182, 137, 255, 0.8)",
-              borderRadius: 8,
-              borderWidth: 0,
-              barThickness: 20
+              borderColor: "#7d33ff",
+              backgroundColor: "rgba(125, 51, 255, 0.1)",
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointBackgroundColor: "#7d33ff",
+              borderWidth: 3
             },
             {
               label: "Profit (₹)",
               data: profitData,
-              backgroundColor: "rgba(132, 217, 210, 0.8)",
-              borderRadius: 8,
-              borderWidth: 0,
-              barThickness: 20
+              borderColor: "#10d9ac",
+              backgroundColor: "rgba(16, 217, 172, 0.1)",
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointBackgroundColor: "#10d9ac",
+              borderWidth: 3
             },
           ],
         },
@@ -833,18 +871,38 @@ export default {
                 font: { family: 'Inter', size: 12, weight: '600' }
               } 
             },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              titleColor: '#1e293b',
+              bodyColor: '#475569',
+              borderColor: '#e2e8f0',
+              borderWidth: 1,
+              padding: 12,
+              boxPadding: 6,
+              usePointStyle: true
+            }
           },
           scales: {
             y: { 
               beginAtZero: true, 
-              grid: { color: "#f3f4f6", drawBorder: false },
-              ticks: { font: { size: 11 } }
+              grid: { color: "#f1f5f9", drawBorder: false },
+              ticks: { 
+                font: { size: 11 },
+                callback: (value) => '₹' + value.toLocaleString()
+              }
             },
             x: { 
               grid: { display: false },
               ticks: { font: { size: 11 } }
             },
           },
+          interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
+          }
         },
       });
 
@@ -947,7 +1005,7 @@ export default {
         this.passwordLoading = false;
       }
     },
-    async fetchDashboardStats() {
+    async fetchDashboardStats(date = null) {
       this.dashboardLoading = true;
       try {
         const [
@@ -963,7 +1021,7 @@ export default {
           axios.get(`${API_BASE_URL}/staff`),
           axios.get(`${API_BASE_URL}/leaves/all`),
           axios.get(`${API_BASE_URL}/reviews/admin/pending`),
-          axios.get(`${API_BASE_URL}/orders/admin/sales-analytics`),
+          axios.get(`${API_BASE_URL}/orders/admin/sales-analytics${date ? `?date=${date}` : ""}`),
         ]);
 
         if (productsRes.data.success && productsRes.data.products) {

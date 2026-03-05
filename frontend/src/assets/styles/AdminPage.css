@@ -425,6 +425,25 @@ a {
   color: var(--text-primary);
 }
 
+.date-picker-input {
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.date-picker-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(125, 51, 255, 0.1);
+  background: #fff;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
