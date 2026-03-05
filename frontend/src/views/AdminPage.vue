@@ -788,215 +788,158 @@ export default {
   },
   methods: {
     handleTimeframeChange() {
-      if (this.chartTimeframe !== 'custom') {
+      if (this.chartTimeframe === 'today') {
+        this.fetchDashboardStats();
+      } else if (this.chartTimeframe !== 'custom') {
         this.initCharts();
       }
     },
     initCharts() {
-      if (!this.$refs.salesChart || !this.$refs.trafficChart) return;
-
-      const salesCtx = this.$refs.salesChart.getContext("2d");
-      const trafficCtx = this.$refs.trafficChart.getContext("2d");
-
-      if (this.salesChart) this.salesChart.destroy();
-      if (this.trafficChart) this.trafficChart.destroy();
-
-      let labels = [];
-      let salesData = [];
-      let profitData = [];
-
-      const formatDateKey = (date) => date.toLocaleDateString('sv-SE');
-
-      if (this.analyticsData) {
-        if (this.chartTimeframe === "today" || this.chartTimeframe === "custom") {
-          const dataSet = this.analyticsData.hourly || { purchases: {}, profit: {} };
-          const keys = Object.keys(dataSet.purchases).sort();
-          labels = keys;
-          
-          let runningSales = 0;
-          let runningProfit = 0;
-          salesData = keys.map(k => {
-            const val = Number(dataSet.purchases[k]) || 0;
-            runningSales += val;
-            return runningSales;
-          });
-          profitData = keys.map(k => {
-            const val = Number(dataSet.profit[k]) || 0;
-            runningProfit += val;
-            return runningProfit;
-          });
-        } else if (this.chartTimeframe === "daily") {
-          const dataSet = this.analyticsData.daily || { purchases: {}, profit: {} };
-          
-          let runningSales = 0;
-          let runningProfit = 0;
-          
-          const allKeys = Object.keys(dataSet.purchases).sort();
-          const last7DaysKeys = [];
-          for (let i = 6; i >= 0; i--) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            last7DaysKeys.push(formatDateKey(date));
-          }
-
-          // Initial cumulative value from before the window
-          allKeys.forEach(k => {
-            if (k < last7DaysKeys[0]) {
-              runningSales += (Number(dataSet.purchases[k]) || 0);
-              runningProfit += (Number(dataSet.profit[k]) || 0);
-            }
-          });
-
-          last7DaysKeys.forEach(key => {
-            const dateParts = key.split('-');
-            const dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-            labels.push(dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }));
-            
-            runningSales += (Number(dataSet.purchases[key]) || 0);
-            runningProfit += (Number(dataSet.profit[key]) || 0);
-            salesData.push(runningSales);
-            profitData.push(runningProfit);
-          });
-        } else if (this.chartTimeframe === "monthly") {
-          const dataSet = this.analyticsData.monthly || { purchases: {}, profit: {} };
-          const keys = Object.keys(dataSet.purchases).sort();
-          
-          let runningSales = 0;
-          let runningProfit = 0;
-          
-          labels = keys.map(k => {
-            const [y, m] = k.split('-');
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            return `${months[parseInt(m)-1]} ${y}`;
-          });
-          salesData = keys.map(k => {
-            runningSales += (Number(dataSet.purchases[k]) || 0);
-            return runningSales;
-          });
-          profitData = keys.map(k => {
-            runningProfit += (Number(dataSet.profit[k]) || 0);
-            return runningProfit;
-          });
-        } else if (this.chartTimeframe === "yearly") {
-          const dataSet = this.analyticsData.yearly || { purchases: {}, profit: {} };
-          const keys = Object.keys(dataSet.purchases).sort();
-          labels = keys;
-          
-          let runningSales = 0;
-          let runningProfit = 0;
-          
-          salesData = keys.map(k => {
-            runningSales += (Number(dataSet.purchases[k]) || 0);
-            return runningSales;
-          });
-          profitData = keys.map(k => {
-            runningProfit += (Number(dataSet.profit[k]) || 0);
-            return runningProfit;
-          });
+      this.$nextTick(() => {
+        if (!this.$refs.salesChart || !this.$refs.trafficChart) {
+          console.warn("Chart refs not ready");
+          return;
         }
-      }
 
-      this.salesChart = new Chart(salesCtx, {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: "Cumulative Sales (₹)",
-              data: salesData,
-              borderColor: "#7d33ff",
-              backgroundColor: "rgba(125, 51, 255, 0.2)",
-              fill: true,
-              tension: 0.3,
-              pointRadius: 4,
-              pointBackgroundColor: "#7d33ff",
-              borderWidth: 3
-            },
-            {
-              label: "Cumulative Profit (₹)",
-              data: profitData,
-              borderColor: "#10d9ac",
-              backgroundColor: "rgba(16, 217, 172, 0.15)",
-              fill: true,
-              tension: 0.3,
-              pointRadius: 4,
-              pointBackgroundColor: "#10d9ac",
-              borderWidth: 3
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { 
-              position: "top", 
-              align: "end", 
-              labels: { 
-                usePointStyle: true,
-                pointStyle: 'circle',
-                padding: 20
-              } 
-            },
-            tooltip: {
-              mode: 'index',
-              intersect: false,
-              backgroundColor: '#fff',
-              titleColor: '#1e293b',
-              bodyColor: '#475569',
-              borderColor: '#e2e8f0',
-              borderWidth: 1,
-              padding: 12,
-              callbacks: {
-                label: function(context) {
-                  let label = context.dataset.label || '';
-                  if (label) { label += ': '; }
-                  if (context.parsed.y !== null) {
-                    label += '₹' + context.parsed.y.toLocaleString();
+        const salesCtx = this.$refs.salesChart.getContext("2d");
+        const trafficCtx = this.$refs.trafficChart.getContext("2d");
+
+        if (this.salesChart) { this.salesChart.destroy(); this.salesChart = null; }
+        if (this.trafficChart) { this.trafficChart.destroy(); this.trafficChart = null; }
+
+        let labels = [];
+        let salesData = [];
+        let profitData = [];
+
+        const ad = this.analyticsData;
+        console.log("analyticsData:", JSON.stringify(ad));
+        console.log("chartTimeframe:", this.chartTimeframe);
+
+        if (ad) {
+          if (this.chartTimeframe === "today" || this.chartTimeframe === "custom") {
+            const hourly = ad.hourly || { purchases: {}, profit: {} };
+            labels = Object.keys(hourly.purchases || {}).sort();
+            salesData = labels.map(k => parseFloat(hourly.purchases[k]) || 0);
+            profitData = labels.map(k => parseFloat(hourly.profit[k]) || 0);
+
+          } else if (this.chartTimeframe === "daily") {
+            const daily = ad.daily || { purchases: {}, profit: {} };
+            // Generate last 7 days
+            for (let i = 6; i >= 0; i--) {
+              const d = new Date();
+              d.setDate(d.getDate() - i);
+              // Try multiple key formats
+              const key1 = d.toLocaleDateString('sv-SE'); // YYYY-MM-DD (local)
+              const key2 = d.toISOString().split('T')[0];  // YYYY-MM-DD (UTC)
+              const val = parseFloat(daily.purchases[key1] || daily.purchases[key2]) || 0;
+              const profit = parseFloat(daily.profit[key1] || daily.profit[key2]) || 0;
+              labels.push(`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`);
+              salesData.push(val);
+              profitData.push(profit);
+            }
+
+          } else if (this.chartTimeframe === "monthly") {
+            const monthly = ad.monthly || { purchases: {}, profit: {} };
+            const keys = Object.keys(monthly.purchases || {}).sort();
+            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            labels = keys.map(k => {
+              const parts = k.split('-');
+              const m = parseInt(parts[1]) - 1;
+              return `${monthNames[m]} ${parts[0]}`;
+            });
+            salesData = keys.map(k => parseFloat(monthly.purchases[k]) || 0);
+            profitData = keys.map(k => parseFloat(monthly.profit[k]) || 0);
+
+          } else if (this.chartTimeframe === "yearly") {
+            const yearly = ad.yearly || { purchases: {}, profit: {} };
+            labels = Object.keys(yearly.purchases || {}).sort();
+            salesData = labels.map(k => parseFloat(yearly.purchases[k]) || 0);
+            profitData = labels.map(k => parseFloat(yearly.profit[k]) || 0);
+          }
+        }
+
+        console.log("labels:", labels);
+        console.log("salesData:", salesData);
+        console.log("profitData:", profitData);
+
+        this.salesChart = new Chart(salesCtx, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Sales (₹)",
+                data: salesData,
+                backgroundColor: "rgba(125, 51, 255, 0.7)",
+                borderColor: "#7d33ff",
+                borderWidth: 2,
+                borderRadius: 4,
+                order: 2
+              },
+              {
+                label: "Profit (₹)",
+                data: profitData,
+                backgroundColor: "rgba(16, 217, 172, 0.7)",
+                borderColor: "#10d9ac",
+                borderWidth: 2,
+                borderRadius: 4,
+                order: 1
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "top",
+                align: "end",
+                labels: { usePointStyle: true, padding: 20 }
+              },
+              tooltip: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                  label: function(ctx) {
+                    return `${ctx.dataset.label}: ₹${Number(ctx.parsed.y || 0).toLocaleString()}`;
                   }
-                  return label;
                 }
               }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { callback: v => '₹' + Number(v).toLocaleString() }
+              },
+              x: { grid: { display: false } }
             }
-          },
-          scales: {
-            y: { 
-              beginAtZero: true, 
-              grid: { color: "#f1f5f9" },
-              ticks: { callback: (value) => '₹' + value.toLocaleString() }
-            },
-            x: { grid: { display: false } },
           }
-        },
-      });
+        });
 
-      // System Distribution
-      const invPercent = Math.max(0, Math.min((Number(this.totalInventory) / 1000) * 100, 100)) || 0;
-      const staffPercent = Math.max(0, Math.min((Number(this.activeStaff) / (Number(this.totalStaff) || 1)) * 100, 100)) || 0;
+        // System Distribution (Doughnut)
+        const invP = Math.max(1, Math.min(Number(this.totalInventory) || 1, 100));
+        const staffP = Math.max(1, Math.min(Number(this.activeStaff) || 1, 100));
+        const rem = Math.max(1, 100 - invP - staffP);
 
-      this.trafficChart = new Chart(trafficCtx, {
-        type: "doughnut",
-        data: {
-          labels: ["Inventory", "Staff", "Available"],
-          datasets: [
-            {
-              data: [invPercent, staffPercent, Math.max(0, 100 - (invPercent + staffPercent)/2)],
-              backgroundColor: ["#7d33ff", "#10d9ac", "#f1f5f9"],
+        this.trafficChart = new Chart(trafficCtx, {
+          type: "doughnut",
+          data: {
+            labels: ["Inventory", "Staff", "Available"],
+            datasets: [{
+              data: [invP, staffP, rem],
+              backgroundColor: ["#7d33ff", "#10d9ac", "#e2e8f0"],
               borderWidth: 0,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: "75%",
-          plugins: {
-            legend: { 
-              position: "bottom", 
-              labels: { usePointStyle: true, pointStyle: 'circle', padding: 15 } 
-            },
+            }],
           },
-        },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "70%",
+            plugins: {
+              legend: { position: "bottom", labels: { usePointStyle: true, padding: 12 } }
+            }
+          }
+        });
       });
     },
     getPageTitle(menu) {
