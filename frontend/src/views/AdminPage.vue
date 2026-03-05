@@ -816,11 +816,13 @@ export default {
           let runningSales = 0;
           let runningProfit = 0;
           salesData = keys.map(k => {
-            runningSales += (dataSet.purchases[k] || 0);
+            const val = Number(dataSet.purchases[k]) || 0;
+            runningSales += val;
             return runningSales;
           });
           profitData = keys.map(k => {
-            runningProfit += (dataSet.profit[k] || 0);
+            const val = Number(dataSet.profit[k]) || 0;
+            runningProfit += val;
             return runningProfit;
           });
         } else if (this.chartTimeframe === "daily") {
@@ -829,7 +831,6 @@ export default {
           let runningSales = 0;
           let runningProfit = 0;
           
-          // To make it look like the internet image (rising curve), we sum everything up to the start of the 7-day window first
           const allKeys = Object.keys(dataSet.purchases).sort();
           const last7DaysKeys = [];
           for (let i = 6; i >= 0; i--) {
@@ -841,16 +842,18 @@ export default {
           // Initial cumulative value from before the window
           allKeys.forEach(k => {
             if (k < last7DaysKeys[0]) {
-              runningSales += (dataSet.purchases[k] || 0);
-              runningProfit += (dataSet.profit[k] || 0);
+              runningSales += (Number(dataSet.purchases[k]) || 0);
+              runningProfit += (Number(dataSet.profit[k]) || 0);
             }
           });
 
           last7DaysKeys.forEach(key => {
-            const dateObj = new Date(key);
+            const dateParts = key.split('-');
+            const dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
             labels.push(dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }));
-            runningSales += (dataSet.purchases[key] || 0);
-            runningProfit += (dataSet.profit[key] || 0);
+            
+            runningSales += (Number(dataSet.purchases[key]) || 0);
+            runningProfit += (Number(dataSet.profit[key]) || 0);
             salesData.push(runningSales);
             profitData.push(runningProfit);
           });
@@ -867,11 +870,11 @@ export default {
             return `${months[parseInt(m)-1]} ${y}`;
           });
           salesData = keys.map(k => {
-            runningSales += (dataSet.purchases[k] || 0);
+            runningSales += (Number(dataSet.purchases[k]) || 0);
             return runningSales;
           });
           profitData = keys.map(k => {
-            runningProfit += (dataSet.profit[k] || 0);
+            runningProfit += (Number(dataSet.profit[k]) || 0);
             return runningProfit;
           });
         } else if (this.chartTimeframe === "yearly") {
@@ -883,11 +886,11 @@ export default {
           let runningProfit = 0;
           
           salesData = keys.map(k => {
-            runningSales += (dataSet.purchases[k] || 0);
+            runningSales += (Number(dataSet.purchases[k]) || 0);
             return runningSales;
           });
           profitData = keys.map(k => {
-            runningProfit += (dataSet.profit[k] || 0);
+            runningProfit += (Number(dataSet.profit[k]) || 0);
             return runningProfit;
           });
         }
@@ -902,28 +905,22 @@ export default {
               label: "Cumulative Sales (₹)",
               data: salesData,
               borderColor: "#7d33ff",
-              backgroundColor: "rgba(125, 51, 255, 0.15)",
+              backgroundColor: "rgba(125, 51, 255, 0.2)",
               fill: true,
-              tension: 0.4,
+              tension: 0.3,
               pointRadius: 4,
-              pointHoverRadius: 6,
-              pointBackgroundColor: "#fff",
-              pointBorderColor: "#7d33ff",
-              pointBorderWidth: 2,
+              pointBackgroundColor: "#7d33ff",
               borderWidth: 3
             },
             {
               label: "Cumulative Profit (₹)",
               data: profitData,
               borderColor: "#10d9ac",
-              backgroundColor: "rgba(16, 217, 172, 0.1)",
+              backgroundColor: "rgba(16, 217, 172, 0.15)",
               fill: true,
-              tension: 0.4,
+              tension: 0.3,
               pointRadius: 4,
-              pointHoverRadius: 6,
-              pointBackgroundColor: "#fff",
-              pointBorderColor: "#10d9ac",
-              pointBorderWidth: 2,
+              pointBackgroundColor: "#10d9ac",
               borderWidth: 3
             },
           ],
@@ -938,9 +935,7 @@ export default {
               labels: { 
                 usePointStyle: true,
                 pointStyle: 'circle',
-                boxWidth: 8,
-                padding: 20,
-                font: { family: 'Inter', size: 12, weight: '600' }
+                padding: 20
               } 
             },
             tooltip: {
@@ -952,15 +947,12 @@ export default {
               borderColor: '#e2e8f0',
               borderWidth: 1,
               padding: 12,
-              boxPadding: 6,
-              bodyFont: { family: 'Inter', size: 13 },
-              titleFont: { family: 'Inter', size: 14, weight: '700' },
               callbacks: {
                 label: function(context) {
                   let label = context.dataset.label || '';
                   if (label) { label += ': '; }
                   if (context.parsed.y !== null) {
-                    label += new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(context.parsed.y);
+                    label += '₹' + context.parsed.y.toLocaleString();
                   }
                   return label;
                 }
@@ -970,39 +962,27 @@ export default {
           scales: {
             y: { 
               beginAtZero: true, 
-              grid: { color: "#f1f5f9", drawBorder: false },
-              ticks: { 
-                font: { size: 11 },
-                callback: (value) => '₹' + value.toLocaleString()
-              }
+              grid: { color: "#f1f5f9" },
+              ticks: { callback: (value) => '₹' + value.toLocaleString() }
             },
-            x: { 
-              grid: { display: false },
-              ticks: { font: { size: 11, weight: '500' } }
-            },
-          },
-          interaction: {
-            mode: 'nearest',
-            axis: 'x',
-            intersect: false
+            x: { grid: { display: false } },
           }
         },
       });
 
       // System Distribution
-      const invPercent = Math.min((this.totalInventory / 1000) * 100, 100);
-      const staffPercent = Math.min((this.activeStaff / (this.totalStaff || 1)) * 100, 100);
+      const invPercent = Math.max(0, Math.min((Number(this.totalInventory) / 1000) * 100, 100)) || 0;
+      const staffPercent = Math.max(0, Math.min((Number(this.activeStaff) / (Number(this.totalStaff) || 1)) * 100, 100)) || 0;
 
       this.trafficChart = new Chart(trafficCtx, {
         type: "doughnut",
         data: {
-          labels: ["Inventory Utilization", "Staff Coverage", "Overall Capacity"],
+          labels: ["Inventory", "Staff", "Available"],
           datasets: [
             {
-              data: [invPercent, staffPercent, 100 - ((invPercent + staffPercent)/2)],
+              data: [invPercent, staffPercent, Math.max(0, 100 - (invPercent + staffPercent)/2)],
               backgroundColor: ["#7d33ff", "#10d9ac", "#f1f5f9"],
               borderWidth: 0,
-              hoverOffset: 4
             },
           ],
         },
@@ -1013,12 +993,7 @@ export default {
           plugins: {
             legend: { 
               position: "bottom", 
-              labels: { 
-                usePointStyle: true,
-                pointStyle: 'circle',
-                padding: 15,
-                font: { family: 'Inter', size: 11, weight: '500' }
-              } 
+              labels: { usePointStyle: true, pointStyle: 'circle', padding: 15 } 
             },
           },
         },
