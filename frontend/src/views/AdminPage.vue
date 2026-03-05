@@ -796,7 +796,10 @@ export default {
       if (!this.$refs.salesChart || !this.$refs.trafficChart) return;
 
       const salesCtx = this.$refs.salesChart.getContext("2d");
+      const trafficCtx = this.$refs.trafficChart.getContext("2d");
+
       if (this.salesChart) this.salesChart.destroy();
+      if (this.trafficChart) this.trafficChart.destroy();
 
       let labels = [];
       let salesData = [];
@@ -809,15 +812,24 @@ export default {
           salesData = labels.map(label => dataSet.purchases[label] || 0);
           profitData = labels.map(label => dataSet.profit[label] || 0);
         } else if (this.chartTimeframe === "daily") {
+          // Generate last 7 days including today
           const dataSet = this.analyticsData.daily || { purchases: {}, profit: {} };
-          const keys = Object.keys(dataSet.purchases).sort().slice(-7);
-          labels = keys.map(k => k.split('-').slice(-2).join('/')); // MM/DD
-          salesData = keys.map(k => dataSet.purchases[k] || 0);
-          profitData = keys.map(k => dataSet.profit[k] || 0);
+          for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const key = date.toISOString().split('T')[0];
+            labels.push(date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })); // DD/MM
+            salesData.push(dataSet.purchases[key] || 0);
+            profitData.push(dataSet.profit[key] || 0);
+          }
         } else if (this.chartTimeframe === "monthly") {
           const dataSet = this.analyticsData.monthly || { purchases: {}, profit: {} };
           const keys = Object.keys(dataSet.purchases).sort();
-          labels = keys.map(k => k.split('-').slice(1).join('/')); // MM/YYYY
+          labels = keys.map(k => {
+            const [y, m] = k.split('-');
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${months[parseInt(m)-1]} ${y}`;
+          });
           salesData = keys.map(k => dataSet.purchases[k] || 0);
           profitData = keys.map(k => dataSet.profit[k] || 0);
         } else if (this.chartTimeframe === "yearly") {
@@ -829,7 +841,7 @@ export default {
       }
 
       this.salesChart = new Chart(salesCtx, {
-        type: "line", // Line chart looks more professional for trends
+        type: "line",
         data: {
           labels: labels,
           datasets: [
@@ -840,7 +852,7 @@ export default {
               backgroundColor: "rgba(125, 51, 255, 0.1)",
               fill: true,
               tension: 0.4,
-              pointRadius: 4,
+              pointRadius: labels.length > 50 ? 0 : 4,
               pointBackgroundColor: "#7d33ff",
               borderWidth: 3
             },
@@ -851,7 +863,7 @@ export default {
               backgroundColor: "rgba(16, 217, 172, 0.1)",
               fill: true,
               tension: 0.4,
-              pointRadius: 4,
+              pointRadius: labels.length > 50 ? 0 : 4,
               pointBackgroundColor: "#10d9ac",
               borderWidth: 3
             },
@@ -906,18 +918,14 @@ export default {
         },
       });
 
-      // System Distribution (Pie/Doughnut)
-      const trafficCtx = this.$refs.trafficChart.getContext("2d");
-      if (this.trafficChart) this.trafficChart.destroy();
-
-      // Use inventory and staff ratios for distribution mock if real data is missing
+      // Restore Traffic Chart
       const inventoryRatio = Math.min(this.totalInventory / 1000, 1) * 100;
       const staffRatio = (this.activeStaff / (this.totalStaff || 1)) * 100;
 
       this.trafficChart = new Chart(trafficCtx, {
         type: "doughnut",
         data: {
-          labels: ["Inventory", "Active Staff", "Pending"],
+          labels: ["Inventory", "Active Staff", "Capacity"],
           datasets: [
             {
               data: [inventoryRatio, staffRatio, 100 - staffRatio],
