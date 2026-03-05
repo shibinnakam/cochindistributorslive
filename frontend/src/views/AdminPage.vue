@@ -1,7 +1,7 @@
 <template>
   <div class="admin-container">
     <!-- Sidebar Navigation -->
-    <aside class="sidebar" :class="{ 'mobile-open': isSidebarOpen }">
+    <aside class="sidebar" :class="{ 'mobile-open': isSidebarOpen, 'collapsed': !isSidebarOpen }">
       <div class="brand">
         <div class="brand-text">ShopAdmin</div>
       </div>
@@ -644,7 +644,7 @@ export default {
   data() {
     return {
       selectedMenu: "dashboard",
-      isSidebarOpen: false,
+      isSidebarOpen: true,
       showAddProductModal: false,
       showListProductsModal: false,
       showEditProductModal: false,
@@ -692,6 +692,10 @@ export default {
     };
   },
   mounted() {
+    // Initialize sidebar state based on screen width
+    if (window.innerWidth <= 1024) {
+      this.isSidebarOpen = false;
+    }
     this.fetchDashboardStats();
     this.fetchUnreadMessages();
     this.messageInterval = setInterval(() => {
