@@ -258,7 +258,7 @@
               <div class="stat-value">₹{{ totalPurchases.toLocaleString() }}</div>
               <div class="stat-subtext">Cumulative Sales</div>
             </div>
-            <div class="stat-card gradient-info">
+            <div class="stat-card gradient-primary">
               <div class="stat-label">
                 <span>Active Orders</span>
                 <span class="stat-icon">🛒</span>
@@ -267,6 +267,14 @@
               <div class="stat-subtext">Proccessing now</div>
             </div>
             <div class="stat-card gradient-success">
+              <div class="stat-label">
+                <span>Total Profit</span>
+                <span class="stat-icon">📈</span>
+              </div>
+              <div class="stat-value">₹{{ totalProfit.toLocaleString() }}</div>
+              <div class="stat-subtext">Cumulative Profit</div>
+            </div>
+            <div class="stat-card gradient-info">
               <div class="stat-label">
                 <span>Staff Present</span>
                 <span class="stat-icon">👥</span>
@@ -300,22 +308,25 @@
           <div class="charts-grid mt-4">
             <div class="section-card">
               <div class="section-header">
-                <h3>Sales & Profit Analytics</h3>
-                <div class="time-filter">
-                  <select v-model="chartTimeframe" @change="handleTimeframeChange" class="chart-select">
-                    <option value="today">Today</option>
-                    <option value="custom">Custom Day</option>
-                    <option value="daily">Last 7 Days</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
-                  <input 
-                    v-if="chartTimeframe === 'custom'" 
-                    type="date" 
-                    v-model="customChartDate" 
-                    @change="fetchDashboardStats(customChartDate)" 
-                    class="date-picker-input"
-                  />
+                <div class="analytics-controls">
+                  <div class="time-filter">
+                    <select v-model="chartTimeframe" @change="handleTimeframeChange" class="chart-select">
+                      <option value="today">Today</option>
+                      <option value="weekly">This Week</option>
+                      <option value="monthly">This Month</option>
+                      <option value="yearly">This Year</option>
+                      <option value="custom">Custom Range</option>
+                    </select>
+                    <div v-if="chartTimeframe === 'custom'" class="date-range-inputs">
+                      <input type="date" v-model="customStartDate" @change="handleTimeframeChange" class="date-picker-input" />
+                      <span>to</span>
+                      <input type="date" v-model="customEndDate" @change="handleTimeframeChange" class="date-picker-input" />
+                    </div>
+                  </div>
+                  <button @click="downloadReport" class="btn-download" :disabled="reportLoading">
+                    <span v-if="reportLoading">Generating...</span>
+                    <span v-else>📥 Download Report</span>
+                  </button>
                 </div>
               </div>
               <div style="height: 350px">
@@ -686,12 +697,13 @@ export default {
       totalOrders: 0,
       salesTimeframe: "all",
       analyticsData: null,
-      chartTimeframe: "daily",
+      chartTimeframe: "weekly",
       displayedPurchases: 0,
       displayedProfit: 0,
       reviewsLoading: false,
       currentReviews: [],
       actionLoading: false,
+      reportLoading: false,
       messageInterval: null,
       topProductsInterval: null,
 
@@ -702,7 +714,8 @@ export default {
       // Charts
       salesChart: null,
       trafficChart: null,
-      customChartDate: new Date().toISOString().split('T')[0],
+      customStartDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      customEndDate: new Date().toISOString().split('T')[0],
 
       // Password Change
       passwordForm: {
@@ -822,10 +835,27 @@ export default {
       return `/${path}`;
     },
     handleTimeframeChange() {
-      if (this.chartTimeframe === 'today') {
-        this.fetchDashboardStats();
-      } else if (this.chartTimeframe !== 'custom') {
-        this.initCharts();
+      this.fetchDashboardStats();
+    },
+    async downloadReport() {
+      this.reportLoading = true;
+      try {
+        let url = `${API_BASE_URL}/orders/admin/generate-report?timeframe=${this.chartTimeframe}`;
+        if (this.chartTimeframe === 'custom') {
+          url += `&startDate=${this.customStartDate}&endDate=${this.customEndDate}`;
+        }
+        
+        const response = await axios.get(url, { responseType: 'blob' });
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = `sales_report_${this.chartTimeframe}_${new Date().toISOString().split('T')[0]}.pdf`;
+        link.click();
+      } catch (e) {
+        console.error("Download error:", e);
+        alert("Failed to generate report");
+      } finally {
+        this.reportLoading = false;
       }
     },
     initCharts() {
@@ -850,45 +880,55 @@ export default {
         console.log("chartTimeframe:", this.chartTimeframe);
 
         if (ad) {
-          if (this.chartTimeframe === "today" || this.chartTimeframe === "custom") {
+          if (this.chartTimeframe === "today") {
             const hourly = ad.hourly || { purchases: {}, profit: {} };
             labels = Object.keys(hourly.purchases || {}).sort();
             salesData = labels.map(k => parseFloat(hourly.purchases[k]) || 0);
             profitData = labels.map(k => parseFloat(hourly.profit[k]) || 0);
 
-          } else if (this.chartTimeframe === "daily") {
+          } else if (this.chartTimeframe === "weekly" || (this.chartTimeframe === "custom" && labels.length === 0)) {
             const daily = ad.daily || { purchases: {}, profit: {} };
-            // Generate last 7 days
-            for (let i = 6; i >= 0; i--) {
-              const d = new Date();
-              d.setDate(d.getDate() - i);
-              // Try multiple key formats
-              const key1 = d.toLocaleDateString('sv-SE'); // YYYY-MM-DD (local)
-              const key2 = d.toISOString().split('T')[0];  // YYYY-MM-DD (UTC)
-              const val = parseFloat(daily.purchases[key1] || daily.purchases[key2]) || 0;
-              const profit = parseFloat(daily.profit[key1] || daily.profit[key2]) || 0;
-              labels.push(`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`);
+            // Generate last 7 days or custom range
+            const start = this.chartTimeframe === 'weekly' ? new Date(Date.now() - 6 * 24 * 60 * 60 * 1000) : new Date(this.customStartDate);
+            const end = this.chartTimeframe === 'weekly' ? new Date() : new Date(this.customEndDate);
+            
+            let current = new Date(start);
+            while (current <= end) {
+              const key = current.toLocaleDateString('sv-SE'); // YYYY-MM-DD
+              const val = parseFloat(daily.purchases[key] || 0);
+              const profit = parseFloat(daily.profit[key] || 0);
+              labels.push(`${String(current.getDate()).padStart(2,'0')}/${String(current.getMonth()+1).padStart(2,'0')}`);
               salesData.push(val);
               profitData.push(profit);
+              current.setDate(current.getDate() + 1);
+              if (labels.length > 31) break; // Limit daily view
             }
 
           } else if (this.chartTimeframe === "monthly") {
             const monthly = ad.monthly || { purchases: {}, profit: {} };
-            const keys = Object.keys(monthly.purchases || {}).sort();
-            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            labels = keys.map(k => {
-              const parts = k.split('-');
-              const m = parseInt(parts[1]) - 1;
-              return `${monthNames[m]} ${parts[0]}`;
-            });
-            salesData = keys.map(k => parseFloat(monthly.purchases[k]) || 0);
-            profitData = keys.map(k => parseFloat(monthly.profit[k]) || 0);
+            const daily = ad.daily || { purchases: {}, profit: {} };
+            // Show all days of this month
+            const now = new Date();
+            const start = new Date(now.getFullYear(), now.getMonth(), 1);
+            let current = new Date(start);
+            while (current.getMonth() === now.getMonth()) {
+              const key = current.toLocaleDateString('sv-SE');
+              labels.push(current.getDate().toString());
+              salesData.push(parseFloat(daily.purchases[key] || 0));
+              profitData.push(parseFloat(daily.profit[key] || 0));
+              current.setDate(current.getDate() + 1);
+            }
 
           } else if (this.chartTimeframe === "yearly") {
-            const yearly = ad.yearly || { purchases: {}, profit: {} };
-            labels = Object.keys(yearly.purchases || {}).sort();
-            salesData = labels.map(k => parseFloat(yearly.purchases[k]) || 0);
-            profitData = labels.map(k => parseFloat(yearly.profit[k]) || 0);
+            const monthly = ad.monthly || { purchases: {}, profit: {} };
+            const year = new Date().getFullYear();
+            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            for (let m = 0; m < 12; m++) {
+              const key = `${year}-${String(m + 1).padStart(2, '0')}`;
+              labels.push(monthNames[m]);
+              salesData.push(parseFloat(monthly.purchases[key] || 0));
+              profitData.push(parseFloat(monthly.profit[key] || 0));
+            }
           }
         }
 
@@ -1039,6 +1079,13 @@ export default {
     async fetchDashboardStats(date = null) {
       this.dashboardLoading = true;
       try {
+        let salesUrl = `${API_BASE_URL}/orders/admin/sales-analytics?timeframe=${this.chartTimeframe}`;
+        if (this.chartTimeframe === 'custom') {
+          salesUrl += `&startDate=${this.customStartDate}&endDate=${this.customEndDate}`;
+        } else if (this.chartTimeframe === 'today') {
+          salesUrl += `&date=${new Date().toISOString().split('T')[0]}`;
+        }
+
         const [
           productsRes,
           categoriesRes,
@@ -1052,7 +1099,7 @@ export default {
           axios.get(`${API_BASE_URL}/staff`),
           axios.get(`${API_BASE_URL}/leaves/all`),
           axios.get(`${API_BASE_URL}/reviews/admin/pending`),
-          axios.get(`${API_BASE_URL}/orders/admin/sales-analytics${date ? `?date=${date}` : ""}`),
+          axios.get(salesUrl),
         ]);
 
         if (productsRes.data.success && productsRes.data.products) {
