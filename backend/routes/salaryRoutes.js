@@ -35,9 +35,9 @@ router.get("/calculate/:staffId", async (req, res) => {
     const monthNum = parseInt(month.split("-")[1]);
 
     // 1. Check if already paid
-    const existingPayment = await SalaryPayment.findOne({ 
-      staffId: req.params.staffId, 
-      monthAndYear: month 
+    const existingPayment = await SalaryPayment.findOne({
+      staffId: req.params.staffId,
+      monthAndYear: month
     });
 
     if (existingPayment) {
@@ -51,7 +51,7 @@ router.get("/calculate/:staffId", async (req, res) => {
     }
 
     const baseSalary = staff.salary || 0;
-    
+
     // Total days and Sundays
     const totalDaysInMonth = getDaysInMonth(yearNum, monthNum);
     const sundays = countSundays(yearNum, monthNum);
@@ -64,9 +64,9 @@ router.get("/calculate/:staffId", async (req, res) => {
     // 3. Fetch attendance records for the month
     // Date format in DB is "YYYY-MM-DD"
     const regex = new RegExp(`^${month}`);
-    const attendances = await Attendance.find({ 
-      staffId: req.params.staffId, 
-      date: regex 
+    const attendances = await Attendance.find({
+      staffId: req.params.staffId,
+      date: regex
     });
 
     // 4. Calculate actual present days and overtime
@@ -77,50 +77,57 @@ router.get("/calculate/:staffId", async (req, res) => {
     const presentDates = new Set();
 
     attendances.forEach(att => {
-        if(att.inTime && att.outTime) {
-            presentDates.add(att.date);
-            const ms = new Date(att.outTime) - new Date(att.inTime);
-            let hoursWorked = ms / (1000 * 60 * 60);
-            
-            // Cap reasonable hours if forgot to checkout until next day
-            if (hoursWorked > 24) hoursWorked = 24; 
+      if (att.inTime && att.outTime) {
+        presentDates.add(att.date);
+        const ms = new Date(att.outTime) - new Date(att.inTime);
+        let hoursWorked = ms / (1000 * 60 * 60);
 
-            if (hoursWorked > 10) {
-                totalOvertimeHours += (hoursWorked - 10);
-            }
+        // Cap reasonable hours if forgot to checkout until next day
+        if (hoursWorked > 24) hoursWorked = 24;
+
+        if (hoursWorked > 10) {
+          totalOvertimeHours += (hoursWorked - 10);
         }
+      }
     });
 
     presentDaysCount = presentDates.size;
-    
+
     // Deductions: days missing attendance that are NOT Sundays or approved leave (simplified to just unpaid absences)
     // We will just base the calculation on present days versus expected working days
     // If workingDays = 26, presentDays = 24. They missed 2 days.
     // If they have approved leave for those 2 days, those should not be deducted if paid (or deducted if unpaid).
     // For simplicity, absentDays = workingDays - presentDays. 
-    
+
     // Check approved leaves for the month
+    const startDate = new Date(yearNum, monthNum - 1, 1);
+    const endDate = new Date(yearNum, monthNum, 1);
+
     const leaves = await Leave.find({
-        email: staff.email,
-        status: "Approved",
-        date: regex
+      email: staff.email,
+      status: "Approved",
+      date: { $gte: startDate, $lt: endDate }
     });
-    
+
     // Here we assume leaves are PAID leaves (meaning they reduce absent days)
-    const leaveDates = new Set(leaves.map(l => l.date));
-    
+    // Convert Leave date objects to YYYY-MM-DD
+    const leaveDates = new Set(leaves.map(l => {
+      const d = new Date(l.date);
+      return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
+    }));
+
     // We count missing days
     let absentDays = 0;
     for (let i = 1; i <= totalDaysInMonth; i++) {
-        const dStr = `${month}-${i.toString().padStart(2, "0")}`;
-        const d = new Date(yearNum, monthNum - 1, i);
-        if (d.getDay() !== 0) { // Not Sunday
-            if (!presentDates.has(dStr)) { // No attendance
-                if (!leaveDates.has(dStr)) { // No approved leave
-                    absentDays++;
-                }
-            }
+      const dStr = `${month}-${i.toString().padStart(2, "0")}`;
+      const d = new Date(yearNum, monthNum - 1, i);
+      if (d.getDay() !== 0) { // Not Sunday
+        if (!presentDates.has(dStr)) { // No attendance
+          if (!leaveDates.has(dStr)) { // No approved leave
+            absentDays++;
+          }
         }
+      }
     }
 
     const leaveDeductions = absentDays * dailyRate;
@@ -133,15 +140,15 @@ router.get("/calculate/:staffId", async (req, res) => {
     if (finalSalary < 0) finalSalary = 0;
 
     const salaryData = {
-        staffId: staff._id,
-        monthAndYear: month,
-        baseSalary: parseFloat(baseSalary.toFixed(2)),
-        totalWorkingDays: workingDays,
-        presentDays: presentDaysCount,
-        leaveDeductions: parseFloat(leaveDeductions.toFixed(2)),
-        overtimeHours: parseFloat(totalOvertimeHours.toFixed(2)),
-        overtimePay: parseFloat(overtimePay.toFixed(2)),
-        finalSalary: Math.round(finalSalary),
+      staffId: staff._id,
+      monthAndYear: month,
+      baseSalary: parseFloat(baseSalary.toFixed(2)),
+      totalWorkingDays: workingDays,
+      presentDays: presentDaysCount,
+      leaveDeductions: parseFloat(leaveDeductions.toFixed(2)),
+      overtimeHours: parseFloat(totalOvertimeHours.toFixed(2)),
+      overtimePay: parseFloat(overtimePay.toFixed(2)),
+      finalSalary: Math.round(finalSalary),
     };
 
     res.json({ success: true, isPaid: false, data: salaryData });
@@ -154,35 +161,35 @@ router.get("/calculate/:staffId", async (req, res) => {
 // POST /api/salary/pay
 router.post("/pay", async (req, res) => {
   try {
-    const { 
-        staffId, 
-        monthAndYear, 
-        baseSalary, 
-        totalWorkingDays, 
-        presentDays, 
-        leaveDeductions, 
-        overtimeHours, 
-        overtimePay, 
-        finalSalary 
+    const {
+      staffId,
+      monthAndYear,
+      baseSalary,
+      totalWorkingDays,
+      presentDays,
+      leaveDeductions,
+      overtimeHours,
+      overtimePay,
+      finalSalary
     } = req.body;
 
     // Check if already paid
     const existing = await SalaryPayment.findOne({ staffId, monthAndYear });
     if (existing) {
-        return res.status(400).json({ success: false, message: "Salary already paid for this month." });
+      return res.status(400).json({ success: false, message: "Salary already paid for this month." });
     }
 
     const payment = new SalaryPayment({
-        staffId,
-        monthAndYear,
-        baseSalary,
-        totalWorkingDays,
-        presentDays,
-        leaveDeductions,
-        overtimeHours,
-        overtimePay,
-        finalSalary,
-        status: "Paid"
+      staffId,
+      monthAndYear,
+      baseSalary,
+      totalWorkingDays,
+      presentDays,
+      leaveDeductions,
+      overtimeHours,
+      overtimePay,
+      finalSalary,
+      status: "Paid"
     });
 
     await payment.save();
