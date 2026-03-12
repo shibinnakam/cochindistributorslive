@@ -305,6 +305,9 @@
           </div>
 
           <!-- Charts Grid -->
+          <div class="charts-grid mt-4">
+            <div class="section-card">
+              <div class="section-header">
                 <h3>📊 Sales & Profit Analytics</h3>
                 <div class="analytics-controls">
                   <div class="chart-type-toggle">
