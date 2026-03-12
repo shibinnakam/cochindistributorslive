@@ -379,6 +379,29 @@ module.exports = (io) => {
       const formatDateKey = (date) => date.toLocaleDateString('sv-SE');
       const targetDateStr = formatDateKey(new Date());
 
+      // Prepare date filter for productBreakdown
+      let breakdownStart = new Date();
+      let breakdownEnd = new Date();
+      if (timeframe === "today") {
+        breakdownStart.setHours(0, 0, 0, 0);
+        breakdownEnd.setHours(23, 59, 59, 999);
+      } else if (timeframe === "weekly") {
+        breakdownStart.setDate(breakdownStart.getDate() - 7);
+      } else if (timeframe === "monthly") {
+        breakdownStart.setMonth(breakdownStart.getMonth() - 1);
+      } else if (timeframe === "yearly") {
+        breakdownStart.setFullYear(breakdownStart.getFullYear() - 1);
+      } else if (timeframe === "custom" && startDate && endDate) {
+        breakdownStart = new Date(startDate);
+        breakdownStart.setHours(0, 0, 0, 0);
+        breakdownEnd = new Date(endDate);
+        breakdownEnd.setHours(23, 59, 59, 999);
+      } else {
+        breakdownStart.setDate(breakdownStart.getDate() - 7);
+      }
+
+      const productBreakdown = {};
+
       for (let i = 0; i < 24; i++) {
         const hourKey = String(i).padStart(2, '0') + ":00";
         hourlyPurchases[hourKey] = 0;
@@ -396,6 +419,22 @@ module.exports = (io) => {
           const cost = Number(item.costPrice || 0) * Number(item.quantity || 0);
           const revenue = Number(item.price || 0) * Number(item.quantity || 0);
           orderProfit += revenue - cost;
+
+          // Add to breakdown if within timeframe
+          if (date >= breakdownStart && date <= breakdownEnd && item.product) {
+            const pid = item.product._id.toString();
+            if (!productBreakdown[pid]) {
+              productBreakdown[pid] = {
+                name: item.product.name,
+                unitsSold: 0,
+                revenue: 0,
+                profit: 0
+              };
+            }
+            productBreakdown[pid].unitsSold += Number(item.quantity || 0);
+            productBreakdown[pid].revenue += revenue;
+            productBreakdown[pid].profit += (revenue - cost);
+          }
         });
 
         totalPurchases += Number(order.totalAmount || 0);
@@ -422,6 +461,7 @@ module.exports = (io) => {
         totalPurchases,
         totalProfit,
         totalOrders,
+        productBreakdown: Object.values(productBreakdown).sort((a, b) => b.revenue - a.revenue),
         hourly: { purchases: hourlyPurchases, profit: hourlyProfit, date: targetDateStr },
         daily: { purchases: dailyPurchases, profit: dailyProfit },
         monthly: { purchases: monthlyPurchases, profit: monthlyProfit },

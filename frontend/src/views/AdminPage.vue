@@ -357,6 +357,11 @@
                       :class="['toggle-btn', { active: salesChartType === 'doughnut' }]"
                       title="Doughnut Chart"
                     >⭕</button>
+                    <button 
+                      @click="salesChartType = 'table'" 
+                      :class="['toggle-btn', { active: salesChartType === 'table' }]"
+                      title="Table View"
+                    >📋</button>
                   </div>
                   <div class="time-filter">
                     <select v-model="chartTimeframe" @change="handleTimeframeChange" class="chart-select">
@@ -378,8 +383,31 @@
                   </button>
                 </div>
               </div>
-              <div style="height: 350px">
+              <div v-if="salesChartType !== 'table'" style="height: 350px">
                 <canvas ref="salesChart"></canvas>
+              </div>
+              <div v-else class="analytics-table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Product Name</th>
+                      <th>Qty Sold</th>
+                      <th>Revenue (₹)</th>
+                      <th>Profit (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in (analyticsData?.productBreakdown || [])" :key="item.name">
+                      <td>{{ item.name }}</td>
+                      <td>{{ item.unitsSold }}</td>
+                      <td>{{ item.revenue.toLocaleString() }}</td>
+                      <td>{{ item.profit.toLocaleString() }}</td>
+                    </tr>
+                    <tr v-if="!analyticsData?.productBreakdown?.length">
+                      <td colspan="4" class="empty-msg">No sales data for this period.</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
             <div class="section-card top-products-card">
