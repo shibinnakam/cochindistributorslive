@@ -741,12 +741,3 @@ export default {
   .products-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
 }
 </style>
-  .header-section {
-    padding: 15px;
-  }
-
-  .page-title {
-    font-size: 20px;
-  }
-}
-</style>
