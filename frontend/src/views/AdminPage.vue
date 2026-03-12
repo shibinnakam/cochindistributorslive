@@ -222,21 +222,6 @@
           >
             ☰
           </button>
-          <div class="search-bar">
-            <span class="search-icon">🔍</span>
-            <input type="text" placeholder="Search projects" />
-          </div>
-        </div>
-        <div class="header-right">
-          <div class="header-actions">
-            <button class="header-action-btn">🔔 <span class="dot"></span></button>
-            <button class="header-action-btn">✉️ <span class="dot"></span></button>
-          </div>
-          <div class="user-profile">
-            <div class="avatar">A</div>
-            <span class="name">Administrator</span>
-            <span class="dropdown-arrow">▼</span>
-          </div>
         </div>
       </header>
 
