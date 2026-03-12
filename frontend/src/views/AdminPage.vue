@@ -332,7 +332,7 @@
                   </div>
                   <div class="item-actions">
                     <span class="badge warning">Expiring</span>
-                    <button class="btn-manage-alert" @click="manageProduct(p._id)">Edit</button>
+                    <button class="btn-manage-alert" @click="openEditProductModal(p._id)">Edit</button>
                   </div>
                 </div>
                 <!-- Also show expired ones in this list if they exist -->
@@ -460,7 +460,7 @@
         <!-- Other Views -->
         <AddProduct v-if="selectedMenu === 'addProduct'" />
         <ProductCategory v-if="selectedMenu === 'addCategory'" />
-        <ProductList v-if="selectedMenu === 'listProducts'" />
+        <ProductList v-if="selectedMenu === 'listProducts'" @edit="openEditProductModal" />
         <StaffManagement v-if="selectedMenu === 'staffManagement'" />
         <AdminOrders v-if="selectedMenu === 'orders'" />
         <AdminLeaves v-if="selectedMenu === 'approve-leaves'" />
