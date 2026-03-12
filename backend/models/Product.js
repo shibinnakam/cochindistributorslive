@@ -45,7 +45,8 @@ const productSchema = new mongoose.Schema(
 
 // 🔹 Auto-update isExpired before saving
 productSchema.pre("save", function (next) {
-  this.isExpired = this.expiryDate < new Date();
+  const now = new Date();
+  this.isExpired = this.expiryDate <= now;
   next();
 });
 

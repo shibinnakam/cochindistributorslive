@@ -261,7 +261,14 @@ module.exports = (io) => {
   // ✅ Get All Products (with category details)
   router.get("/getproduct", async (req, res) => {
     try {
-      const products = await Product.find()
+      const { filterExpired } = req.query;
+      const query = { isDeleted: false };
+
+      if (filterExpired === "true") {
+        query.expiryDate = { $gt: new Date() };
+      }
+
+      const products = await Product.find(query)
         .populate("category", "name") // ✅ show category name instead of ID
         .sort({ createdAt: -1 });
 

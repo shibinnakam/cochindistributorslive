@@ -304,6 +304,42 @@
             </div>
           </div>
 
+          <!-- Component: Expiry Alerts Section -->
+          <div v-if="expiringProducts.length > 0 || expiredCount > 0" class="expiry-alerts-wrapper mt-4">
+            <div class="section-card alert-section" :class="{ 'has-expired': expiredCount > 0 }">
+              <div class="alert-banner" :class="expiredCount > 0 ? 'danger' : 'warning'">
+                <div class="alert-info">
+                  <span class="alert-icon">{{ expiredCount > 0 ? '🚫' : '⚠️' }}</span>
+                  <div class="alert-text">
+                    <strong v-if="expiredCount > 0">{{ expiredCount }} Products have EXPIRED!</strong>
+                    <strong v-else>{{ expiringProducts.length }} Products expiring soon (within 10 days).</strong>
+                    <p>Immediate action recommended to manage inventory.</p>
+                  </div>
+                </div>
+                <button class="btn-toggle-alerts" @click="showExpiryDetails = !showExpiryDetails">
+                  {{ showExpiryDetails ? 'Close Alerts' : 'Manage Now' }}
+                </button>
+              </div>
+
+              <div v-if="showExpiryDetails" class="expiry-details-list">
+                <div v-for="p in expiringProducts" :key="p._id" class="expiry-item">
+                  <div class="item-main">
+                    <img :src="getImageUrl(p.image || p.imageFront)" class="mini-prod-img" />
+                    <div class="item-meta">
+                      <span class="item-name">{{ p.name }}</span>
+                      <span class="item-date">Expires: {{ new Date(p.expiryDate).toLocaleDateString() }}</span>
+                    </div>
+                  </div>
+                  <div class="item-actions">
+                    <span class="badge warning">Expiring</span>
+                    <button class="btn-manage-alert" @click="manageProduct(p._id)">Edit</button>
+                  </div>
+                </div>
+                <!-- Also show expired ones in this list if they exist -->
+              </div>
+            </div>
+          </div>
+
           <!-- Charts Grid -->
           <div class="charts-grid mt-4">
             <div class="section-card">
@@ -724,6 +760,11 @@ export default {
       topProducts: [],
       topProductsLoading: false,
 
+      // Expiry & Alerts
+      expiringProducts: [],
+      expiredCount: 0,
+      showExpiryDetails: false,
+
       // Charts
       salesChart: null,
       trafficChart: null,
@@ -847,6 +888,10 @@ export default {
       if (path.startsWith('/') || path.startsWith('http')) return path;
       // Otherwise add leading slash
       return `/${path}`;
+    },
+    manageProduct(productId) {
+      this.editProductId = productId;
+      this.showEditProductModal = true;
     },
     handleTimeframeChange() {
       this.fetchDashboardStats();
@@ -1150,6 +1195,19 @@ export default {
             (sum, p) => sum + (p.quantity || 0),
             0
           );
+
+          // Expiry logic
+          const now = new Date();
+          const tenDaysLater = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000);
+          
+          this.expiringProducts = productsRes.data.products.filter(p => {
+            const exp = new Date(p.expiryDate);
+            return exp > now && exp <= tenDaysLater;
+          });
+          
+          this.expiredCount = productsRes.data.products.filter(p => {
+            return new Date(p.expiryDate) < now;
+          }).length;
         }
 
         if (Array.isArray(categoriesRes.data)) {

@@ -568,7 +568,7 @@ export default {
     async fetchProducts() {
       this.loading = true;
       try {
-        const res = await axios.get("/api/products/getproduct");
+        const res = await axios.get("/api/products/getproduct?filterExpired=true");
         if (res.data.success) this.products = res.data.products;
       } catch (err) {
         console.error("Error fetching products:", err);

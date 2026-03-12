@@ -115,7 +115,7 @@ export default {
       this.loading = true;
       try {
         const [prodRes, catRes] = await Promise.all([
-          axios.get("/api/products/getproduct"),
+          axios.get("/api/products/getproduct?filterExpired=true"),
           axios.get("/api/categories")
         ]);
         

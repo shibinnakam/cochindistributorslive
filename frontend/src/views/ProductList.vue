@@ -139,9 +139,10 @@
           <div class="meta-row">
             <div
               class="stock-status"
-              :class="getQuantityClass(product.quantity)"
+              :class="isProductExpired(product) ? 'out-of-stock' : getQuantityClass(product.quantity)"
             >
-              <span v-if="product.quantity === 0">Out of Stock</span>
+              <span v-if="isProductExpired(product)" class="expired-label">PRODUCT EXPIRED</span>
+              <span v-else-if="product.quantity === 0">Out of Stock</span>
               <span v-else-if="product.quantity < 10"
                 >Only {{ product.quantity }} left!</span
               >
@@ -283,6 +284,10 @@ export default {
       } else {
         this.active3DProductId = productId;
       }
+    },
+    isProductExpired(product) {
+      if (!product.expiryDate) return false;
+      return new Date(product.expiryDate) < new Date();
     },
     calculateDiscount(original, discount) {
       if (!original || !discount) return 0;
