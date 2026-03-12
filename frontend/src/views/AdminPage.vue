@@ -410,42 +410,52 @@
             </div>
           </div>
 
-          <!-- Recent Activity Section -->
+          <!-- Product Overview Table -->
           <div class="dashboard-sections">
-            <div class="section-card recent-orders">
+            <div class="section-card" style="width:100%">
               <div class="section-header">
-                <h3>Recent Activity</h3>
+                <h3>📦 Product Overview</h3>
+                <span v-if="productOverviewLoading" style="font-size:0.8rem;color:#64748b">Loading...</span>
               </div>
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Activity</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>#1024</td>
-                    <td>New Product Added</td>
-                    <td><span class="status-badge success">DONE</span></td>
-                    <td>Just now</td>
-                  </tr>
-                  <tr>
-                    <td>#1023</td>
-                    <td>Staff Leave Request</td>
-                    <td><span class="status-badge warning">PROGRESS</span></td>
-                    <td>2 hours ago</td>
-                  </tr>
-                  <tr>
-                    <td>#1022</td>
-                    <td>Category Updated</td>
-                    <td><span class="status-badge info">INFO</span></td>
-                    <td>Yesterday</td>
-                  </tr>
-                </tbody>
-              </table>
+              <div class="analytics-table-container" style="height:350px">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Product Name</th>
+                      <th>Total Qty</th>
+                      <th>Sold Qty</th>
+                      <th>Balance Qty</th>
+                      <th>MFD</th>
+                      <th>Expiry</th>
+                      <th>Selling Price (₹)</th>
+                      <th>Profit Gained (₹)</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(p, idx) in productOverview" :key="p._id" :class="{ 'row-expired': p.isExpired }">
+                      <td>{{ idx + 1 }}</td>
+                      <td>{{ p.name }}</td>
+                      <td>{{ p.totalQty }}</td>
+                      <td>{{ p.soldQty }}</td>
+                      <td>{{ p.balanceQty }}</td>
+                      <td>{{ p.manufacturingDate ? new Date(p.manufacturingDate).toLocaleDateString('en-IN') : '-' }}</td>
+                      <td>{{ p.expiryDate ? new Date(p.expiryDate).toLocaleDateString('en-IN') : '-' }}</td>
+                      <td>₹{{ Number(p.sellingPrice || 0).toLocaleString() }}</td>
+                      <td>₹{{ Number(p.profitGained || 0).toLocaleString() }}</td>
+                      <td>
+                        <span :class="p.isExpired ? 'status-badge danger' : 'status-badge success'">
+                          {{ p.isExpired ? 'Expired' : 'Active' }}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr v-if="!productOverview.length && !productOverviewLoading">
+                      <td colspan="10" class="empty-msg">No products found.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -741,6 +751,8 @@ export default {
       chartTimeframe: "today",
       displayedPurchases: 0,
       displayedProfit: 0,
+      productOverview: [],
+      productOverviewLoading: false,
       reviewsLoading: false,
       currentReviews: [],
       actionLoading: false,
@@ -782,6 +794,7 @@ export default {
     this.fetchDashboardStats();
     this.fetchUnreadMessages();
     this.fetchTopProducts();
+    this.fetchProductOverview();
     this.messageInterval = setInterval(() => {
       this.fetchUnreadMessages();
     }, 10000);
@@ -851,6 +864,19 @@ export default {
     }
   },
   methods: {
+    async fetchProductOverview() {
+      this.productOverviewLoading = true;
+      try {
+        const res = await axios.get(`${API_BASE_URL}/orders/admin/product-overview`);
+        if (res.data.success) {
+          this.productOverview = res.data.overview;
+        }
+      } catch (e) {
+        console.error("fetchProductOverview error:", e);
+      } finally {
+        this.productOverviewLoading = false;
+      }
+    },
     async fetchTopProducts() {
       this.topProductsLoading = this.topProducts.length === 0;
       try {

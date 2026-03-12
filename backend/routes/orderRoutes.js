@@ -355,6 +355,52 @@ module.exports = (io) => {
     }
   });
 
+  // Admin: Product Overview Table
+  router.get("/admin/product-overview", authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+      const products = await Product.find({ isDeleted: false });
+      const orders = await Order.find({ status: { $ne: "cancelled" } }).populate("items.product");
+
+      // Build sold qty and profit map per product
+      const soldMap = {};
+      orders.forEach(order => {
+        order.items.forEach(item => {
+          if (!item.product) return;
+          const pid = item.product._id.toString();
+          if (!soldMap[pid]) soldMap[pid] = { unitsSold: 0, profit: 0 };
+          const qty = Number(item.quantity || 0);
+          const revenue = Number(item.price || 0) * qty;
+          const cost = Number(item.costPrice || 0) * qty;
+          soldMap[pid].unitsSold += qty;
+          soldMap[pid].profit += revenue - cost;
+        });
+      });
+
+      const overview = products.map(p => {
+        const pid = p._id.toString();
+        const soldData = soldMap[pid] || { unitsSold: 0, profit: 0 };
+        return {
+          _id: pid,
+          name: p.name,
+          totalQty: p.quantity + soldData.unitsSold,  // original stock = current + sold
+          soldQty: soldData.unitsSold,
+          balanceQty: p.quantity,
+          manufacturingDate: p.manufacturingDate,
+          expiryDate: p.expiryDate,
+          profitGained: soldData.profit,
+          isExpired: p.isExpired,
+          costPrice: p.costPrice,
+          sellingPrice: p.discountPrice
+        };
+      });
+
+      res.json({ success: true, overview });
+    } catch (error) {
+      console.error("Product overview error:", error);
+      res.status(500).json({ msg: "Server error" });
+    }
+  });
+
   // Admin: Get Sales Analytics
   router.get("/admin/sales-analytics", authMiddleware, adminMiddleware, async (req, res) => {
     try {

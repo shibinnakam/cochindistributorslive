@@ -1050,6 +1050,27 @@ a {
   }
 }
 
+/* Product Overview Table Styles */
+.row-expired {
+  background-color: #fff1f2 !important;
+}
+
+.row-expired td {
+  color: #be123c !important;
+}
+
+.status-badge.danger {
+  background: #ffe4e6;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+}
+
+.status-badge.success {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
