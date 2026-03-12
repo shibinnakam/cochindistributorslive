@@ -189,7 +189,9 @@ router.post("/create-order", async (req, res) => {
     const options = {
       amount: Math.round(amount * 100), // in paisa
       currency: "INR",
-      receipt: `sal_${staffId}_${monthAndYear}_${Date.now().toString().slice(-6)}`,
+      // Shorten receipt to stay under Razorpay's 40-character limit
+      // sal_ (4) + staffId (24) + timestamp (6) = 34 chars
+      receipt: `sal_${staffId.toString().slice(-10)}_${Date.now().toString().slice(-10)}`,
     };
 
     const order = await razorpay.orders.create(options);
