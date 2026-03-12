@@ -321,7 +321,7 @@ export default {
         this.loadTexture(textureLoader, this.imageBack),
       ];
 
-      Promise.all(texturePromises).then(([frontTexture, backTexture]) => {
+      Promise.all(texturePromises).then(([frontTexture]) => {
         // Bread loaf profile: Flat bottom, vertical sides, rounded top
         const width = 0.7;
         const height = 0.9;
@@ -366,7 +366,6 @@ export default {
         for (let i = 0; i < posAttr.count; i++) {
           const x = posAttr.getX(i);
           const y = posAttr.getY(i);
-          const z = posAttr.getZ(i);
 
           // Front-facing UVs for the front cap
           // In ExtrudeGeometry, groups are used.
