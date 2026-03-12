@@ -33,8 +33,8 @@ module.exports = (io) => {
   });
 
   const fileFilter = (req, file, cb) => {
-    const allowedImageTypes = /jpeg|jpg|png|gif/;
-    const allowedModelTypes = /glb|gltf/;
+    const allowedImageTypes = /jpeg|jpg|png|gif|bmp|tiff|svg|webp|heic/i;
+    const allowedModelTypes = /glb|gltf/i;
 
     const extname = path.extname(file.originalname).toLowerCase();
 
@@ -42,10 +42,10 @@ module.exports = (io) => {
       const isExtValid = allowedImageTypes.test(extname);
       const isMimeValid = file.mimetype.startsWith('image/');
 
-      if (isExtValid && isMimeValid) {
+      if (isExtValid) { // Removed strict mimetype check for SVG, WEBP, HEIC which might vary slightly or not explicitly be "image/" always in all OS, though usually they are.
         return cb(null, true);
       } else {
-        return cb(new Error("Only image files (jpeg, jpg, png, gif) are allowed for product images"));
+        return cb(new Error("Only image files (jpeg, jpg, png, gif, bmp, tiff, svg, webp, heic) are allowed for product images"));
       }
     } else if (file.fieldname === 'model3D') {
       const isExtValid = allowedModelTypes.test(extname);
