@@ -3,8 +3,13 @@
     <!-- Left Sidebar -->
     <aside class="pos-sidebar">
       <div class="sidebar-brand" @click="$router.push('/')">
-        <div class="brand-logo">C</div>
-        <span class="brand-name">Cochin Distributors</span>
+        <div class="brand-logo">
+          <img src="@/assets/logo.jpeg" alt="Logo" />
+        </div>
+        <div class="brand-text">
+          <span class="text-cochin">Cochin</span>
+          <span class="text-distributors">Distributors</span>
+        </div>
       </div>
 
       <div class="user-profile-small">
@@ -797,6 +802,7 @@ export default {
 
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&display=swap");
 
 .pos-wrapper {
   display: flex;
@@ -826,22 +832,41 @@ export default {
 }
 
 .brand-logo {
-  width: 36px;
-  height: 36px;
-  background: #ff9a44;
-  color: white;
+  width: 48px;
+  height: 48px;
   border-radius: 8px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 20px;
+  flex-shrink: 0;
 }
 
-.brand-name {
-  font-weight: 800;
-  font-size: 22px;
-  letter-spacing: -0.5px;
+.brand-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 0.9;
+}
+
+.text-cochin {
+  font-family: 'Dancing Script', cursive;
+  font-size: 26px;
+  font-weight: 700;
+  color: #5d3f32;
+}
+
+.text-distributors {
+  font-family: 'Dancing Script', cursive;
+  font-size: 26px;
+  font-weight: 700;
+  color: #fbaa19;
+  margin-left: 15px;
 }
 
 .user-profile-small {
