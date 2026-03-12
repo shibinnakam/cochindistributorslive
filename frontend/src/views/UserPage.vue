@@ -21,7 +21,6 @@
         </div>
         <div class="user-info">
           <h4 class="user-name">{{ userName }}</h4>
-          <p class="user-role">Product Designer</p>
         </div>
       </div>
 
