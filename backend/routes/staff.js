@@ -275,12 +275,18 @@ router.put("/update", authMiddleware, upload.single("profilePhoto"), async (req,
 // Admin updates staff details (position, salary)
 router.put("/update-details/:id", async (req, res) => {
   try {
-    const { position, salary } = req.body;
+    const { position, salary, phone } = req.body;
     const staff = await Staff.findById(req.params.id);
     if (!staff) return res.status(404).json({ message: "Staff not found" });
 
     if (position !== undefined) staff.position = position;
     if (salary !== undefined) staff.salary = salary;
+    if (phone !== undefined) {
+      if (!/^[6-9]\d{9}$/.test(phone)) {
+        return res.status(400).json({ message: "Invalid Indian phone number" });
+      }
+      staff.phone = phone;
+    }
 
     await staff.save();
     res.json({ success: true, message: "Staff details updated", staff });

@@ -313,29 +313,44 @@
         <form @submit.prevent="submitStaffDetails" class="invite-form-modal">
           <div class="form-group">
             <label>Position</label>
-            <input
+            <select
               v-model="editForm.position"
+              required
+            >
+              <option value="">Select Position</option>
+              <option value="manager">Manager</option>
+              <option value="driver">Driver</option>
+              <option value="store keeper">Store Keeper</option>
+              <option value="sales">Sales</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input
+              v-model="editForm.phone"
               type="text"
-              placeholder="e.g. Manager, Sales, Driver"
+              placeholder="Enter 10-digit phone number"
               required
             />
           </div>
+
           <div class="form-group">
             <label>Salary</label>
             <input
               v-model="editForm.salary"
               type="number"
-              placeholder="Enter salary"
+              placeholder="e.g. 15000"
               required
             />
           </div>
-          <div v-if="isApproveMode" class="form-group">
-            <label>Joining Date</label>
-            <input v-model="editForm.joiningDate" type="date" required />
-          </div>
-          <button type="submit" class="btn-submit">
-            {{ isApproveMode ? "Approve" : "Save Changes" }}
-          </button>
+            <div v-if="isApproveMode" class="form-group">
+              <label>Joining Date</label>
+              <input v-model="editForm.joiningDate" type="date" required />
+            </div>
+            <button type="submit" class="btn-submit">
+              {{ isApproveMode ? "Approve" : "Save Changes" }}
+            </button>
         </form>
       </div>
     </div>
@@ -410,9 +425,9 @@
         <div class="salary-modal-body">
           <div class="form-group row-group">
             <label>Select Month</label>
-            <input 
-              type="month" 
-              v-model="salaryMonth" 
+            <input
+              type="month"
+              v-model="salaryMonth"
               @change="calculateSalary"
               class="month-picker"
             />
@@ -423,7 +438,7 @@
           </div>
           <div v-else-if="salaryData" class="salary-details">
              <div v-if="isSalaryPaid" class="paid-badge">✓ Paid on {{ new Date(salaryData.paidAt || Date.now()).toLocaleDateString() }}</div>
-             
+
              <div class="salary-grid">
                <div class="salary-row">
                  <span>Base Salary</span>
@@ -451,9 +466,9 @@
                </div>
              </div>
 
-             <button 
-                v-if="!isSalaryPaid" 
-                @click="payNow" 
+             <button
+                v-if="!isSalaryPaid"
+                @click="payNow"
                 class="btn-submit pay-btn"
                 :disabled="salaryLoading || razorpayLoading"
              >
@@ -493,6 +508,7 @@ export default {
         id: null,
         position: "",
         salary: "",
+        phone: "",
         joiningDate: new Date().toISOString().split("T")[0],
       },
       showSalaryModal: false,
@@ -572,6 +588,7 @@ export default {
           joiningDate: data.joiningDate || new Date().toISOString(),
           position: data.position,
           salary: data.salary,
+          phone: data.phone,
         };
         const res = await axios.put(`/api/staff/approve/${id}`, payload);
         this.showToast(res.data.message || "Staff approved successfully");
@@ -589,6 +606,7 @@ export default {
         id: staff._id,
         position: staff.position || "",
         salary: staff.salary || "",
+        phone: staff.phone || "",
       };
       this.showEditModal = true;
       this.activeMenu = null;
@@ -599,14 +617,17 @@ export default {
         id: staff._id,
         position: staff.position || "",
         salary: staff.salary || "",
-        joiningDate: new Date().toISOString().split("T")[0],
+        phone: staff.phone || "",
+        joiningDate: staff.dateOfJoining
+          ? new Date(staff.dateOfJoining).toISOString().split("T")[0]
+          : new Date().toISOString().split("T")[0],
       };
       this.showEditModal = true;
       this.activeMenu = null;
     },
     closeEditModal() {
       this.showEditModal = false;
-      this.editForm = { id: null, position: "", salary: "", joiningDate: "" };
+      this.editForm = { id: null, position: "", salary: "", phone: "", joiningDate: "" };
     },
     async submitStaffDetails() {
       if (this.isApproveMode) {
@@ -621,6 +642,7 @@ export default {
         const res = await axios.put(`/api/staff/update-details/${id}`, {
           position: data.position,
           salary: data.salary,
+          phone: data.phone,
         });
         this.showToast(res.data.message || "Details updated");
         this.fetchStaff();
