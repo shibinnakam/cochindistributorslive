@@ -905,7 +905,6 @@ export default {
             }
 
           } else if (this.chartTimeframe === "monthly") {
-            const monthly = ad.monthly || { purchases: {}, profit: {} };
             const daily = ad.daily || { purchases: {}, profit: {} };
             // Show all days of this month
             const now = new Date();
@@ -1076,7 +1075,7 @@ export default {
         this.passwordLoading = false;
       }
     },
-    async fetchDashboardStats(date = null) {
+    async fetchDashboardStats() {
       this.dashboardLoading = true;
       try {
         let salesUrl = `${API_BASE_URL}/orders/admin/sales-analytics?timeframe=${this.chartTimeframe}`;
