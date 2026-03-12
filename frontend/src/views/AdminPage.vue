@@ -305,10 +305,20 @@
           </div>
 
           <!-- Charts Grid -->
-          <div class="charts-grid mt-4">
-            <div class="section-card">
-              <div class="section-header">
+                <h3>📊 Sales & Profit Analytics</h3>
                 <div class="analytics-controls">
+                  <div class="chart-type-toggle">
+                    <button 
+                      @click="salesChartType = 'bar'; initCharts()" 
+                      :class="['toggle-btn', { active: salesChartType === 'bar' }]"
+                      title="Bar Chart"
+                    >📊</button>
+                    <button 
+                      @click="salesChartType = 'doughnut'; initCharts()" 
+                      :class="['toggle-btn', { active: salesChartType === 'doughnut' }]"
+                      title="Doughnut Chart"
+                    >⭕</button>
+                  </div>
                   <div class="time-filter">
                     <select v-model="chartTimeframe" @change="handleTimeframeChange" class="chart-select">
                       <option value="today">Today</option>
@@ -714,6 +724,7 @@ export default {
       // Charts
       salesChart: null,
       trafficChart: null,
+      salesChartType: 'bar',
       customStartDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       customEndDate: new Date().toISOString().split('T')[0],
 
@@ -936,27 +947,41 @@ export default {
         console.log("profitData:", profitData);
 
         this.salesChart = new Chart(salesCtx, {
-          type: "bar",
+          type: this.salesChartType,
           data: {
             labels,
             datasets: [
               {
                 label: "Sales (₹)",
                 data: salesData,
-                backgroundColor: "rgba(125, 51, 255, 0.7)",
+                backgroundColor: this.salesChartType === 'bar' ? "rgba(125, 51, 255, 0.7)" : [
+                  'rgba(125, 51, 255, 0.8)',
+                  'rgba(16, 217, 172, 0.8)',
+                  'rgba(255, 159, 64, 0.8)',
+                  'rgba(54, 162, 235, 0.8)',
+                  'rgba(255, 99, 132, 0.8)',
+                  'rgba(75, 192, 192, 0.8)',
+                  'rgba(153, 102, 255, 0.8)'
+                ],
                 borderColor: "#7d33ff",
-                borderWidth: 2,
-                borderRadius: 4,
-                order: 2
+                borderWidth: 1,
+                borderRadius: this.salesChartType === 'bar' ? 4 : 0,
               },
               {
                 label: "Profit (₹)",
                 data: profitData,
-                backgroundColor: "rgba(16, 217, 172, 0.7)",
+                backgroundColor: this.salesChartType === 'bar' ? "rgba(16, 217, 172, 0.7)" : [
+                  'rgba(16, 217, 172, 0.6)',
+                  'rgba(125, 51, 255, 0.6)',
+                  'rgba(255, 205, 86, 0.6)',
+                  'rgba(201, 203, 207, 0.6)',
+                  'rgba(255, 159, 64, 0.6)',
+                  'rgba(54, 162, 235, 0.6)',
+                  'rgba(255, 99, 132, 0.6)'
+                ],
                 borderColor: "#10d9ac",
-                borderWidth: 2,
-                borderRadius: 4,
-                order: 1
+                borderWidth: 1,
+                borderRadius: this.salesChartType === 'bar' ? 4 : 0,
               },
             ],
           },
@@ -967,25 +992,40 @@ export default {
               legend: {
                 position: "top",
                 align: "end",
-                labels: { usePointStyle: true, padding: 20 }
+                labels: { usePointStyle: true, padding: 20, font: { family: "'Inter', sans-serif", size: 12 } }
               },
               tooltip: {
                 mode: 'index',
                 intersect: false,
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                titleColor: '#1e293b',
+                bodyColor: '#475569',
+                borderColor: '#e2e8f0',
+                borderWidth: 1,
+                padding: 12,
+                boxPadding: 6,
+                usePointStyle: true,
                 callbacks: {
                   label: function(ctx) {
-                    return `${ctx.dataset.label}: ₹${Number(ctx.parsed.y || 0).toLocaleString()}`;
+                    return `${ctx.dataset.label}: ₹${Number(ctx.parsed.y || ctx.parsed || 0).toLocaleString()}`;
                   }
                 }
               }
             },
-            scales: {
+            scales: this.salesChartType === 'bar' ? {
               y: {
                 beginAtZero: true,
-                ticks: { callback: v => '₹' + Number(v).toLocaleString() }
+                grid: { color: '#f1f5f9' },
+                ticks: { 
+                  font: { family: "'Inter', sans-serif" },
+                  callback: v => '₹' + Number(v).toLocaleString() 
+                }
               },
-              x: { grid: { display: false } }
-            }
+              x: { 
+                grid: { display: false },
+                ticks: { font: { family: "'Inter', sans-serif" } }
+              }
+            } : {}
           }
         });
 
