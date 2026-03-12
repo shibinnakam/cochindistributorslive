@@ -57,9 +57,8 @@ router.get("/calculate/:staffId", async (req, res) => {
     const sundays = countSundays(yearNum, monthNum);
     const workingDays = totalDaysInMonth - sundays;
 
-    // Daily and Hourly rates based on working days (assuming 10 hour standard day 8:30 to 18:30)
-    const dailyRate = workingDays > 0 ? baseSalary / workingDays : 0;
-    const hourlyRate = dailyRate / 10;
+    // We don't define dailyRate here since we'll use totalDaysInMonth
+    // 8:30 AM to 6:00 PM is 9.5 hours.
 
     // 3. Fetch attendance records for the month
     // Date format in DB is "YYYY-MM-DD"
@@ -69,35 +68,41 @@ router.get("/calculate/:staffId", async (req, res) => {
       date: regex
     });
 
-    // 4. Calculate actual present days and overtime
+    // 4. Calculate actual present time and overtime
     let presentDaysCount = 0;
-    let totalOvertimeHours = 0;
+    let totalPresentMinutes = 0;
+    let totalOvertimeMinutes = 0;
 
     // A simple set to track dates present
     const presentDates = new Set();
+    const expectedMinutesPerDay = 9.5 * 60; // 8:30 AM to 6:00 PM = 9.5 hours
+    const dailyRate = baseSalary / totalDaysInMonth; // Salary divided by total days in month
+    const hourlyRate = dailyRate / 9.5;
+    const minuteRate = hourlyRate / 60;
 
     attendances.forEach(att => {
       if (att.inTime && att.outTime) {
         presentDates.add(att.date);
         const ms = new Date(att.outTime) - new Date(att.inTime);
-        let hoursWorked = ms / (1000 * 60 * 60);
+        let minutesWorked = ms / (1000 * 60);
 
         // Cap reasonable hours if forgot to checkout until next day
-        if (hoursWorked > 24) hoursWorked = 24;
+        if (minutesWorked > 24 * 60) minutesWorked = 24 * 60;
 
-        if (hoursWorked > 10) {
-          totalOvertimeHours += (hoursWorked - 10);
+        totalPresentMinutes += minutesWorked;
+
+        if (minutesWorked > expectedMinutesPerDay) {
+          totalOvertimeMinutes += (minutesWorked - expectedMinutesPerDay);
         }
       }
     });
 
     presentDaysCount = presentDates.size;
 
-    // Deductions: days missing attendance that are NOT Sundays or approved leave (simplified to just unpaid absences)
-    // We will just base the calculation on present days versus expected working days
-    // If workingDays = 26, presentDays = 24. They missed 2 days.
-    // If they have approved leave for those 2 days, those should not be deducted if paid (or deducted if unpaid).
-    // For simplicity, absentDays = workingDays - presentDays. 
+    // Deductions logic
+    // We will base deductions heavily on the daily rate vs present days
+    // But since the user wants it to be based exactly on hours and minutes present:
+    // If they were completely absent on a working day (and no leave), deduct the full day
 
     // Check approved leaves for the month
     const startDate = new Date(yearNum, monthNum - 1, 1);
@@ -110,7 +115,6 @@ router.get("/calculate/:staffId", async (req, res) => {
     });
 
     // Here we assume leaves are PAID leaves (meaning they reduce absent days)
-    // Convert Leave date objects to YYYY-MM-DD
     const leaveDates = new Set(leaves.map(l => {
       const d = new Date(l.date);
       return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
@@ -130,10 +134,13 @@ router.get("/calculate/:staffId", async (req, res) => {
       }
     }
 
+    // Leave deductions are simply based on fully absent days without leave
     const leaveDeductions = absentDays * dailyRate;
-    const overtimePay = totalOvertimeHours * hourlyRate;
 
-    // final salary: base - deductions + overtime
+    // Total standard pay is based on total minutes worked (capped at standard limits) + paid leave days + sundays
+    // BUT the simplest approach requested: calculate base salary correctly.
+    // Base Calculation: baseSalary - leaveDeductions + Overtime
+    const overtimePay = totalOvertimeMinutes * minuteRate;
     let finalSalary = baseSalary - leaveDeductions + overtimePay;
 
     // Sanitize values
@@ -146,7 +153,7 @@ router.get("/calculate/:staffId", async (req, res) => {
       totalWorkingDays: workingDays,
       presentDays: presentDaysCount,
       leaveDeductions: parseFloat(leaveDeductions.toFixed(2)),
-      overtimeHours: parseFloat(totalOvertimeHours.toFixed(2)),
+      overtimeHours: parseFloat((totalOvertimeMinutes / 60).toFixed(2)),
       overtimePay: parseFloat(overtimePay.toFixed(2)),
       finalSalary: Math.round(finalSalary),
     };
