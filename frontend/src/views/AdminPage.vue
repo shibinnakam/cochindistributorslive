@@ -363,6 +363,7 @@
                   <button @click="downloadReport" class="btn-download" :disabled="reportLoading">
                     <span v-if="reportLoading">Generating...</span>
                     <span v-else>📥 Download Report</span>
+                  </button>
                 </div>
               </div>
               <div class="analytics-table-container">
@@ -694,7 +695,6 @@ import "@/assets/styles/AdminPage.css";
 import logo from "@/assets/logo.jpeg";
 import axios from "@/utils/axios";
 import socket from "@/socket";
-import Chart from "chart.js/auto";
 import AddProduct from "@/views/AddProduct.vue";
 import ProductList from "@/views/ProductList.vue";
 import ProductEdit from "@/views/ProductEdit.vue";
