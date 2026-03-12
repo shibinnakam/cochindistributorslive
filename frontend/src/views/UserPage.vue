@@ -111,6 +111,17 @@
               placeholder="Search in products"
               v-model="searchQuery"
             />
+            <button class="btn-visual-search" @click="$refs.visualSearchInput.click()" title="Search by Image">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            </button>
+            <input 
+              type="file" 
+              ref="visualSearchInput" 
+              style="display: none" 
+              accept="image/*" 
+              capture="environment"
+              @change="handleVisualSearch"
+            />
           </div>
           <select v-model="selectedCategory" class="filter-select">
             <option :value="null">All Category</option>
@@ -145,7 +156,14 @@
 
         <!-- Product Grid -->
         <div class="pos-product-grid">
-          <div v-if="loading" class="grid-loading">Loading...</div>
+          <div v-if="loading || visualSearchLoading" class="grid-loading">
+             <div class="loading-spinner"></div>
+             <span>{{ visualSearchLoading ? 'AI identifying products...' : 'Loading...' }}</span>
+          </div>
+          <div v-if="isAiSearch" class="ai-search-banner">
+            <span>Showing matched products from AI visual search</span>
+            <button @click="clearAiSearch" class="btn-clear-ai">Clear Search</button>
+          </div>
           <div
             v-for="product in filteredProducts"
             :key="product._id"
@@ -416,6 +434,8 @@ export default {
       selectedPaymentMethod: null,
       processingPayment: false,
       userProfile: null,
+      visualSearchLoading: false,
+      isAiSearch: false,
     };
   },
   computed: {
@@ -738,6 +758,38 @@ export default {
       this.showScratchCard = true;
       this.showScratchCardsList = false;
     },
+    async handleVisualSearch(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      this.visualSearchLoading = true;
+      const formData = new FormData();
+      formData.append("image", file);
+
+      try {
+        const res = await axios.post("/api/products/search-image", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        if (res.data.success) {
+          this.products = res.data.products;
+          this.isAiSearch = true;
+          this.searchQuery = ""; // Clear text search
+          this.selectedCategory = null; 
+        }
+      } catch (err) {
+        console.error("Visual Search Error:", err);
+        alert(err.response?.data?.message || "Visual search failed. Please try again.");
+      } finally {
+        this.visualSearchLoading = false;
+        // Reset file input
+        event.target.value = '';
+      }
+    },
+    async clearAiSearch() {
+      this.isAiSearch = false;
+      this.fetchProducts();
+    },
   },
 };
 </script>
@@ -1053,13 +1105,92 @@ export default {
 }
 
 .filter-input-group {
-  flex: 1;
   display: flex;
   align-items: center;
   background: white;
-  padding: 8px 16px;
-  border-radius: 10px;
-  border: 1px solid #eee;
+  border: 1px solid #e0e6ed;
+  border-radius: 12px;
+  padding: 0 16px;
+  flex: 1;
+  max-width: 400px;
+  transition: all 0.3s ease;
+}
+
+.filter-input-group:focus-within {
+  border-color: #ff9a44;
+  box-shadow: 0 0 0 4px rgba(255, 154, 68, 0.1);
+}
+
+.btn-visual-search {
+  background: none;
+  border: none;
+  padding: 8px;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-visual-search:hover {
+  color: #ff9a44;
+  background: #fff8f1;
+}
+
+.ai-search-banner {
+  grid-column: 1 / -1;
+  background: #fff8f1;
+  border: 1px dashed #ff9a44;
+  padding: 12px 20px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  color: #ff9a44;
+  font-weight: 600;
+}
+
+.btn-clear-ai {
+  background: #ff9a44;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-clear-ai:hover {
+  background: #ff8522;
+  transform: translateY(-1px);
+}
+
+.grid-loading {
+  grid-column: 1 / -1;
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: #64748b;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #ff9a44;
+  border-radius: 50%;
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .filter-input-group input {

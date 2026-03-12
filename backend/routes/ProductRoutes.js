@@ -4,8 +4,18 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const Jimp = require("jimp");
+const axios = require("axios");
 const Product = require("../models/Product");
 const Category = require("../models/Category");
+
+// Helper: robusly get AI service base URL
+function getAiBaseUrl() {
+  let url = process.env.PYTHON_AI_SERVICE_URL;
+  if (!url || url.includes("localhost")) {
+    url = "http://distribution-agency-ai:10000";
+  }
+  return url.replace(/\/analyze$/, "").replace(/\/$/, "");
+}
 
 module.exports = (io) => {
   const router = express.Router();
@@ -445,7 +455,7 @@ module.exports = (io) => {
     }
   });
 
-  // ✅ Search Products by Image
+  // ✅ Search Products by Image (Visual Search using Python AI)
   router.post("/search-image", upload.single('image'), async (req, res) => {
     try {
       if (!req.file) {
@@ -453,79 +463,59 @@ module.exports = (io) => {
       }
 
       const uploadedImagePath = req.file.path;
-      let uploadedImage;
-      try {
-        // Check if file is webp, if so, reject or handle differently (Jimp doesn't support webp by default)
-        if (req.file.mimetype === 'image/webp') {
-          if (fs.existsSync(uploadedImagePath)) fs.unlinkSync(uploadedImagePath);
-          return res.status(400).json({ message: "WebP images are not supported for search. Please use JPG, JPEG, or PNG." });
-        }
 
-        uploadedImage = await Jimp.read(uploadedImagePath);
-      } catch (error) {
-        console.error("Error reading uploaded image:", error);
-        if (fs.existsSync(uploadedImagePath)) fs.unlinkSync(uploadedImagePath);
-        return res.status(400).json({ message: "Invalid image file or unsupported format" });
-      }
+      // Read image and convert to base64 for Python AI
+      const imageBuffer = fs.readFileSync(uploadedImagePath);
+      const base64Image = imageBuffer.toString('base64');
+      const dataUri = `data:${req.file.mimetype};base64,${base64Image}`;
 
-      uploadedImage.resize({ w: 64, h: 64 });
-      uploadedImage.greyscale();
+      // Get all products to build the target list
+      const products = await Product.find({ isDeleted: false });
 
-      const products = await Product.find();
-      const results = [];
+      // We need to provide absolute URLs for the Python service if it's external,
+      // or at least reachable URLs. Since the backend serves uploads, we use the public URL.
+      // For now, let's assume the Python service can reach the backend's public URL.
+      const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
 
-      for (const product of products) {
-        const productImageUrl = product.image || product.imageFront;
-        if (!productImageUrl) continue;
+      const targets = products.map(p => {
+        const imgUrl = p.image || p.imageFront;
+        return {
+          id: p._id.toString(),
+          image_url: imgUrl.startsWith('http') ? imgUrl : `${baseUrl}${imgUrl}`
+        };
+      }).filter(t => t.image_url);
 
-        // Handle both absolute and relative paths correctly
-        let productImagePath;
-        if (path.isAbsolute(productImageUrl)) {
-          productImagePath = productImageUrl;
-        } else {
-          productImagePath = path.join(__dirname, "..", productImageUrl.replace(/^\//, ''));
-        }
+      // Call Python AI service
+      const aiUrl = `${getAiBaseUrl()}/visual-search`;
+      console.log(`Calling Python AI for visual search at: ${aiUrl}`);
 
-        if (fs.existsSync(productImagePath)) {
-          try {
-            const productImage = await Jimp.read(productImagePath);
-            productImage.resize({ w: 64, h: 64 });
-            productImage.greyscale();
+      const aiResponse = await axios.post(aiUrl, {
+        query_image: dataUri,
+        targets: targets
+      }, { timeout: 30000 }); // 30s timeout as image processing can be slow
 
-            const dist = Jimp.distance(uploadedImage, productImage);
-            const diffResult = Jimp.diff(uploadedImage, productImage);
+      if (aiResponse.data.success) {
+        const matches = aiResponse.data.matches; // List of {id, score}
 
-            const score = dist + diffResult.percent;
+        // Fetch the full product details for the matches
+        const matchedIds = matches.map(m => m.id);
+        const matchedProducts = await Product.find({ _id: { $in: matchedIds } })
+          .populate("category", "name");
 
-            // If score is very low, it's likely the same product
-            if (score < 0.5) {
-              results.push({ product, score });
-            }
-          } catch (e) {
-            console.error(`Error comparing image for product ${product._id}:`, e);
-          }
-        }
-      }
+        // Re-sort matchedProducts based on the order returned from AI
+        const finalProducts = matchedIds.map(id => matchedProducts.find(p => p._id.toString() === id))
+          .filter(p => p !== undefined);
 
-      results.sort((a, b) => a.score - b.score);
-
-      fs.unlinkSync(uploadedImagePath);
-
-      // Logic: If exact match found (score < 0.15), return only that. Otherwise return similar products.
-      const exactMatchThreshold = 0.15;
-      const exactMatches = results.filter(r => r.score < exactMatchThreshold);
-
-      let finalProducts;
-      if (exactMatches.length > 0) {
-        finalProducts = exactMatches.map(r => r.product);
+        res.status(200).json({ success: true, products: finalProducts, aiMessage: aiResponse.data.message });
       } else {
-        finalProducts = results.map(r => r.product);
+        throw new Error(aiResponse.data.error || "AI search failed");
       }
 
-      res.status(200).json({ success: true, products: finalProducts });
+      // Cleanup
+      if (fs.existsSync(uploadedImagePath)) fs.unlinkSync(uploadedImagePath);
 
     } catch (err) {
-      console.error("Search image error:", err);
+      console.error("Visual Search Error:", err);
       if (req.file && fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
       }

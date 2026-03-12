@@ -11,6 +11,9 @@ import os
 import time
 import requests
 from io import BytesIO
+import cv2
+from PIL import Image
+import base64
 
 # Import face_recognition only if available
 try:
@@ -263,6 +266,83 @@ def verify_face():
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({"status": "healthy"}), 200
+
+def get_image_from_data(data):
+    if data.startswith('data:image'):
+        data = data.split(',')[1]
+    img_data = base64.b64decode(data)
+    nparr = np.frombuffer(img_data, np.uint8)
+    return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+@app.route('/visual-search', methods=['POST'])
+def visual_search():
+    """
+    Visual Search Endpoint: Matches a query image against a list of product images.
+    Expects: { "query_image": "base64...", "targets": [ {"id": "...", "image_url": "..."}, ... ] }
+    """
+    try:
+        data = request.get_json()
+        if not data or 'query_image' not in data or 'targets' not in data:
+            return jsonify({"success": False, "error": "Missing query_image or targets"}), 400
+
+        # Load query image
+        query_img = get_image_from_data(data['query_image'])
+        if query_img is None:
+            return jsonify({"success": False, "error": "Invalid query image"}), 400
+
+        # Extract features from query image
+        orb = cv2.ORB_create(nfeatures=500)
+        kp_query, des_query = orb.detectAndCompute(query_img, None)
+        
+        if des_query is None:
+            return jsonify({"success": True, "matches": [], "message": "No features found in query image"})
+
+        bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        matches_results = []
+
+        for target in data['targets']:
+            try:
+                # Load target image from URL
+                target_url = target['image_url']
+                response = requests.get(target_url, timeout=5)
+                target_img = cv2.imdecode(np.frombuffer(response.content, np.uint8), cv2.IMREAD_COLOR)
+                
+                if target_img is None:
+                    continue
+
+                kp_target, des_target = orb.detectAndCompute(target_img, None)
+                if des_target is None:
+                    continue
+
+                # Match descriptors
+                matches = bf.match(des_query, des_target)
+                # Sort them in the order of their distance
+                matches = sorted(matches, key=lambda x: x.distance)
+                
+                # Use a combined score: count of good matches and average distance
+                good_matches = [m for m in matches if m.distance < 50]
+                score = len(good_matches)
+                
+                if score > 5: # Minimum threshold for matches
+                    matches_results.append({
+                        "id": target['id'],
+                        "score": score,
+                        "match_count": len(matches)
+                    })
+            except Exception as e:
+                print(f"Error processing target {target.get('id')}: {e}")
+                continue
+
+        # Sort results by score descending
+        matches_results = sorted(matches_results, key=lambda x: x['score'], reverse=True)
+
+        return jsonify({
+            "success": True,
+            "matches": matches_results[:10]  # Return top 10 matches
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(port=5001, debug=True)
