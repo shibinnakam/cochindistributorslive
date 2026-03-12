@@ -358,7 +358,7 @@ module.exports = (io) => {
   // Admin: Get Sales Analytics
   router.get("/admin/sales-analytics", authMiddleware, adminMiddleware, async (req, res) => {
     try {
-      const { date: targetDate } = req.query;
+      const { timeframe = "weekly", startDate, endDate } = req.query;
       const orders = await Order.find({ status: { $ne: "cancelled" } }).populate("items.product");
 
       let totalPurchases = 0;
@@ -373,18 +373,12 @@ module.exports = (io) => {
       let monthlyProfit = {};
       let yearlyProfit = {};
 
-      // Hourly data for a specific date (or today)
       let hourlyPurchases = {};
       let hourlyProfit = {};
 
-      // Use local date string for consistent grouping
-      const formatDateKey = (date) => {
-        return date.toLocaleDateString('sv-SE'); // YYYY-MM-DD
-      };
+      const formatDateKey = (date) => date.toLocaleDateString('sv-SE');
+      const targetDateStr = formatDateKey(new Date());
 
-      const targetDateStr = targetDate || formatDateKey(new Date());
-
-      // Initialize 24 hours
       for (let i = 0; i < 24; i++) {
         const hourKey = String(i).padStart(2, '0') + ":00";
         hourlyPurchases[hourKey] = 0;
@@ -407,7 +401,6 @@ module.exports = (io) => {
         totalPurchases += Number(order.totalAmount || 0);
         totalProfit += orderProfit;
 
-        // Hourly for target date
         if (dayKey === targetDateStr) {
           const hour = date.getHours();
           const hourKey = String(hour).padStart(2, '0') + ":00";
@@ -415,15 +408,12 @@ module.exports = (io) => {
           hourlyProfit[hourKey] += orderProfit;
         }
 
-        // Daily
         dailyPurchases[dayKey] = (dailyPurchases[dayKey] || 0) + Number(order.totalAmount || 0);
         dailyProfit[dayKey] = (dailyProfit[dayKey] || 0) + orderProfit;
 
-        // Monthly
         monthlyPurchases[monthKey] = (monthlyPurchases[monthKey] || 0) + Number(order.totalAmount || 0);
         monthlyProfit[monthKey] = (monthlyProfit[monthKey] || 0) + orderProfit;
 
-        // Yearly
         yearlyPurchases[yearKey] = (yearlyPurchases[yearKey] || 0) + Number(order.totalAmount || 0);
         yearlyProfit[yearKey] = (yearlyProfit[yearKey] || 0) + orderProfit;
       });
@@ -432,11 +422,7 @@ module.exports = (io) => {
         totalPurchases,
         totalProfit,
         totalOrders,
-        hourly: {
-          purchases: hourlyPurchases,
-          profit: hourlyProfit,
-          date: targetDateStr
-        },
+        hourly: { purchases: hourlyPurchases, profit: hourlyProfit, date: targetDateStr },
         daily: { purchases: dailyPurchases, profit: dailyProfit },
         monthly: { purchases: monthlyPurchases, profit: monthlyProfit },
         yearly: { purchases: yearlyPurchases, profit: yearlyProfit }
@@ -470,7 +456,6 @@ module.exports = (io) => {
         end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
       } else {
-        // Default to last 7 days for "daily" or others
         start.setDate(start.getDate() - 7);
       }
 
@@ -497,60 +482,43 @@ module.exports = (io) => {
             };
           }
           const itemRev = (Number(item.price) || 0) * (Number(item.quantity) || 0);
-          const itemCost =
-            (Number(item.costPrice) || 0) * (Number(item.quantity) || 0);
+          const itemCost = (Number(item.costPrice) || 0) * (Number(item.quantity) || 0);
           productMap[pid].unitsSold += Number(item.quantity) || 0;
           productMap[pid].revenue += itemRev;
           productMap[pid].cost += itemCost;
           productMap[pid].profit += itemRev - itemCost;
-
           totalRevenue += itemRev;
           totalProfit += itemRev - itemCost;
         });
       });
 
-      const reportItems = Object.values(productMap).sort(
-        (a, b) => b.revenue - a.revenue
-      );
+      const reportItems = Object.values(productMap).sort((a, b) => b.revenue - a.revenue);
 
       const doc = new PDFDocument({ margin: 50 });
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename=sales_report_${timeframe}.pdf`
-      );
+      res.setHeader("Content-Disposition", `attachment; filename=sales_report_${timeframe}.pdf`);
       doc.pipe(res);
 
-      // Header
       doc.fillColor("#444444").fontSize(20).text("Cochin Distributors", 50, 50);
-      doc
-        .fontSize(10)
+      doc.fontSize(10)
         .text("Sales & Profit Analysis Report", 200, 50, { align: "right" })
-        .text(`${start.toLocaleDateString()} - ${end.toLocaleDateString()}`, 200, 65, {
-          align: "right",
-        })
+        .text(`${start.toLocaleDateString()} - ${end.toLocaleDateString()}`, 200, 65, { align: "right" })
         .moveDown();
 
       doc.moveTo(50, 85).lineTo(550, 85).strokeColor("#eeeeee").stroke();
-
-      // Summary
       doc.moveDown(2);
-      doc.fillColor("#333333").fontSize(14).text("Business Summary", { underline: false });
+      doc.fillColor("#333333").fontSize(14).text("Business Summary");
       doc.moveDown(0.5);
 
       const summaryY = doc.y;
       doc.fontSize(12).text(`Total Revenue:`, 50, summaryY);
       doc.fillColor("#7d33ff").text(`₹${totalRevenue.toLocaleString()}`, 150, summaryY);
-
       doc.fillColor("#333333").text(`Total Profit:`, 50, summaryY + 20);
       doc.fillColor("#10d9ac").text(`₹${totalProfit.toLocaleString()}`, 150, summaryY + 20);
-
       doc.fillColor("#333333").text(`Total Orders:`, 50, summaryY + 40);
       doc.text(`${orders.length}`, 150, summaryY + 40);
 
       doc.moveDown(3);
-
-      // Table Header
       doc.fillColor("#333333").fontSize(12).text("Product-wise Sales Performance", 50, doc.y);
       doc.moveDown();
 
@@ -566,191 +534,128 @@ module.exports = (io) => {
 
       let rowY = tableTop + 25;
       reportItems.forEach((item) => {
-        if (rowY > 700) {
-          doc.addPage();
-          rowY = 50;
-        }
-
-        doc.fillColor("#444444");
-        doc.text(item.name.substring(0, 40), 50, rowY);
+        if (rowY > 700) { doc.addPage(); rowY = 50; }
+        doc.fillColor("#444444").text(item.name.substring(0, 40), 50, rowY);
         doc.text(item.unitsSold.toString(), 280, rowY, { width: 50, align: "right" });
         doc.text(`₹${item.revenue.toLocaleString()}`, 350, rowY, { width: 80, align: "right" });
         doc.fillColor(item.profit >= 0 ? "#10d9ac" : "#ff4d4f");
         doc.text(`₹${item.profit.toLocaleString()}`, 450, rowY, { width: 80, align: "right" });
-
         rowY += 25;
         doc.moveTo(50, rowY - 5).lineTo(530, rowY - 5).strokeColor("#f5f5f5").stroke();
       });
 
-      // Footer
       const pages = doc.bufferedPageRange();
       for (let i = 0; i < pages.count; i++) {
         doc.switchToPage(i);
         doc.fillColor("#999999").fontSize(8).text(
           `Generated on ${new Date().toLocaleString()} - Page ${i + 1} of ${pages.count}`,
-          50,
-          750,
-          { align: "center", width: 500 }
+          50, 750, { align: "center", width: 500 }
         );
       }
-
       doc.end();
+    } catch (error) {
+      console.error("Generate report error:", error);
+      res.status(500).json({ msg: "Server error" });
+    }
+  });
 
-      // Admin: Get Top Selling Products
-      router.get("/admin/top-products", authMiddleware, adminMiddleware, async (req, res) => {
-        try {
-          const orders = await Order.find({ status: { $ne: "cancelled" } }).populate("items.product");
-
-          const productMap = {};
-
-          orders.forEach(order => {
-            order.items.forEach(item => {
-              if (!item.product) return;
-              const pid = item.product._id.toString();
-              if (!productMap[pid]) {
-                productMap[pid] = {
-                  _id: pid,
-                  name: item.product.name || "Unknown",
-                  image: item.product.imageFront || item.product.image || null,
-                  unitsSold: 0,
-                  revenue: 0
-                };
-              }
-              productMap[pid].unitsSold += Number(item.quantity) || 0;
-              productMap[pid].revenue += (Number(item.price) || 0) * (Number(item.quantity) || 0);
-            });
-          });
-
-          const topProducts = Object.values(productMap)
-            .sort((a, b) => b.unitsSold - a.unitsSold)
-            .slice(0, 5);
-
-          res.json({ topProducts });
-        } catch (error) {
-          console.error("Top products error:", error);
-          res.status(500).json({ msg: "Server error" });
-        }
-      });
-
-      // Rate Order Item
-      router.patch("/rate-item", authMiddleware, async (req, res) => {
-        const { orderId, itemId, rating, suggestion } = req.body;
-        const Review = require("../models/Review");
-
-        try {
-          const order = await Order.findOne({ _id: orderId, user: req.user._id });
-          if (!order) return res.status(404).json({ msg: "Order not found" });
-
-          if (order.status !== "delivered") {
-            return res.status(400).json({ msg: "Can only rate delivered orders" });
+  // Admin: Get Top Selling Products
+  router.get("/admin/top-products", authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+      const orders = await Order.find({ status: { $ne: "cancelled" } }).populate("items.product");
+      const productMap = {};
+      orders.forEach(order => {
+        order.items.forEach(item => {
+          if (!item.product) return;
+          const pid = item.product._id.toString();
+          if (!productMap[pid]) {
+            productMap[pid] = {
+              _id: pid,
+              name: item.product.name || "Unknown",
+              image: item.product.imageFront || item.product.image || null,
+              unitsSold: 0,
+              revenue: 0
+            };
           }
-
-          const item = order.items.id(itemId);
-          if (!item) return res.status(404).json({ msg: "Item not found in order" });
-
-          // Check if already rated in Order model
-          if (item.rating) {
-            return res.status(400).json({ msg: "Item already rated" });
-          }
-
-          // Update Order model
-          item.rating = rating;
-          item.suggestion = suggestion || "";
-          await order.save();
-
-          // Create a Review document - Automatically Approved
-          const review = new Review({
-            user: req.user._id,
-            product: item.product,
-            rating: rating,
-            comment: suggestion || "No comment provided",
-            isApproved: true // Automatically approved as requested
-          });
-          await review.save();
-
-          // Recalculate product rating stats
-          const reviews = await Review.find({
-            product: item.product,
-            isApproved: true,
-            isDeleted: false,
-          });
-
-          const ratingCount = reviews.length;
-          const averageRating =
-            ratingCount > 0
-              ? reviews.reduce((sum, r) => sum + r.rating, 0) / ratingCount
-              : 0;
-
-          await Product.findByIdAndUpdate(item.product, {
-            averageRating: parseFloat(averageRating.toFixed(1)),
-            ratingCount,
-          });
-
-          // Notify admins about new review
-          await notifyAdmins(
-            `New product review from ${req.user.name} for item in order #${orderId}`,
-            "new_review",
-            orderId
-          );
-
-          res.json({ msg: "Rating submitted successfully" });
-        } catch (error) {
-          console.error("Rate item error:", error);
-          res.status(500).json({ msg: "Server error" });
-        }
+          productMap[pid].unitsSold += Number(item.quantity) || 0;
+          productMap[pid].revenue += (Number(item.price) || 0) * (Number(item.quantity) || 0);
+        });
       });
+      const topProducts = Object.values(productMap).sort((a, b) => b.unitsSold - a.unitsSold).slice(0, 5);
+      res.json({ topProducts });
+    } catch (error) {
+      console.error("Top products error:", error);
+      res.status(500).json({ msg: "Server error" });
+    }
+  });
 
-      // Scratch Card Reveal and Credit Wallet
-      router.post("/scratch-card", authMiddleware, async (req, res) => {
-        const { orderId } = req.body;
+  // Rate Order Item
+  router.patch("/rate-item", authMiddleware, async (req, res) => {
+    const { orderId, itemId, rating, suggestion } = req.body;
+    const Review = require("../models/Review");
+    try {
+      const order = await Order.findOne({ _id: orderId, user: req.user._id });
+      if (!order) return res.status(404).json({ msg: "Order not found" });
+      if (order.status !== "delivered") return res.status(400).json({ msg: "Can only rate delivered orders" });
+      const item = order.items.id(itemId);
+      if (!item) return res.status(404).json({ msg: "Item not found in order" });
+      if (item.rating) return res.status(400).json({ msg: "Item already rated" });
 
-        try {
-          const order = await Order.findOne({ _id: orderId, user: req.user._id });
-          if (!order) return res.status(404).json({ msg: "Order not found" });
+      item.rating = rating;
+      item.suggestion = suggestion || "";
+      await order.save();
 
-          if (order.scratchCardOffer === null || order.scratchCardOffer === undefined) {
-            return res.status(400).json({ msg: "No scratch card offer for this order" });
-          }
-
-          if (order.scratchCardRevealed) {
-            return res.status(400).json({ msg: "Scratch card already revealed" });
-          }
-
-          // Mark as revealed and credit wallet
-          order.scratchCardRevealed = true;
-          await order.save();
-
-          const user = await User.findById(req.user._id);
-          user.walletBalance += order.scratchCardOffer;
-          await user.save();
-
-          // Emit real-time update to the user
-          io.to(req.user._id.toString()).emit('walletUpdated', { balance: user.walletBalance });
-
-          res.json({
-            msg: "Scratch card revealed!",
-            amount: order.scratchCardOffer,
-            newBalance: user.walletBalance
-          });
-        } catch (error) {
-          console.error("Scratch card error:", error);
-          res.status(500).json({ msg: "Server error" });
-        }
+      const review = new Review({
+        user: req.user._id,
+        product: item.product,
+        rating: rating,
+        comment: suggestion || "No comment provided",
+        isApproved: true
       });
+      await review.save();
 
-      // Get User's Unrevealed Scratch Cards
-      router.get("/my-scratchcards", authMiddleware, async (req, res) => {
-        try {
-          const orders = await Order.find({
-            user: req.user._id,
-            scratchCardOffer: { $ne: null }
-          }).sort({ createdAt: -1 });
-          res.json(orders);
-        } catch (error) {
-          console.error("Get scratchcards error:", error);
-          res.status(500).json({ msg: "Server error" });
-        }
-      });
+      const reviews = await Review.find({ product: item.product, isApproved: true, isDeleted: false });
+      const ratingCount = reviews.length;
+      const averageRating = ratingCount > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / ratingCount : 0;
+      await Product.findByIdAndUpdate(item.product, { averageRating: parseFloat(averageRating.toFixed(1)), ratingCount });
 
-      return router;
-    };
+      await notifyAdmins(`New product review from ${req.user.name}`, "new_review", orderId);
+      res.json({ msg: "Rating submitted successfully" });
+    } catch (error) {
+      console.error("Rate item error:", error);
+      res.status(500).json({ msg: "Server error" });
+    }
+  });
+
+  // Scratch Card Reveal
+  router.post("/scratch-card", authMiddleware, async (req, res) => {
+    const { orderId } = req.body;
+    try {
+      const order = await Order.findOne({ _id: orderId, user: req.user._id });
+      if (!order || order.scratchCardOffer == null) return res.status(404).json({ msg: "No offer found" });
+      if (order.scratchCardRevealed) return res.status(400).json({ msg: "Already revealed" });
+
+      order.scratchCardRevealed = true;
+      await order.save();
+      const user = await User.findById(req.user._id);
+      user.walletBalance += order.scratchCardOffer;
+      await user.save();
+      io.to(req.user._id.toString()).emit('walletUpdated', { balance: user.walletBalance });
+      res.json({ msg: "Revealed!", amount: order.scratchCardOffer, newBalance: user.walletBalance });
+    } catch (error) {
+      res.status(500).json({ msg: "Server error" });
+    }
+  });
+
+  // Get Scratch Cards
+  router.get("/my-scratchcards", authMiddleware, async (req, res) => {
+    try {
+      const orders = await Order.find({ user: req.user._id, scratchCardOffer: { $ne: null } }).sort({ createdAt: -1 });
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ msg: "Server error" });
+    }
+  });
+
+  return router;
+};
