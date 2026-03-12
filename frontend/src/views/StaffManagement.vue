@@ -497,6 +497,7 @@ export default {
       },
       showSalaryModal: false,
       salaryMonth: new Date().toISOString().slice(0, 7),
+      salaryData: null,
       isSalaryPaid: false,
       salaryLoading: false,
       razorpayLoading: false,
@@ -783,9 +784,9 @@ export default {
               await this.verifySalaryPayment(response);
             },
             prefill: {
-              name: this.currentStaff.name,
-              email: this.currentStaff.email,
-              contact: this.currentStaff.phone || ""
+              name: this.currentStaff.name || "Staff",
+              email: this.currentStaff.email || "",
+              contact: this.currentStaff.phone ? (this.currentStaff.phone.length === 10 ? '+91' + this.currentStaff.phone : this.currentStaff.phone) : ""
             },
             theme: {
               color: "#10b981",
