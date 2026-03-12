@@ -4,6 +4,17 @@ const Staff = require("../models/Staff");
 const Attendance = require("../models/Attendance");
 const SalaryPayment = require("../models/SalaryPayment");
 const Leave = require("../models/Leave");
+const crypto = require("crypto");
+
+// Initialize Razorpay
+let razorpay = null;
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+  const Razorpay = require("razorpay");
+  razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+}
 
 // Helper to get number of days in a month
 function getDaysInMonth(year, month) {
@@ -76,7 +87,7 @@ router.get("/calculate/:staffId", async (req, res) => {
     // A simple set to track dates present
     const presentDates = new Set();
     const expectedMinutesPerDay = 9.5 * 60; // 8:30 AM to 6:00 PM = 9.5 hours
-    const dailyRate = baseSalary / totalDaysInMonth; // Salary divided by total days in month
+    const dailyRate = workingDays > 0 ? baseSalary / workingDays : 0; // Salary divided by working days in month
     const hourlyRate = dailyRate / 9.5;
     const minuteRate = hourlyRate / 60;
 
@@ -165,9 +176,59 @@ router.get("/calculate/:staffId", async (req, res) => {
   }
 });
 
-// POST /api/salary/pay
-router.post("/pay", async (req, res) => {
+// POST /api/salary/create-order
+router.post("/create-order", async (req, res) => {
+  const { amount, staffId, monthAndYear } = req.body;
+
   try {
+    if (!razorpay) {
+      return res.status(503).json({ success: false, message: "Payment service not configured" });
+    }
+
+    // Amount is already calculated in frontend, but we should use it in paisa
+    const options = {
+      amount: Math.round(amount * 100), // in paisa
+      currency: "INR",
+      receipt: `sal_${staffId}_${monthAndYear}_${Date.now().toString().slice(-6)}`,
+    };
+
+    const order = await razorpay.orders.create(options);
+
+    res.json({
+      success: true,
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      key: process.env.RAZORPAY_KEY_ID
+    });
+  } catch (err) {
+    console.error("Salary order error:", err);
+    res.status(500).json({ success: false, message: "Error creating payment order" });
+  }
+});
+
+// POST /api/salary/verify-payment
+router.post("/verify-payment", async (req, res) => {
+  const {
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
+    salaryData
+  } = req.body;
+
+  try {
+    // Verify signature
+    const sign = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSign = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(sign.toString())
+      .digest("hex");
+
+    if (razorpay_signature !== expectedSign) {
+      return res.status(400).json({ success: false, message: "Invalid payment signature" });
+    }
+
+    // Now mark as paid in DB (logic from former /pay route)
     const {
       staffId,
       monthAndYear,
@@ -178,9 +239,8 @@ router.post("/pay", async (req, res) => {
       overtimeHours,
       overtimePay,
       finalSalary
-    } = req.body;
+    } = salaryData;
 
-    // Check if already paid
     const existing = await SalaryPayment.findOne({ staffId, monthAndYear });
     if (existing) {
       return res.status(400).json({ success: false, message: "Salary already paid for this month." });
@@ -196,15 +256,17 @@ router.post("/pay", async (req, res) => {
       overtimeHours,
       overtimePay,
       finalSalary,
-      status: "Paid"
+      status: "Paid",
+      razorpayPaymentId: razorpay_payment_id,
+      razorpayOrderId: razorpay_order_id
     });
 
     await payment.save();
 
-    res.json({ success: true, message: "Salary marked as paid successfully.", payment });
+    res.json({ success: true, message: "Salary paid and recorded successfully.", payment });
   } catch (err) {
-    console.error("Salary payment error:", err);
-    res.status(500).json({ success: false, error: err.message });
+    console.error("Salary verification error:", err);
+    res.status(500).json({ success: false, message: "Server error verifying payment" });
   }
 });
 

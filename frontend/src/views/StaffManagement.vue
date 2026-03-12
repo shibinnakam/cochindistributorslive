@@ -453,10 +453,11 @@
 
              <button 
                 v-if="!isSalaryPaid" 
-                @click="markAsPaid" 
+                @click="payNow" 
                 class="btn-submit pay-btn"
+                :disabled="salaryLoading || razorpayLoading"
              >
-               Mark as Paid
+               {{ razorpayLoading ? 'Processing...' : 'Pay Now' }}
              </button>
           </div>
         </div>
@@ -496,9 +497,9 @@ export default {
       },
       showSalaryModal: false,
       salaryMonth: new Date().toISOString().slice(0, 7),
-      salaryData: null,
       isSalaryPaid: false,
       salaryLoading: false,
+      razorpayLoading: false,
       currentStaff: null,
     };
   },
@@ -760,17 +761,66 @@ export default {
         this.salaryLoading = false;
       }
     },
-    async markAsPaid() {
-      if (!this.salaryData) return;
+    async payNow() {
+      if (!this.salaryData || !this.currentStaff) return;
+      this.razorpayLoading = true;
       try {
-        const res = await axios.post("/api/salary/pay", this.salaryData);
+        const res = await axios.post("/api/salary/create-order", {
+          amount: this.salaryData.finalSalary,
+          staffId: this.currentStaff._id,
+          monthAndYear: this.salaryData.monthAndYear
+        });
+
         if (res.data.success) {
-          this.showToast("Salary marked as paid!");
+          const options = {
+            key: res.data.key,
+            amount: res.data.amount,
+            currency: res.data.currency,
+            order_id: res.data.orderId,
+            name: "Cochin Distributors",
+            description: `Salary for ${this.salaryData.monthAndYear}`,
+            handler: async (response) => {
+              await this.verifySalaryPayment(response);
+            },
+            prefill: {
+              name: this.currentStaff.name,
+              email: this.currentStaff.email,
+              contact: this.currentStaff.phone || ""
+            },
+            theme: {
+              color: "#10b981",
+            },
+          };
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        }
+      } catch (err) {
+        this.showToast(err.response?.data?.message || "Error initiating payment", true);
+      } finally {
+        this.razorpayLoading = false;
+      }
+    },
+    async verifySalaryPayment(response) {
+      try {
+        const res = await axios.post("/api/salary/verify-payment", {
+          ...response,
+          salaryData: this.salaryData
+        });
+        if (res.data.success) {
+          this.showToast("Salary paid successfully!");
           this.isSalaryPaid = true;
           this.salaryData.paidAt = new Date();
         }
       } catch (err) {
-        this.showToast(err.response?.data?.message || "Error paying salary", true);
+        this.showToast("Payment verification failed", true);
+      }
+    },
+    loadRazorpay() {
+      if (!window.Razorpay) {
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        document.body.appendChild(script);
       }
     },
 
@@ -929,6 +979,7 @@ export default {
   },
   mounted() {
     this.fetchStaff();
+    this.loadRazorpay();
   },
 };
 </script>

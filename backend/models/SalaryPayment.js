@@ -13,6 +13,8 @@ const salaryPaymentSchema = new mongoose.Schema(
     finalSalary: { type: Number, required: true },
     status: { type: String, enum: ["Pending", "Paid"], default: "Paid" },
     paidAt: { type: Date, default: Date.now },
+    razorpayPaymentId: { type: String },
+    razorpayOrderId: { type: String },
   },
   { timestamps: true }
 );
