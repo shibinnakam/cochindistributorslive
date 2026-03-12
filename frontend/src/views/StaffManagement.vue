@@ -264,6 +264,13 @@
                   </button>
                   <button
                     v-if="s.status === 'active'"
+                    @click="openSalaryModal(s)"
+                    class="menu-item salary"
+                  >
+                    💰 Pay Salary
+                  </button>
+                  <button
+                    v-if="s.status === 'active'"
                     @click="setStatus(s._id, 'deactivated')"
                     class="menu-item deactivate"
                   >
@@ -392,6 +399,69 @@
         </div>
       </div>
     </div>
+
+    <!-- Salary Modal -->
+    <div v-if="showSalaryModal" class="modal-overlay" @click="closeSalaryModal">
+      <div class="modal-content salary-modal" @click.stop>
+        <div class="modal-header">
+          <h2>Salary Slip - {{ currentStaff?.name || 'Staff' }}</h2>
+          <button class="modal-close" @click="closeSalaryModal">✕</button>
+        </div>
+        <div class="salary-modal-body">
+          <div class="form-group row-group">
+            <label>Select Month</label>
+            <input 
+              type="month" 
+              v-model="salaryMonth" 
+              @change="calculateSalary"
+              class="month-picker"
+            />
+          </div>
+
+          <div v-if="salaryLoading" class="loading-state">
+            Calculating salary...
+          </div>
+          <div v-else-if="salaryData" class="salary-details">
+             <div v-if="isSalaryPaid" class="paid-badge">✓ Paid on {{ new Date(salaryData.paidAt || Date.now()).toLocaleDateString() }}</div>
+             
+             <div class="salary-grid">
+               <div class="salary-row">
+                 <span>Base Salary</span>
+                 <strong>₹{{ salaryData.baseSalary }}</strong>
+               </div>
+               <div class="salary-row">
+                 <span>Total Working Days</span>
+                 <strong>{{ salaryData.totalWorkingDays }} days</strong>
+               </div>
+               <div class="salary-row">
+                 <span>Days Present</span>
+                 <strong>{{ salaryData.presentDays }} days</strong>
+               </div>
+               <div class="salary-row text-red">
+                 <span>Leave Deductions</span>
+                 <strong>- ₹{{ salaryData.leaveDeductions }}</strong>
+               </div>
+               <div class="salary-row text-green">
+                 <span>Overtime ({{ salaryData.overtimeHours }} hrs)</span>
+                 <strong>+ ₹{{ salaryData.overtimePay }}</strong>
+               </div>
+               <div class="salary-row total-row">
+                 <span>Net Salary</span>
+                 <strong>₹{{ salaryData.finalSalary }}</strong>
+               </div>
+             </div>
+
+             <button 
+                v-if="!isSalaryPaid" 
+                @click="markAsPaid" 
+                class="btn-submit pay-btn"
+             >
+               Mark as Paid
+             </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -424,6 +494,12 @@ export default {
         salary: "",
         joiningDate: new Date().toISOString().split("T")[0],
       },
+      showSalaryModal: false,
+      salaryMonth: new Date().toISOString().slice(0, 7),
+      salaryData: null,
+      isSalaryPaid: false,
+      salaryLoading: false,
+      currentStaff: null,
     };
   },
   computed: {
@@ -654,6 +730,51 @@ export default {
           err.response?.data?.message || "Error assigning RFID UID";
       }
     },
+
+    // --- Salary ---
+    openSalaryModal(staff) {
+      this.currentStaff = staff;
+      this.salaryMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+      this.salaryData = null;
+      this.showSalaryModal = true;
+      this.activeMenu = null;
+      this.calculateSalary();
+    },
+    closeSalaryModal() {
+      this.showSalaryModal = false;
+      this.currentStaff = null;
+      this.salaryData = null;
+    },
+    async calculateSalary() {
+      if (!this.currentStaff || !this.salaryMonth) return;
+      this.salaryLoading = true;
+      try {
+        const res = await axios.get(`/api/salary/calculate/${this.currentStaff._id}?month=${this.salaryMonth}`);
+        if (res.data.success) {
+          this.isSalaryPaid = res.data.isPaid;
+          this.salaryData = res.data.data;
+        }
+      } catch (err) {
+        this.showToast(err.response?.data?.message || "Error calculating salary", true);
+      } finally {
+        this.salaryLoading = false;
+      }
+    },
+    async markAsPaid() {
+      if (!this.salaryData) return;
+      try {
+        const res = await axios.post("/api/salary/pay", this.salaryData);
+        if (res.data.success) {
+          this.showToast("Salary marked as paid!");
+          this.isSalaryPaid = true;
+          this.salaryData.paidAt = new Date();
+        }
+      } catch (err) {
+        this.showToast(err.response?.data?.message || "Error paying salary", true);
+      }
+    },
+
+
 
     showToast(message, isError = false) {
       this.toastMessage = message;
@@ -1730,5 +1851,119 @@ export default {
 .menu-item.rfid:hover {
   background: #eff6ff;
   color: #1d4ed8;
+}
+/* ── Salary Modal Styles ── */
+.salary-modal {
+  max-width: 550px;
+}
+
+.salary-modal-body {
+  padding: 10px 4px;
+}
+
+.month-picker {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9px;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 40px 0;
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.paid-badge {
+  background: #dcfce7;
+  color: #166534;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 20px;
+  border: 1px solid #bbf7d0;
+}
+
+.salary-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 24px;
+}
+
+.salary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #475569;
+}
+
+.salary-row strong {
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.salary-row.total-row {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1.5px dashed #cbd5e1;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.salary-row.total-row strong {
+  font-size: 20px;
+  color: #2563eb;
+}
+
+.text-red {
+  color: #ef4444;
+}
+
+.text-red strong {
+  color: #ef4444;
+}
+
+.text-green {
+  color: #10b981;
+}
+
+.text-green strong {
+  color: #10b981;
+}
+
+.pay-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.pay-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.menu-item.salary {
+  color: #059669;
+}
+
+.menu-item.salary:hover {
+  background: #ecfdf5;
+  color: #059669;
 }
 </style>
