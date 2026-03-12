@@ -50,7 +50,7 @@
             href="#"
             class="nav-item"
             :class="{ active: selectedMenu === 'listProducts' }"
-            @click.prevent="openListProductsModal"
+            @click.prevent="selectMenu('listProducts')"
           >
             <span class="icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
@@ -598,27 +598,6 @@
       </div>
     </div>
 
-    <div
-      v-if="showListProductsModal"
-      class="modal-backdrop"
-      @click="showListProductsModal = false"
-    >
-      <div class="modal-panel large" @click.stop>
-        <div class="modal-header">
-          <h3>Product Catalog</h3>
-          <button class="close-btn" @click="showListProductsModal = false">
-            ×
-          </button>
-        </div>
-        <div class="modal-body">
-          <ProductList
-            :is-modal="true"
-            @close="closeListProductsModal"
-            @edit="openEditProductModal"
-          />
-        </div>
-      </div>
-    </div>
 
     <div
       v-if="showEditProductModal"
