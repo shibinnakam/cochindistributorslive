@@ -344,25 +344,8 @@
           <div class="charts-grid mt-4">
             <div class="section-card">
               <div class="section-header">
-                <h3>📊 Sales & Profit Analytics</h3>
+                <h3>📊 Sales & Profit Breakdown</h3>
                 <div class="analytics-controls">
-                  <div class="chart-type-toggle">
-                    <button 
-                      @click="salesChartType = 'bar'; initCharts()" 
-                      :class="['toggle-btn', { active: salesChartType === 'bar' }]"
-                      title="Bar Chart"
-                    >📊</button>
-                    <button 
-                      @click="salesChartType = 'doughnut'; initCharts()" 
-                      :class="['toggle-btn', { active: salesChartType === 'doughnut' }]"
-                      title="Doughnut Chart"
-                    >⭕</button>
-                    <button 
-                      @click="salesChartType = 'table'" 
-                      :class="['toggle-btn', { active: salesChartType === 'table' }]"
-                      title="Table View"
-                    >📋</button>
-                  </div>
                   <div class="time-filter">
                     <select v-model="chartTimeframe" @change="handleTimeframeChange" class="chart-select">
                       <option value="today">Today</option>
@@ -380,13 +363,9 @@
                   <button @click="downloadReport" class="btn-download" :disabled="reportLoading">
                     <span v-if="reportLoading">Generating...</span>
                     <span v-else>📥 Download Report</span>
-                  </button>
                 </div>
               </div>
-              <div v-if="salesChartType !== 'table'" style="height: 350px">
-                <canvas ref="salesChart"></canvas>
-              </div>
-              <div v-else class="analytics-table-container">
+              <div class="analytics-table-container">
                 <table class="data-table">
                   <thead>
                     <tr>
@@ -774,7 +753,7 @@ export default {
       totalOrders: 0,
       salesTimeframe: "all",
       analyticsData: null,
-      chartTimeframe: "weekly",
+      chartTimeframe: "today",
       displayedPurchases: 0,
       displayedProfit: 0,
       reviewsLoading: false,
@@ -793,10 +772,8 @@ export default {
       expiredCount: 0,
       showExpiryDetails: false,
 
-      // Charts
-      salesChart: null,
-      trafficChart: null,
-      salesChartType: 'bar',
+      // Analytics
+      salesChartType: 'table',
       customStartDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       customEndDate: new Date().toISOString().split('T')[0],
 
@@ -861,10 +838,6 @@ export default {
     if (this.messageInterval) clearInterval(this.messageInterval);
     if (this.topProductsInterval) clearInterval(this.topProductsInterval);
 
-    // Destroy charts
-    if (this.salesChart) this.salesChart.destroy();
-    if (this.trafficChart) this.trafficChart.destroy();
-
     // Remove socket listeners
     socket.off("productAdded");
     socket.off("productUpdated");
@@ -880,15 +853,11 @@ export default {
         this.fetchReviews();
       }
       if (newVal === "dashboard") {
-        this.$nextTick(() => {
-          this.initCharts();
-        });
+        this.fetchDashboardStats();
       }
     },
     totalPurchases() {
-      if (this.selectedMenu === "dashboard") {
-        this.initCharts();
-      }
+      // data updated, table re-renders reactively
     },
     chartTimeframe(newVal) {
       if (newVal === 'today') {
@@ -945,191 +914,9 @@ export default {
         this.reportLoading = false;
       }
     },
-    initCharts() {
-      this.$nextTick(() => {
-        if (!this.$refs.salesChart || !this.$refs.trafficChart) {
-          console.warn("Chart refs not ready");
-          return;
-        }
-
-        const salesCtx = this.$refs.salesChart.getContext("2d");
-        const trafficCtx = this.$refs.trafficChart.getContext("2d");
-
-        if (this.salesChart) { this.salesChart.destroy(); this.salesChart = null; }
-        if (this.trafficChart) { this.trafficChart.destroy(); this.trafficChart = null; }
-
-        let labels = [];
-        let salesData = [];
-        let profitData = [];
-
-        const ad = this.analyticsData;
-        console.log("analyticsData:", JSON.stringify(ad));
-        console.log("chartTimeframe:", this.chartTimeframe);
-
-        if (ad) {
-          if (this.chartTimeframe === "today") {
-            const hourly = ad.hourly || { purchases: {}, profit: {} };
-            labels = Object.keys(hourly.purchases || {}).sort();
-            salesData = labels.map(k => parseFloat(hourly.purchases[k]) || 0);
-            profitData = labels.map(k => parseFloat(hourly.profit[k]) || 0);
-
-          } else if (this.chartTimeframe === "weekly" || (this.chartTimeframe === "custom" && labels.length === 0)) {
-            const daily = ad.daily || { purchases: {}, profit: {} };
-            // Generate last 7 days or custom range
-            const start = this.chartTimeframe === 'weekly' ? new Date(Date.now() - 6 * 24 * 60 * 60 * 1000) : new Date(this.customStartDate);
-            const end = this.chartTimeframe === 'weekly' ? new Date() : new Date(this.customEndDate);
-            
-            let current = new Date(start);
-            while (current <= end) {
-              const key = current.toLocaleDateString('sv-SE'); // YYYY-MM-DD
-              const val = parseFloat(daily.purchases[key] || 0);
-              const profit = parseFloat(daily.profit[key] || 0);
-              labels.push(`${String(current.getDate()).padStart(2,'0')}/${String(current.getMonth()+1).padStart(2,'0')}`);
-              salesData.push(val);
-              profitData.push(profit);
-              current.setDate(current.getDate() + 1);
-              if (labels.length > 31) break; // Limit daily view
-            }
-
-          } else if (this.chartTimeframe === "monthly") {
-            const daily = ad.daily || { purchases: {}, profit: {} };
-            // Show all days of this month
-            const now = new Date();
-            const start = new Date(now.getFullYear(), now.getMonth(), 1);
-            let current = new Date(start);
-            while (current.getMonth() === now.getMonth()) {
-              const key = current.toLocaleDateString('sv-SE');
-              labels.push(current.getDate().toString());
-              salesData.push(parseFloat(daily.purchases[key] || 0));
-              profitData.push(parseFloat(daily.profit[key] || 0));
-              current.setDate(current.getDate() + 1);
-            }
-
-          } else if (this.chartTimeframe === "yearly") {
-            const monthly = ad.monthly || { purchases: {}, profit: {} };
-            const year = new Date().getFullYear();
-            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            for (let m = 0; m < 12; m++) {
-              const key = `${year}-${String(m + 1).padStart(2, '0')}`;
-              labels.push(monthNames[m]);
-              salesData.push(parseFloat(monthly.purchases[key] || 0));
-              profitData.push(parseFloat(monthly.profit[key] || 0));
-            }
-          }
-        }
-
-        console.log("labels:", labels);
-        console.log("salesData:", salesData);
-        console.log("profitData:", profitData);
-
-        this.salesChart = new Chart(salesCtx, {
-          type: this.salesChartType,
-          data: {
-            labels,
-            datasets: [
-              {
-                label: "Sales (₹)",
-                data: salesData,
-                backgroundColor: this.salesChartType === 'bar' ? "rgba(125, 51, 255, 0.7)" : [
-                  'rgba(125, 51, 255, 0.8)',
-                  'rgba(16, 217, 172, 0.8)',
-                  'rgba(255, 159, 64, 0.8)',
-                  'rgba(54, 162, 235, 0.8)',
-                  'rgba(255, 99, 132, 0.8)',
-                  'rgba(75, 192, 192, 0.8)',
-                  'rgba(153, 102, 255, 0.8)'
-                ],
-                borderColor: "#7d33ff",
-                borderWidth: 1,
-                borderRadius: this.salesChartType === 'bar' ? 4 : 0,
-              },
-              {
-                label: "Profit (₹)",
-                data: profitData,
-                backgroundColor: this.salesChartType === 'bar' ? "rgba(16, 217, 172, 0.7)" : [
-                  'rgba(16, 217, 172, 0.6)',
-                  'rgba(125, 51, 255, 0.6)',
-                  'rgba(255, 205, 86, 0.6)',
-                  'rgba(201, 203, 207, 0.6)',
-                  'rgba(255, 159, 64, 0.6)',
-                  'rgba(54, 162, 235, 0.6)',
-                  'rgba(255, 99, 132, 0.6)'
-                ],
-                borderColor: "#10d9ac",
-                borderWidth: 1,
-                borderRadius: this.salesChartType === 'bar' ? 4 : 0,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: "top",
-                align: "end",
-                labels: { usePointStyle: true, padding: 20, font: { family: "'Inter', sans-serif", size: 12 } }
-              },
-              tooltip: {
-                mode: 'index',
-                intersect: false,
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                titleColor: '#1e293b',
-                bodyColor: '#475569',
-                borderColor: '#e2e8f0',
-                borderWidth: 1,
-                padding: 12,
-                boxPadding: 6,
-                usePointStyle: true,
-                callbacks: {
-                  label: function(ctx) {
-                    return `${ctx.dataset.label}: ₹${Number(ctx.parsed.y || ctx.parsed || 0).toLocaleString()}`;
-                  }
-                }
-              }
-            },
-            scales: this.salesChartType === 'bar' ? {
-              y: {
-                beginAtZero: true,
-                grid: { color: '#f1f5f9' },
-                ticks: { 
-                  font: { family: "'Inter', sans-serif" },
-                  callback: v => '₹' + Number(v).toLocaleString() 
-                }
-              },
-              x: { 
-                grid: { display: false },
-                ticks: { font: { family: "'Inter', sans-serif" } }
-              }
-            } : {}
-          }
-        });
-
-        // System Distribution (Doughnut)
-        const invP = Math.max(1, Math.min(Number(this.totalInventory) || 1, 100));
-        const staffP = Math.max(1, Math.min(Number(this.activeStaff) || 1, 100));
-        const rem = Math.max(1, 100 - invP - staffP);
-
-        this.trafficChart = new Chart(trafficCtx, {
-          type: "doughnut",
-          data: {
-            labels: ["Inventory", "Staff", "Available"],
-            datasets: [{
-              data: [invP, staffP, rem],
-              backgroundColor: ["#7d33ff", "#10d9ac", "#e2e8f0"],
-              borderWidth: 0,
-            }],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: "70%",
-            plugins: {
-              legend: { position: "bottom", labels: { usePointStyle: true, padding: 12 } }
-            }
-          }
-        });
-      });
+     initCharts() {
+      // Charts are no longer used in this view
+      return;
     },
     getPageTitle(menu) {
       const titles = {
