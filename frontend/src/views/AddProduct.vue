@@ -116,12 +116,23 @@
         </div>
         <div class="form-group">
           <label for="shape">3D Shape</label>
-          <select v-model="shape" id="shape">
-            <option value="box">Box (Carton)</option>
-            <option value="pillow">Pillow (Packet/Chips)</option>
-            <option value="cylinder">Cylinder (Bottle/Can)</option>
-            <option value="exact">Exact Shape (From Image)</option>
-          </select>
+          <div class="input-with-action">
+            <select v-model="shape" id="shape">
+              <option value="box">Box (Carton)</option>
+              <option value="pillow">Pillow (Packet/Chips)</option>
+              <option value="cylinder">Cylinder (Bottle/Can)</option>
+              <option value="bread">Bread (Loaf)</option>
+              <option value="exact">Exact Shape (From Image)</option>
+            </select>
+            <button 
+              type="button" 
+              class="btn-action" 
+              @click="detectShape" 
+              :disabled="!imageFront || detectingShape"
+            >
+              {{ detectingShape ? '...' : 'Auto' }}
+            </button>
+          </div>
         </div>
 
         <!-- Row 6: Description (Full Width) -->
@@ -285,6 +296,7 @@ export default {
       previewBottom: null,
       model3D: null,
       loading: false,
+      detectingShape: false,
       errors: {},
     };
   },
@@ -315,6 +327,24 @@ export default {
       const file = e.target.files[0];
       if (file) {
         this.model3D = file;
+      }
+    },
+
+    async detectShape() {
+      if (!this.imageFront) return;
+      this.detectingShape = true;
+      try {
+        const formData = new FormData();
+        formData.append("image", this.imageFront);
+        const res = await axios.post("/api/products/detect-shape", formData);
+        if (res.data.success) {
+          this.shape = res.data.shape;
+          // alert(`AI detected shape: ${res.data.shape}`);
+        }
+      } catch (err) {
+        console.error("Shape detection error:", err);
+      } finally {
+        this.detectingShape = false;
       }
     },
 
@@ -577,6 +607,36 @@ export default {
 
 .btn-submit:disabled {
   opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.input-with-action {
+  display: flex;
+  gap: 8px;
+}
+
+.input-with-action select {
+  flex: 1;
+}
+
+.btn-action {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-action:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.btn-action:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 

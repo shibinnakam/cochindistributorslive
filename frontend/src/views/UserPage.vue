@@ -158,7 +158,7 @@
         <div class="pos-product-grid">
           <div v-if="loading || visualSearchLoading" class="grid-loading">
              <div class="loading-spinner"></div>
-             <span>{{ visualSearchLoading ? 'AI identifying products & analyzing text...' : 'Loading...' }}</span>
+             <span>{{ visualSearchLoading ? 'AI identifying products...' : 'Loading...' }}</span>
           </div>
           <div v-if="isAiSearch" class="ai-search-banner">
             <span>Showing matched products from AI visual search</span>

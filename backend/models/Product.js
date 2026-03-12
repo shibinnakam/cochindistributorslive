@@ -16,7 +16,7 @@ const productSchema = new mongoose.Schema(
     model3D: { type: String, required: false }, // uploaded 3D model path (optional)
     shape: {
       type: String,
-      enum: ['box', 'cylinder', 'pillow', 'exact'],
+      enum: ['box', 'cylinder', 'pillow', 'bread', 'exact'],
       default: 'box'
     }, // 3D shape type
     category: {

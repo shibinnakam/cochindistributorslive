@@ -481,7 +481,6 @@ module.exports = (io) => {
         const imgUrl = p.image || p.imageFront;
         return {
           id: p._id.toString(),
-          name: p.name,
           image_url: imgUrl.startsWith('http') ? imgUrl : `${baseUrl}${imgUrl}`
         };
       }).filter(t => t.image_url);
@@ -517,6 +516,42 @@ module.exports = (io) => {
 
     } catch (err) {
       console.error("Visual Search Error:", err);
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // ✅ Auto-detect Product Shape using Python AI
+  router.post("/detect-shape", upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Please upload an image" });
+      }
+
+      const uploadedImagePath = req.file.path;
+      const imageBuffer = fs.readFileSync(uploadedImagePath);
+      const base64Image = imageBuffer.toString('base64');
+      const dataUri = `data:${req.file.mimetype};base64,${base64Image}`;
+
+      const aiUrl = `${getAiBaseUrl()}/detect-shape`;
+      console.log(`Calling Python AI for shape detection at: ${aiUrl}`);
+
+      const aiResponse = await axios.post(aiUrl, {
+        image: dataUri
+      }, { timeout: 15000 });
+
+      // Cleanup
+      if (fs.existsSync(uploadedImagePath)) fs.unlinkSync(uploadedImagePath);
+
+      if (aiResponse.data.success) {
+        res.status(200).json({ success: true, shape: aiResponse.data.shape, details: aiResponse.data.details });
+      } else {
+        throw new Error(aiResponse.data.error || "AI shape detection failed");
+      }
+    } catch (err) {
+      console.error("Shape Detection Error:", err);
       if (req.file && fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
       }

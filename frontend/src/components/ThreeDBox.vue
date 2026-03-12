@@ -117,6 +117,8 @@ export default {
             this.createCylinder(textureLoader);
           } else if (this.shape === "pillow") {
             this.createPillow(textureLoader);
+          } else if (this.shape === "bread") {
+            this.createBreadShape(textureLoader);
           } else if (this.shape === "exact") {
             this.createExactShape(textureLoader);
           } else {
@@ -307,6 +309,77 @@ export default {
           new THREE.MeshStandardMaterial({ map: topBottomTexture }), // Bottom
           new THREE.MeshStandardMaterial({ map: frontTexture }), // Front
           new THREE.MeshStandardMaterial({ map: backTexture }), // Back
+        ];
+
+        this.cube = new THREE.Mesh(geometry, materials);
+        this.scene.add(this.cube);
+      });
+    },
+    createBreadShape(textureLoader) {
+      const texturePromises = [
+        this.loadTexture(textureLoader, this.imageFront),
+        this.loadTexture(textureLoader, this.imageBack),
+      ];
+
+      Promise.all(texturePromises).then(([frontTexture, backTexture]) => {
+        // Bread loaf profile: Flat bottom, vertical sides, rounded top
+        const width = 0.7;
+        const height = 0.9;
+        const radius = width / 2;
+        const straightHeight = height - radius;
+
+        const shape = new THREE.Shape();
+        // Start bottom left
+        shape.moveTo(-width / 2, -height / 2);
+        // Bottom edge
+        shape.lineTo(width / 2, -height / 2);
+        // Right side
+        shape.lineTo(width / 2, -height / 2 + straightHeight);
+        // Top rounded arc
+        shape.absarc(0, -height / 2 + straightHeight, radius, 0, Math.PI, false);
+        // Left side
+        shape.lineTo(-width / 2, -height / 2);
+
+        const extrudeSettings = {
+          depth: 1.2, // Loaf length
+          bevelEnabled: true,
+          bevelThickness: 0.05,
+          bevelSize: 0.05,
+          bevelSegments: 5,
+        };
+
+        const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        geometry.center();
+
+        // Rotate to stand vertically if desired, or keep as a loaf lying down
+        // Loaves usually lie down. Let's stand it up like the provided image.
+        geometry.rotateX(Math.PI / 2);
+
+        // Fix UVs
+        geometry.computeBoundingBox();
+        const min = geometry.boundingBox.min;
+        const max = geometry.boundingBox.max;
+        const size = new THREE.Vector3().subVectors(max, min);
+
+        const uvAttr = geometry.attributes.uv;
+        const posAttr = geometry.attributes.position;
+        for (let i = 0; i < posAttr.count; i++) {
+          const x = posAttr.getX(i);
+          const y = posAttr.getY(i);
+          const z = posAttr.getZ(i);
+
+          // Front-facing UVs for the front cap
+          // In ExtrudeGeometry, groups are used.
+          // Since we want front image on front cap and back on back, standard UV mapping is tricky.
+          // Simplest: Planar mapping for front/back
+          const u = (x - min.x) / size.x;
+          const v = (y - min.y) / size.y;
+          uvAttr.setXY(i, u, v);
+        }
+
+        const materials = [
+          new THREE.MeshStandardMaterial({ color: 0xe0c090 }), // Side (crust color)
+          new THREE.MeshStandardMaterial({ map: frontTexture }), // Front/Back caps
         ];
 
         this.cube = new THREE.Mesh(geometry, materials);

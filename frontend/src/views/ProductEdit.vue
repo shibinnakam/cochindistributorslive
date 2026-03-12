@@ -90,12 +90,23 @@
         </div>
         <div class="form-group">
           <label>3D Shape</label>
-          <select v-model="form.shape">
-            <option value="box">Box (Carton)</option>
-            <option value="pillow">Pillow (Packet/Chips)</option>
-            <option value="cylinder">Cylinder (Bottle/Can)</option>
-            <option value="exact">Exact Shape (From Image)</option>
-          </select>
+          <div class="input-with-action">
+            <select v-model="form.shape">
+              <option value="box">Box (Carton)</option>
+              <option value="pillow">Pillow (Packet/Chips)</option>
+              <option value="cylinder">Cylinder (Bottle/Can)</option>
+              <option value="bread">Bread (Loaf)</option>
+              <option value="exact">Exact Shape (From Image)</option>
+            </select>
+            <button 
+              type="button" 
+              class="btn-action" 
+              @click="detectShape" 
+              :disabled="(!files.imageFront && !form.imageFront) || detectingShape"
+            >
+              {{ detectingShape ? '...' : 'Auto' }}
+            </button>
+          </div>
         </div>
 
         <!-- Row 6: Description (Full Width) -->
@@ -293,6 +304,7 @@ export default {
         imageBottom: null,
       },
       loading: false,
+      detectingShape: false,
     };
   },
   async mounted() {
@@ -366,6 +378,41 @@ export default {
     },
     handleModelUpload(e) {
       this.files.model3D = e.target.files[0];
+    },
+    async detectShape() {
+      // Use either newly uploaded image or existing image
+      const imageToDetect = this.files.imageFront;
+      
+      if (!imageToDetect && !this.form.imageFront) return;
+
+      this.detectingShape = true;
+      try {
+        const formData = new FormData();
+        if (imageToDetect) {
+          formData.append("image", imageToDetect);
+        } else {
+          // If no new file, we need to pass the existing URL or download it?
+          // For simplicity, let's only auto-detect if a new image is uploaded or if we have a way to proxy the URL.
+          // Better: The backend could handle a URL too, but for now let's prioritize new uploads.
+          // Actually, let's try to detect from the existing front image if it's available and no new file.
+          
+          // To detect from URL, we'd need another backend endpoint or modify /detect-shape.
+          // Let's just alert for now or skip if no file.
+          if (!imageToDetect) {
+            alert("Please upload a new front image to auto-detect shape.");
+            return;
+          }
+        }
+
+        const res = await axios.post("/api/products/detect-shape", formData);
+        if (res.data.success) {
+          this.form.shape = res.data.shape;
+        }
+      } catch (err) {
+        console.error("Shape detection error:", err);
+      } finally {
+        this.detectingShape = false;
+      }
     },
     async updateProduct() {
       this.loading = true;
@@ -498,6 +545,36 @@ export default {
 
 .btn-submit:disabled {
   opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.input-with-action {
+  display: flex;
+  gap: 8px;
+}
+
+.input-with-action select {
+  flex: 1;
+}
+
+.btn-action {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-action:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.btn-action:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
