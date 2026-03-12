@@ -7,3 +7,5 @@ gunicorn
 requests
 opencv-python-headless
 Pillow
+easyocr
+thefuzz[speedup]

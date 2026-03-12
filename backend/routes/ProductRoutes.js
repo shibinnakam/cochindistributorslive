@@ -481,6 +481,7 @@ module.exports = (io) => {
         const imgUrl = p.image || p.imageFront;
         return {
           id: p._id.toString(),
+          name: p.name,
           image_url: imgUrl.startsWith('http') ? imgUrl : `${baseUrl}${imgUrl}`
         };
       }).filter(t => t.image_url);

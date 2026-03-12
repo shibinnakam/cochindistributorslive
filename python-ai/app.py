@@ -14,6 +14,8 @@ from io import BytesIO
 import cv2
 from PIL import Image
 import base64
+import easyocr
+from thefuzz import fuzz
 
 # Import face_recognition only if available
 try:
@@ -25,8 +27,22 @@ except ImportError:
 app = Flask(__name__)
 CORS(app)
 
-# Path to save the model
-MODEL_PATH = "isolation_forest_model.joblib"
+# Initialize model
+def get_model():
+    if os.path.exists(MODEL_PATH):
+        try:
+            return joblib.load(MODEL_PATH)
+        except Exception:
+            return IsolationForest(contamination=0.1, random_state=42, n_estimators=100)
+    return IsolationForest(contamination=0.1, random_state=42, n_estimators=100)
+
+# Initialize EasyOCR Reader (English only for now)
+try:
+    reader = easyocr.Reader(['en'], gpu=False) # GPU False for Render free tier compatibility
+    HAS_OCR = True
+except Exception as e:
+    print(f"OCR Init Error: {e}")
+    HAS_OCR = False
 
 @app.route('/', methods=['GET'])
 def index():
@@ -277,8 +293,12 @@ def get_image_from_data(data):
 @app.route('/visual-search', methods=['POST'])
 def visual_search():
     """
-    Visual Search Endpoint: Matches a query image against a list of product images.
-    Expects: { "query_image": "base64...", "targets": [ {"id": "...", "image_url": "..."}, ... ] }
+    OCR-Enhanced Visual Search Endpoint.
+    Matches a query image using both ORB features and OCR text matching.
+    Expects: { 
+        "query_image": "base64...", 
+        "targets": [ {"id": "...", "image_url": "...", "name": "..."}, ... ] 
+    }
     """
     try:
         data = request.get_json()
@@ -290,44 +310,57 @@ def visual_search():
         if query_img is None:
             return jsonify({"success": False, "error": "Invalid query image"}), 400
 
-        # Extract features from query image
+        # 1. OCR Extraction (Text-based searching)
+        extracted_text = ""
+        if HAS_OCR:
+            try:
+                # Convert BGR to RGB for EasyOCR
+                rgb_img = cv2.cvtColor(query_img, cv2.COLOR_BGR2RGB)
+                ocr_results = reader.readtext(rgb_img, detail=0, paragraph=True)
+                extracted_text = " ".join(ocr_results).lower()
+            except Exception as e:
+                print(f"OCR Execution Error: {e}")
+
+        # 2. ORB Feature Extraction (Visual-based searching)
         orb = cv2.ORB_create(nfeatures=500)
         kp_query, des_query = orb.detectAndCompute(query_img, None)
         
-        if des_query is None:
-            return jsonify({"success": True, "matches": [], "message": "No features found in query image"})
-
         bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         matches_results = []
 
         for target in data['targets']:
             try:
-                # Load target image from URL
-                target_url = target['image_url']
-                response = requests.get(target_url, timeout=5)
-                target_img = cv2.imdecode(np.frombuffer(response.content, np.uint8), cv2.IMREAD_COLOR)
+                target_score = 0
                 
-                if target_img is None:
-                    continue
-
-                kp_target, des_target = orb.detectAndCompute(target_img, None)
-                if des_target is None:
-                    continue
-
-                # Match descriptors
-                matches = bf.match(des_query, des_target)
-                # Sort them in the order of their distance
-                matches = sorted(matches, key=lambda x: x.distance)
+                # --- A. Text Score (OCR vs Product Name) ---
+                if extracted_text and target.get('name'):
+                    # Use fuzzy matching to compare OCR text with product name
+                    text_sim = fuzz.partial_ratio(extracted_text, target['name'].lower())
+                    if text_sim > 70: # High threshold for fuzzy text match
+                        target_score += (text_sim / 2) # Give significant weight to text
                 
-                # Use a combined score: count of good matches and average distance
-                good_matches = [m for m in matches if m.distance < 50]
-                score = len(good_matches)
+                # --- B. Visual Score (ORB Features) ---
+                visual_score = 0
+                if des_query is not None:
+                    target_url = target['image_url']
+                    response = requests.get(target_url, timeout=5)
+                    target_img = cv2.imdecode(np.frombuffer(response.content, np.uint8), cv2.IMREAD_COLOR)
+                    
+                    if target_img is not None:
+                        kp_target, des_target = orb.detectAndCompute(target_img, None)
+                        if des_target is not None:
+                            matches = bf.match(des_query, des_target)
+                            good_matches = [m for m in matches if m.distance < 50]
+                            visual_score = len(good_matches)
                 
-                if score > 5: # Minimum threshold for matches
+                total_match_score = target_score + visual_score
+                
+                if total_match_score > 5:
                     matches_results.append({
                         "id": target['id'],
-                        "score": score,
-                        "match_count": len(matches)
+                        "score": total_match_score,
+                        "text_match": target_score > 0,
+                        "visual_match_count": visual_score
                     })
             except Exception as e:
                 print(f"Error processing target {target.get('id')}: {e}")
@@ -338,7 +371,9 @@ def visual_search():
 
         return jsonify({
             "success": True,
-            "matches": matches_results[:10]  # Return top 10 matches
+            "matches": matches_results[:10],
+            "extracted_text": extracted_text,
+            "message": f"Found {len(matches_results)} matching products using hybrid search."
         })
 
     except Exception as e:
