@@ -131,7 +131,7 @@ def analyze():
             row = df.iloc[idx]
             rule_result = rule_based_analysis(row)
 
-            final_score = max(anomaly_percentage, rule_result["score"])
+            final_score = int((0.6 * rule_result["score"]) + (0.4 * anomaly_percentage))
             status = "Normal"
             if pred == -1 or final_score > 70:
                 status = "Suspicious"
