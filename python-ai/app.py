@@ -54,6 +54,7 @@ def rule_based_analysis(row):
     """
     duration = row.get('duration_minutes', 0)
     arrival_dev = row.get('arrival_deviation', 0)
+    personal_arrival_dev = row.get('arrival_deviation_from_personal_avg', 0)
     short_stay = row.get('short_stay_count', 0)
     inter_arrival = row.get('inter_arrival_time', 0)
     frequency = row.get('frequency_score', 1)
@@ -82,10 +83,19 @@ def rule_based_analysis(row):
         score = max(score, 65)
         reasons.append("Short work session (<30 min)")
     
-    # Rule 5: Very late arrival (> 3 hours from 9 AM)
-    if arrival_dev > 180:
+    # Rule 5: Very late arrival comparative logic
+    # Penalize based on deviation from expected 8:30 AM AND their personal baseline
+    if arrival_dev > 180 and personal_arrival_dev > 120:
         score = max(score, 60)
-        reasons.append("Very late arrival (>3hr from 9AM)")
+        reasons.append("Very late arrival (>3hr from 8:30AM and >2hr from personal baseline)")
+    elif arrival_dev > 180 and personal_arrival_dev <= 60:
+        # Arrived late compared to official time, BUT within their normal baseline
+        # Thus, less penalty since this is normal for them
+        score = max(score, 30)
+    elif personal_arrival_dev > 180:
+        # Arrived very late compared to their own baseline
+        score = max(score, 65)
+        reasons.append("Highly anomalous arrival (>3hr from personal baseline)")
 
     # Rule 6: Historical short stay pattern
     if short_stay >= 3:
@@ -109,7 +119,7 @@ def analyze():
         df = pd.DataFrame(features_list)
 
         # Ensure all columns exist
-        for col in ['duration_minutes', 'arrival_deviation', 'scan_interval', 'short_stay_count', 'inter_arrival_time', 'frequency_score']:
+        for col in ['duration_minutes', 'arrival_deviation', 'arrival_deviation_from_personal_avg', 'scan_interval', 'short_stay_count', 'inter_arrival_time', 'frequency_score']:
             if col not in df.columns:
                 df[col] = 0
 

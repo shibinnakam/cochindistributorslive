@@ -136,10 +136,10 @@ module.exports = (io) => {
                     const durationMs = outTime - inTime;
                     const durationMinutes = Math.floor(durationMs / 60000);
 
-                    // Eq(7): Arrival deviation from 9:00 AM standard (in minutes)
-                    const nineAM = new Date(inTime);
-                    nineAM.setHours(9, 0, 0, 0);
-                    const arrivalDeviation = Math.abs(Math.floor((inTime - nineAM) / 60000));
+                    // Eq(7): Arrival deviation from 8:30 AM standard (in minutes)
+                    const eightThirtyAM = new Date(inTime);
+                    eightThirtyAM.setHours(8, 30, 0, 0);
+                    const arrivalDeviation = Math.abs(Math.floor((inTime - eightThirtyAM) / 60000));
 
                     // Eq(8)-(9): Compute REAL historical features from past records
                     const thirtyDaysAgo = new Date();
@@ -190,15 +190,35 @@ module.exports = (io) => {
                     const currentFeatures = {
                         duration_minutes: durationMinutes,
                         arrival_deviation: arrivalDeviation,
+                        arrival_deviation_from_personal_avg: 0, // placeholder, will calculate
                         scan_interval: scanInterval,
                         short_stay_count: shortStayCount,
                         inter_arrival_time: interArrivalTime,
                         frequency_score: frequencyScore
                     };
 
+                    // --- NEW: Calculate Personal Arrival Baseline ---
+                    let totalArrivalMinutes = 0;
+                    let validArrivals = 0;
+                    for (const pastRec of historyRecords) {
+                        if (pastRec.inTime) {
+                            const pastIn = new Date(pastRec.inTime);
+                            // Convert arrival time to minutes past midnight
+                            totalArrivalMinutes += (pastIn.getHours() * 60) + pastIn.getMinutes();
+                            validArrivals++;
+                        }
+                    }
+
+                    if (validArrivals > 0) {
+                        const avgArrivalMinutes = Math.round(totalArrivalMinutes / validArrivals);
+                        const todayArrivalMinutes = (inTime.getHours() * 60) + inTime.getMinutes();
+                        currentFeatures.arrival_deviation_from_personal_avg = Math.abs(todayArrivalMinutes - avgArrivalMinutes);
+                    }
+
                     record.features = {
                         durationMinutes,
                         arrivalDeviation,
+                        arrivalDeviationFromPersonalAvg: currentFeatures.arrival_deviation_from_personal_avg,
                         scanInterval,
                         shortStayCount,
                         interArrivalTime,
@@ -216,6 +236,7 @@ module.exports = (io) => {
                             allFeatures.push({
                                 duration_minutes: pastRec.features.durationMinutes,
                                 arrival_deviation: pastRec.features.arrivalDeviation || 0,
+                                arrival_deviation_from_personal_avg: pastRec.features.arrivalDeviationFromPersonalAvg || 0,
                                 scan_interval: pastRec.features.scanInterval || 0,
                                 short_stay_count: pastRec.features.shortStayCount || 0,
                                 inter_arrival_time: pastRec.features.interArrivalTime || 0,
@@ -393,6 +414,7 @@ module.exports = (io) => {
             const featuresList = records.map(r => ({
                 duration_minutes: (r.features && r.features.durationMinutes) || 0,
                 arrival_deviation: (r.features && r.features.arrivalDeviation) || 0,
+                arrival_deviation_from_personal_avg: (r.features && r.features.arrivalDeviationFromPersonalAvg) || 0,
                 scan_interval: (r.features && r.features.scanInterval) || 0,
                 short_stay_count: (r.features && r.features.shortStayCount) || 0,
                 inter_arrival_time: (r.features && r.features.interArrivalTime) || 0,
